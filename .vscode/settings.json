@@ -1,0 +1,7 @@
+{
+    "octave.octaveLocation": "/home/rbeninca/.local/bin/octave-cli",
+    "octave.runInTerminal": true,
+    "files.associations": {
+        "*.m": "octave"
+    }
+}
