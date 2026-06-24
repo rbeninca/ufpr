@@ -1,409 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cálculo de Juros SAC e PRICE</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 0;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Otimização Não Linear — Índice dos Trabalhos</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-        .container {
-            max-width: 1200px;
-            margin: auto;
-        }
+    body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+    .paper { max-width: 210mm; margin: 40px auto; background: white; padding: 20mm 25mm; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; }
 
-        .input-group {
-            margin-bottom: 15px;
-        }
+    h1 { font-size: 22pt; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 10px; }
+    h2 { font-size: 16pt; font-weight: 700; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px; }
+    h3 { font-size: 13pt; font-weight: 600; color: #334155; margin-top: 20px; margin-bottom: 10px; }
 
-        .tabs {
-            display: flex;
-            margin-top: 20px;
-            border-bottom: 1px solid #ccc;
-        }
+    p { margin-bottom: 12px; line-height: 1.6; text-align: justify; font-size: 11pt; }
+    ul { list-style-type: disc; margin-left: 20px; margin-bottom: 12px; font-size: 11pt; }
 
-        .tab {
-            padding: 10px;
-            cursor: pointer;
-            margin-right: 5px;
-            background-color: #f1f1f1;
-            border: 1px solid #ccc;
-            position: relative;
-        }
-
-        .tab.active {
-            background-color: #fff;
-            font-weight: bold;
-        }
-
-        .tab .close {
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding: 0 5px;
-            color: red;
-            cursor: pointer;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 10px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        table {
-            border-collapse: collapse;
-            margin-top: 20px;
-            width: 100%;
-        }
-
-        th,
-        td {
-            text-align: center;
-            border: 1px solid #ccc;
-            padding: 5px;
-        }
-
-        .sac {
-            background-color: #e6f7ff;
-        }
-
-        .price {
-            background-color: #f3e6ff;
-        }
-    </style>
+    .link-card { display: block; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; background: #f8fafc; color: #0f172a; text-decoration: none; transition: background .15s ease, border-color .15s ease, transform .08s ease; }
+    .link-card:hover { background: #eef2ff; border-color: #93c5fd; transform: translateY(-1px); }
+  </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>Cálculo de Juros - SAC e PRICE</h1>
-        <div class="input-group">
-            <label for="financiamento">Valor do Financiamento (R$):</label>
-            <input type="number" id="financiamento">
-        </div>
-        <div class="input-group">
-            <label for="parcelas">Número de Parcelas:</label>
-            <input type="number" id="parcelas">
-        </div>
-        <div class="input-group">
-            <label for="taxaJurosAnual">Taxa de Juros Anual (%):</label>
-            <input type="number" id="taxaJurosAnual" step="0.01">
-        </div>
-        <div class="input-group">
-            <input type="checkbox" id="atualizarCapital">
-            <label for="atualizarCapital">Atualizar Saldo Devedor a cada 12 meses</label>
-            <input type="number" id="taxaAtualizacao" step="0.01" placeholder="Taxa de Atualização (%)">
-        </div>
-        <div class="input-group">
-            <label for="metodo">Método:</label>
-            <select id="metodo">
-                <option value="SAC">SAC</option>
-                <option value="PRICE">PRICE</option>
-            </select>
-        </div>
-        <button id="calcular">Calcular</button>
-        <button id="compartilhar">Compartilhar</button>
-
-        <div class="tabs" id="tabs"></div>
-        <div id="conteudos"></div>
+  <div class="paper">
+    <div class="text-center mb-10">
+      <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Universidade Federal do Paraná</p>
+      <p class="text-xs text-slate-400 uppercase tracking-widest mb-4">Programa de Pós-Graduação em Engenharia Mecânica</p>
+      <h1>Otimização Não Linear</h1>
+      <p class="text-slate-500 text-sm mt-2">Prof. Dr. Carlos Alberto Bavastri</p>
+      <p class="text-slate-500 text-sm mt-1">Aluno: Romulo de Aguiar Beninca</p>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            class Simulador {
-                constructor() {
-                    this.simulacaoContador = 0;
-                    this.tabs = document.getElementById('tabs');
-                    this.conteudos = document.getElementById('conteudos');
+    <section>
+      <h2>Trabalhos</h2>
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <a class="link-card" href="./trabalho1/" title="Abrir Trabalho 1">
+            <strong>Trabalho 1</strong><br/>
+            Apresentação: Método de Nelder-Mead (Poliedro Flexível)
+          </a>
+        </div>
+        <div>
+          <a class="link-card" href="./trabalho2/" title="Abrir Trabalho 2">
+            <strong>Trabalho 2</strong><br/>
+            Cálculo numérico do Gradiente e da Matriz Hessiana em MATLAB
+          </a>
+        </div>
+      </div>
+    </section>
 
-                    document.getElementById('calcular').addEventListener('click', () => this.calcular());
-                    document.getElementById('compartilhar').addEventListener('click', () => this.gerarLinkCompartilhamento());
-                    this.carregarSimulacoes(); // Recarrega simulações salvas
-                    this.carregarDadosURL(); // Carrega dados da URL, se presente
-                }
+    <section>
+      <h2>Repositório</h2>
+      <p>O código-fonte está disponível em:
+        <a href="https://github.com/rbeninca/ufpr" target="_blank" style="color:#1d4ed8">https://github.com/rbeninca/ufpr</a>
+      </p>
+      <p>Publicação: <a href="https://rbeninca.github.io/ufpr/" target="_blank" style="color:#1d4ed8">https://rbeninca.github.io/ufpr/</a></p>
+    </section>
+  </div>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-S90V8HLVGK"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-                formatarMoeda(valor) {
-                    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                }
-
-                carregarDadosURL() {
-                    const params = new URLSearchParams(window.location.search);
-                    const financiamento = parseFloat(params.get('financiamento')) || 0;
-                    const parcelas = parseInt(params.get('parcelas')) || 0;
-                    const taxaJurosAnual = parseFloat(params.get('taxaJurosAnual')) || 0;
-                    const metodo = params.get('metodo') || 'SAC';
-
-                    if (financiamento && parcelas && taxaJurosAnual) {
-                        document.getElementById('financiamento').value = financiamento;
-                        document.getElementById('parcelas').value = parcelas;
-                        document.getElementById('taxaJurosAnual').value = taxaJurosAnual;
-                        document.getElementById('metodo').value = metodo;
-
-                        this.calcular();
-                    }
-                }
-
-                calcular() {
-                    const [financiamento, parcelas, taxa, atualizar, taxaAtualizacao] = this.obterDados();
-                    const metodo = document.getElementById('metodo').value;
-
-                    const novaSimulacao = {
-                        metodo,
-                        financiamento,
-                        parcelas,
-                        taxa,
-                        atualizar,
-                        taxaAtualizacao
-                    };
-
-                    if (this.compararSimulacoes(novaSimulacao)) {
-                        alert('Simulação já existente! Não foi criada uma nova aba.');
-                        return;
-                    }
-
-                    if (metodo === 'SAC') {
-                        this.calcularSAC();
-                    } else {
-                        this.calcularPRICE();
-                    }
-                }
-
-                calcularSAC() {
-                    const [financiamento, parcelas, taxa, atualizar, taxaAtualizacao] = this.obterDados();
-                    const amortizacao = financiamento / parcelas;
-                    let saldoDevedor = financiamento, totalJuros = 0, totalPago = 0;
-
-                    let tabela = '';
-                    tabela += `<table class="sac">
-                <tr>
-                    <th>Parcela</th>
-                    <th>Saldo Devedor</th>
-                    <th>Valor Parcela</th>
-                    <th>Valor Juros</th>
-                    <th>Valor Amortização</th>
-                    <th>Total Pago</th>
-                    <th>Total Juros Pago</th>
-                </tr>`;
-
-                    for (let i = 1; i <= parcelas; i++) {
-                        if (atualizar && i % 12 === 1 && i !== 1) saldoDevedor *= (1 + taxaAtualizacao / 100);
-
-                        const juros = saldoDevedor * (taxa / 12 / 100);
-                        const valorParcela = amortizacao + juros;
-                        totalJuros += juros;
-                        totalPago += valorParcela;
-
-                        tabela += `<tr>
-                    <td>${i}</td>
-                    <td>${this.formatarMoeda(saldoDevedor)}</td>
-                    <td>${this.formatarMoeda(valorParcela)}</td>
-                    <td>${this.formatarMoeda(juros)}</td>
-                    <td>${this.formatarMoeda(amortizacao)}</td>
-                    <td>${this.formatarMoeda(totalPago)}</td>
-                    <td>${this.formatarMoeda(totalJuros)}</td>
-                </tr>`;
-                        saldoDevedor -= amortizacao;
-                    }
-
-                    tabela += `</table>`;
-                    const resumo = this.gerarResumo(financiamento, taxa, taxaAtualizacao, totalJuros, totalPago, 'SAC');
-                    this.adicionarAba(resumo + tabela, 'SAC', { financiamento, parcelas, taxa, atualizar, taxaAtualizacao });
-                }
-
-
-                calcularPRICE() {
-                    const [financiamento, parcelas, taxa, atualizar, taxaAtualizacao] = this.obterDados();
-                    const taxaMensal = taxa / 12 / 100;
-
-                    const valorParcelaFixa = financiamento * taxaMensal / (1 - Math.pow(1 + taxaMensal, -parcelas));
-                    let saldoDevedor = financiamento, totalJuros = 0, totalPago = 0;
-
-                    let tabela = '';
-                    tabela += `<table class="price">
-                <tr>
-                    <th>Parcela</th>
-                    <th>Saldo Devedor</th>
-                    <th>Valor Parcela</th>
-                    <th>Valor Juros</th>
-                    <th>Valor Amortização</th>
-                    <th>Total Pago</th>
-                    <th>Total Juros Pago</th>
-                </tr>`;
-
-                    for (let i = 1; i <= parcelas; i++) {
-                        if (atualizar && i % 12 === 1 && i !== 1) saldoDevedor *= (1 + taxaAtualizacao / 100);
-
-                        const juros = saldoDevedor * taxaMensal;
-                        const amortizacao = valorParcelaFixa - juros;
-
-                        saldoDevedor -= amortizacao;
-                        totalJuros += juros;
-                        totalPago += valorParcelaFixa;
-
-                        tabela += `<tr>
-                    <td>${i}</td>
-                    <td>${this.formatarMoeda(saldoDevedor > 0 ? saldoDevedor : 0)}</td>
-                    <td>${this.formatarMoeda(valorParcelaFixa)}</td>
-                    <td>${this.formatarMoeda(juros)}</td>
-                    <td>${this.formatarMoeda(amortizacao)}</td>
-                    <td>${this.formatarMoeda(totalPago)}</td>
-                    <td>${this.formatarMoeda(totalJuros)}</td>
-                </tr>`;
-                    }
-
-                    tabela += `</table>`;
-                    const resumo = this.gerarResumo(financiamento, taxa, taxaAtualizacao, totalJuros, totalPago, 'PRICE');
-                    this.adicionarAba(resumo + tabela, 'PRICE', { financiamento, parcelas, taxa, atualizar, taxaAtualizacao });
-                }
-
-
-
-
-                gerarResumo(financiamento, taxa, taxaAtualizacao, totalJuros, totalPago, metodo) {
-                    return `<h3>Resumo da Simulação (${metodo})</h3>
-            <p>Valor do Empréstimo: ${this.formatarMoeda(financiamento)}</p>
-            <p>Taxa de Juros Anual: ${taxa}%</p>
-            <p>Taxa de Atualização Anual: ${taxaAtualizacao || 'N/A'}%</p>
-            <p>Total Pago em Juros: ${this.formatarMoeda(totalJuros)}</p>
-            <p>Total Pago: ${this.formatarMoeda(totalPago)}</p>`;
-                }
-
-                adicionarAba(tabela, metodo, simulacao) {
-                    if (!simulacao) {
-                        console.error("Simulação não definida!");
-                        return;
-                    }
-
-                    const id = `simulacao-${Date.now()}`;
-                    simulacao.id = id;
-                    simulacao.conteudo = tabela;
-
-                    this.salvarSimulacao(simulacao);
-
-                    const novaAba = `<div class="tab" onclick="simulador.abrirAba('${id}')">
-        ${metodo} ${++this.simulacaoContador}
-        <span class="close" onclick="simulador.fecharAba(event, '${id}')">x</span>
-    </div>`;
-                    this.tabs.insertAdjacentHTML('beforeend', novaAba);
-                    this.conteudos.insertAdjacentHTML('beforeend', `<div id="${id}" class="tab-content">${tabela}</div>`);
-                    this.abrirAba(id);
-                }
-
-
-
-
-
-                carregarSimulacoes() {
-                    const simulacoes = JSON.parse(localStorage.getItem('simulacoes')) || [];
-                    this.carregandoSimulacoes = true; // Flag para evitar alerta de duplicação
-                    simulacoes.forEach(simulacao => this.recriarAba(simulacao));
-                    this.carregandoSimulacoes = false; // Reset da flag
-                }
-
-
-                salvarSimulacao(simulacao) {
-                    const simulacoes = JSON.parse(localStorage.getItem('simulacoes')) || [];
-                    simulacoes.push(simulacao);
-                    localStorage.setItem('simulacoes', JSON.stringify(simulacoes));
-                }
-
-
-                removerSimulacao(id) {
-                    const simulacoes = JSON.parse(localStorage.getItem('simulacoes')) || [];
-                    const novasSimulacoes = simulacoes.filter(simulacao => simulacao.id !== id);
-                    localStorage.setItem('simulacoes', JSON.stringify(novasSimulacoes)); // Atualiza o localStorage
-                }
-
-
-                recriarAba(simulacao) {
-                    const { id, metodo, conteudo } = simulacao;
-
-                    const novaAba = `<div class="tab" onclick="simulador.abrirAba('${id}')">
-        ${metodo}
-        <span class="close" onclick="simulador.fecharAba(event, '${id}')">x</span>
-    </div>`;
-                    this.tabs.insertAdjacentHTML('beforeend', novaAba);
-                    this.conteudos.insertAdjacentHTML('beforeend', `<div id="${id}" class="tab-content">${conteudo}</div>`);
-                }
-                abrirAba(id) {
-                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    document.getElementById(id).classList.add('active');
-                }
-                fecharAba(event, id) {
-                    event.stopPropagation();
-                    document.getElementById(id).remove(); // Remove o conteúdo da aba
-                    event.target.parentElement.remove(); // Remove a aba em si
-                    this.removerSimulacao(id); // Remove a simulação do localStorage
-
-                    // Atualiza o contador de simulações caso necessário
-                    const simulacoes = JSON.parse(localStorage.getItem('simulacoes')) || [];
-                    this.simulacaoContador = simulacoes.length;
-                }
-
-
-
-                obterDados() {
-                    return [
-                        parseFloat(document.getElementById('financiamento').value),
-                        parseInt(document.getElementById('parcelas').value),
-                        parseFloat(document.getElementById('taxaJurosAnual').value),
-                        document.getElementById('atualizarCapital').checked,
-                        parseFloat(document.getElementById('taxaAtualizacao').value) || 0
-                    ];
-                }
-
-                gerarLinkCompartilhamento() {
-                    const params = new URLSearchParams({
-                        financiamento: document.getElementById('financiamento').value,
-                        parcelas: document.getElementById('parcelas').value,
-                        taxaJurosAnual: document.getElementById('taxaJurosAnual').value,
-                        metodo: document.getElementById('metodo').value
-                    }).toString();
-
-                    const url = `${window.location.origin}${window.location.pathname}?${params}`;
-                    navigator.clipboard.writeText(url).then(() => alert('URL copiada para a área de transferência!'));
-                }
-                compararSimulacoes(novaSimulacao) {
-                    if (this.carregandoSimulacoes) {
-                        return false; // Ignora duplicação ao carregar simulações do localStorage
-                    }
-
-                    const simulacoes = JSON.parse(localStorage.getItem('simulacoes')) || [];
-                    const ultimaSimulacao = simulacoes[simulacoes.length - 1];
-
-                    if (!ultimaSimulacao) return false; // Não há simulações anteriores
-
-                    // Verifica se todos os parâmetros são iguais
-                    return (
-                        novaSimulacao.metodo === ultimaSimulacao.metodo &&
-                        novaSimulacao.financiamento === ultimaSimulacao.financiamento &&
-                        novaSimulacao.parcelas === ultimaSimulacao.parcelas &&
-                        novaSimulacao.taxa === ultimaSimulacao.taxa &&
-                        novaSimulacao.atualizar === ultimaSimulacao.atualizar &&
-                        novaSimulacao.taxaAtualizacao === ultimaSimulacao.taxaAtualizacao
-                    );
-                }
-
-
-
-            }
-
-            window.simulador = new Simulador();
-        });
-
-    
-
-       
-    </script>
+  gtag('config', 'G-S90V8HLVGK');
+</script>
 </body>
-
 </html>
