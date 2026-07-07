@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algoritmo da Dicotomia</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 100vw;
+            margin: 20px auto;
+            padding: 0 10px;
+        }
+        .conteiner {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+        }
+        .quadro_input {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 40vw;
+        }
+        .intervalo {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        label {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        input {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+            margin-top: 16px;
+            max-width: 100%;
+        }
+
+        #iteracoes {
+            white-space: pre-wrap;
+            font-family: monospace;
+            margin-top: 12px;
+        }
+
+        .erro {
+            color: #c00;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 16px;
+            width: 100%;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            text-align: right;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        caption {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Algoritmo da Dicotomia</h1>
+    <p>Exemplo de implementação do método da dicotomia (busca do mínimo)</p>
+    <div class="conteiner">
+        <div class="quadro_input">
+            <label>Função f(x):
+                <select id="functionSelect">
+                    <option value="(x - 3)**2 + 0.2">(x - 3)**2 + 0.2</option>
+                    <option value="(x - 1)**2 + 1">(x - 1)**2 + 1</option>
+                    <option value="(x + 2)**2">(x + 2)**2</option>
+                    <option value="Math.sin(x) + x**2">Math.sin(x) + x**2</option>
+                    <option value="Math.exp(x) - 3*x">Math.exp(x) - 3*x</option>
+                </select>
+                <input type="text" id="functionInput" value="(x - 3)**2 + 0.2"
+                    placeholder="Digite a função (ex: (x - 3)**2 + 0.2)">
+            </label>
+            <div class="intervalo">
+                <label>a</label>
+                    <input type="number" id="aInput" value="2.0" step="any">
+                <label>b</label>
+                    <input type="number" id="bInput" value="4.5" step="any">
+            </div>
+            <label>epsilon (precisão):
+                <input type="number" id="epsilonInput" value="0.1" step="any">
+            </label>
+            <button id="btnexecutar">btnExecutar</button>
+        </div>
+        <div class="grafico">
+            <canvas id="graph" width="600" height="400"></canvas>
+        </div>
+        
+    </div>
+    <div id="iteracoes"></div>
+        <div id="tabela"></div>
+
+
+    <script src="dicotomia_web.js"></script>
+    <script>
+        const canvas = document.getElementById('graph');
+        const ctx = canvas.getContext('2d');
+        const saida = document.getElementById('iteracoes');
+        const divTabela = document.getElementById('tabela');
+        const listaFuncoes = [];
+        const functionSelect = document.getElementById('functionSelect');
+
+        //listener function select change 
+        functionSelect.addEventListener('change', () => {
+            const selectedFunc = functionSelect.value;
+            document.getElementById('functionInput').value = selectedFunc;
+        });
+
+        if ( localStorage.getItem('funcoes') ) {
+            try {
+                const funcoesSalvas = JSON.parse(localStorage.getItem('funcoes'));
+                if (Array.isArray(funcoesSalvas)) {
+                    listaFuncoes.push(...funcoesSalvas);
+                }
+                functionSelect.innerHTML = '';
+                listaFuncoes.forEach((funcao, index) => {
+                    const option = document.createElement('option');
+                    option.value = funcao;
+                    option.textContent = funcao;
+                    functionSelect.appendChild(option);
+                });
+
+
+            } catch (e) {
+                console.error('Erro ao carregar funções salvas:', e);
+            }
+        }
+
+
+        document.getElementById('btnexecutar').addEventListener('click', () => {
+            const funcaoInput = document.getElementById('functionInput').value;
+            const a = parseFloat(document.getElementById('aInput').value);
+            const b = parseFloat(document.getElementById('bInput').value);
+            const epsilon = parseFloat(document.getElementById('epsilonInput').value);
+
+            saida.classList.remove('erro');
+
+            if (!funcaoInput.trim()) {
+                saida.textContent = 'Informe a função f(x).';
+                saida.classList.add('erro');
+                return;
+            }
+            if (isNaN(a) || isNaN(b) || isNaN(epsilon)) {
+                saida.textContent = 'Preencha a, b e epsilon com valores numéricos.';
+                saida.classList.add('erro');
+                return;
+            }
+            if (a >= b) {
+                saida.textContent = 'É necessário que a < b.';
+                saida.classList.add('erro');
+                return;
+            }
+            if (epsilon <= 0) {
+                saida.textContent = 'epsilon deve ser maior que zero.';
+                saida.classList.add('erro');
+                return;
+            }
+
+            let funcao;
+            try {
+                funcao = new Function('x', `return ${funcaoInput};`);
+                funcao(a); // testa a expressão
+                //checa se a função já está na lista, se não estiver adiciona
+                if (!listaFuncoes.includes(funcaoInput)) {
+                    const option = document.createElement('option');
+                    option.value = funcaoInput;
+                    option.textContent = funcaoInput;
+                    functionSelect.appendChild(option);
+                    listaFuncoes.push(funcaoInput);
+                    localStorage.setItem('funcoes', JSON.stringify(listaFuncoes));
+                }
+                
+
+            } catch (e) {
+                saida.textContent = 'Função inválida: ' + e.message;
+                saida.classList.add('erro');
+                return;
+            }
+
+            const { min: resultado, iteracoes } = dicotomia(funcao, a, b, epsilon);
+            console.log(resultado);
+            saida.textContent = `Mínimo aproximado: x = ${resultado.toFixed(6)}\n` +
+                `f(x) = ${funcao(resultado).toFixed(6)}\n` +
+                `Iterações: ${iteracoes.length}`;
+
+            desenharGrafico(funcao, a, b, resultado, iteracoes);
+            montarTabela(iteracoes);
+        });
+
+        function montarTabela(iteracoes) {
+            let html = '<table><caption>Iterações</caption><thead><tr>' +
+                '<th>k</th><th>x1</th><th>x2</th><th>f(x1)</th><th>f(x2)</th>' +
+                '<th>a</th><th>b</th><th>largura</th></tr></thead><tbody>';
+            for (const it of iteracoes) {
+                html += `<tr><td>${it.k}</td><td>${it.x1.toFixed(6)}</td><td>${it.x2.toFixed(6)}</td>` +
+                    `<td>${it.f1.toFixed(6)}</td><td>${it.f2.toFixed(6)}</td>` +
+                    `<td>${it.a.toFixed(6)}</td><td>${it.b.toFixed(6)}</td>` +
+                    `<td>${it.largura.toFixed(6)}</td></tr>`;
+            }
+            html += '</tbody></table>';
+            divTabela.innerHTML = html;
+        }
+
+        function desenharGrafico(funcao, a0, b0, xMin, iteracoes) {
+            // Usa o intervalo original para os eixos do gráfico [a e b]
+            const a = a0, b = b0;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Amostra a função para descobrir o intervalo de y
+            const n = 200;
+            const pontos = []; 
+            let yMinVal = Infinity, yMaxVal = -Infinity;
+            for (let i = 0; i <= n; i++) {
+                const x = a + (b - a) * i / n; 
+                const y = funcao(x);  
+                pontos.push({ x, y });
+                if (isFinite(y)) {
+                    if (y < yMinVal) yMinVal = y;
+                    if (y > yMaxVal) yMaxVal = y;
+                }
+            }
+            if (yMinVal === yMaxVal) { yMinVal -= 1; yMaxVal += 1; }
+            const pad = (yMaxVal - yMinVal) * 0.1;
+            yMinVal -= pad; yMaxVal += pad;
+
+            // Margens para os rótulos dos eixos
+            const mLeft = 55, mRight = 15, mTop = 15, mBottom = 40;
+            const plotW = canvas.width - mLeft - mRight;
+            const plotH = canvas.height - mTop - mBottom;
+
+            const toX = x => mLeft + (x - a) / (b - a) * plotW;
+            const toY = y => mTop + plotH - (y - yMinVal) / (yMaxVal - yMinVal) * plotH;
+
+            // Moldura da área do gráfico
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(mLeft, mTop, plotW, plotH);
+
+            // Marcações e rótulos numéricos do eixo X (intervalo inicial [a, b])
+            ctx.fillStyle = '#333';
+            ctx.strokeStyle = '#eee';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const nTicksX = 5;
+            for (let i = 0; i <= nTicksX; i++) {
+                const xv = a + (b - a) * i / nTicksX;
+                const cx = toX(xv);
+                ctx.beginPath();
+                ctx.moveTo(cx, mTop);
+                ctx.lineTo(cx, mTop + plotH);
+                ctx.stroke();
+                ctx.fillText(xv.toFixed(2), cx, mTop + plotH + 4);
+            }
+
+            // Marcações e rótulos numéricos do eixo Y (f(x))
+            ctx.textAlign = 'right';
+            
+            const nTicksY = 5;
+            for (let i = 0; i <= nTicksY; i++) {
+                const yv = yMinVal + (yMaxVal - yMinVal) * i / nTicksY;
+                const cy = toY(yv);
+                ctx.beginPath();
+                ctx.moveTo(mLeft, cy);
+                ctx.lineTo(mLeft + plotW, cy);
+                ctx.stroke();
+                ctx.fillText(yv.toFixed(2), mLeft - 6, cy);
+            }
+
+            // Rótulo do eixo X
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('x  (intervalo inicial)', mLeft + plotW / 2, canvas.height - 2);
+
+            // Rótulo do eixo Y = f(x)
+            ctx.save();
+            ctx.translate(12, mTop + plotH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText('f(x)', 0, 0);
+            ctx.restore();
+
+            // Eixo x (y = 0), se visível
+            if (yMinVal < 0 && yMaxVal > 0) {
+                ctx.strokeStyle = '#888';
+                ctx.beginPath();
+                ctx.moveTo(mLeft, toY(0));
+                ctx.lineTo(mLeft + plotW, toY(0));
+                ctx.stroke();
+            }
+
+            // Curva
+            ctx.strokeStyle = '#0066cc';
+            ctx.beginPath();
+            let iniciou = false;
+            for (const p of pontos) {
+                if (!isFinite(p.y)) { iniciou = false; continue; }
+                const cx = toX(p.x), cy = toY(p.y);
+                if (!iniciou) { ctx.moveTo(cx, cy); iniciou = true; }
+                else ctx.lineTo(cx, cy);
+            }
+            ctx.stroke();
+
+            // Linhas verticais de x1 e x2 de cada iteração
+            ctx.lineWidth = 1;
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+            for (const it of iteracoes) {
+                // x1 em laranja, x2 em verde
+                for (const [x, cor, rot] of [[it.x1, 'orange', 'x1'], [it.x2, 'green', 'x2']]) {
+                    if (x < a || x > b) continue;
+                    const cx = toX(x);
+                    ctx.strokeStyle = cor;
+                    ctx.beginPath();
+                    ctx.moveTo(cx, mTop);
+                    ctx.lineTo(cx, mTop + plotH);
+                    ctx.stroke();
+                    ctx.fillStyle = cor;
+                    ctx.fillText(`${rot}it${it.k}`, cx + 2, mTop + 10 + (rot === 'x2' ? 12 : 0));
+                }
+            }
+
+            // Marca o mínimo encontrado
+            ctx.fillStyle = '#c00';
+            ctx.beginPath();
+            ctx.arc(toX(xMin), toY(funcao(xMin)), 5, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    
+    document.getElementById('btnexecutar').click();
+    </script>
+</body>
+
+</html>

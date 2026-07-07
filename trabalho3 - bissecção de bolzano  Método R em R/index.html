@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trabalho 3 — Método da Dicotomia (Busca Unidimensional)</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] } };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+    .paper { max-width: 210mm; margin: 40px auto; background: white; padding: 20mm 25mm; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; }
+
+    h1 { font-size: 22pt; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 10px; }
+    h2 { font-size: 16pt; font-weight: 700; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px; }
+    h3 { font-size: 13pt; font-weight: 600; color: #334155; margin-top: 20px; margin-bottom: 10px; }
+
+    p { margin-bottom: 12px; line-height: 1.6; text-align: justify; font-size: 11pt; }
+    ul, ol { margin-left: 22px; margin-bottom: 12px; font-size: 11pt; line-height: 1.6; }
+    ul { list-style-type: disc; }
+    ol { list-style-type: decimal; }
+
+    pre { background:#0f172a; color:#e2e8f0; font-family:'JetBrains Mono', monospace; font-size:9.5pt; padding:16px; border-radius:8px; overflow-x:auto; line-height:1.5; margin-bottom:14px; }
+    code { font-family:'JetBrains Mono', monospace; font-size:10pt; background:#eef2ff; padding:1px 5px; border-radius:4px; color:#3730a3; }
+    pre code { background:none; padding:0; color:inherit; }
+    .back { color:#1d4ed8; text-decoration:none; font-size:10pt; }
+    table { width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:14px; }
+    th, td { border:1px solid #cbd5e1; padding:6px 10px; text-align:left; }
+    th { background:#f1f5f9; }
+
+    .caption { font-size:9.5pt; color:#64748b; text-align:center; margin-top:8px; font-style:italic; }
+
+    /* Folhas do caderno em largura total da página (extravasam o padding lateral do .paper) */
+    .folha-full { margin-left:-25mm; margin-right:-25mm; margin-bottom:18px; }
+    .folha-full img { width:100%; display:block; }
+
+    /* Ajustes para impressão / geração de PDF */
+    @page { size: A4; margin: 12mm; }
+    @media print {
+      body { background:#fff; }
+      .paper { box-shadow:none; margin:0; max-width:none; border-radius:0; padding:0; }
+      .back { display:none; }
+      pre { white-space:pre-wrap; word-break:break-word; overflow-x:visible; }
+      .folha-full { margin-left:0; margin-right:0; }
+      .folha-full img { break-inside:avoid; page-break-inside:avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="paper">
+
+    <div class="text-center my-8">
+      <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Otimização Não Linear — Trabalho 3</p>
+      <h1>Método da Dicotomia</h1>
+      <p class="text-slate-500 text-sm mt-1">Busca Unidimensional para Minimização de Funções</p>
+      <p class="text-slate-500 text-sm mt-3">Romulo de Aguiar Beninca · Prof. Dr. Carlos Alberto Bavastri</p>
+    </div>
+
+    <section>
+      <h2>1. Objetivo</h2>
+      <p>
+        O método da dicotomia é uma técnica de <em>busca unidimensional</em> usada para localizar o mínimo
+        de uma função \( f(x) \) unimodal em um intervalo fechado \( [a, b] \). A ideia é reduzir
+        progressivamente o intervalo de incerteza — onde sabemos que o mínimo está — até que sua largura
+        fique menor que uma precisão \( \varepsilon \) definida previamente.
+      </p>
+      <p>
+        A cada iteração avaliamos a função em dois pontos muito próximos, simétricos em torno do centro do
+        intervalo, e usamos a comparação entre eles para descartar a metade que não pode conter o mínimo.
+      </p>
+    </section>
+
+    <section>
+      <h2>2. Explicação (folhas do caderno)</h2>
+      <p>
+        As páginas a seguir contêm o desenvolvimento manuscrito do método: a formulação, a estratégia de
+        redução do intervalo e a interpretação geométrica dos pontos de teste.
+      </p>
+
+      <div class="folha-full">
+        <img src="./foto-caderno1.jpeg" alt="Folha 1 — formulação do método da dicotomia" />
+      </div>
+
+      <div class="folha-full">
+        <img src="./foto-caderno2.jpeg" alt="Folha 2 — redução do intervalo de incerteza" />
+      </div>
+
+      <div class="folha-full">
+        <img src="./foto-caderno3.jpeg" alt="Folha 3 — interpretação geométrica e critério de parada" />
+      </div>
+    </section>
+
+    <section>
+      <h2>3. O algoritmo</h2>
+    
+    </section>
+
+    <section>
+      <h2>4. Código utilizado</h2>
+      <p>Arquivo <code>dicotomia.m</code> — implementação da busca do mínimo pelo método da dicotomia:</p>
+      <pre><code>funcao = @(x) (x - 3).^2 + 0.2;
+
+% Intervalo inicial
+a = 2.0;
+b = 4.5;
+
+epsilon = 0.1;        % precisão
+
+delta = epsilon / 10;
+
+k = 0;
+
+resultado = busca_min_dicotomia(funcao, a, b, epsilon);
+resultado
+
+function min = busca_min_dicotomia(funcao, a, b, epsilon)
+    k = 0;
+    while abs(b - a) &gt; epsilon
+        k = k + 1;
+        centro = (a + b) / 2;
+        x1 = centro - epsilon/10;
+        x2 = centro + epsilon/10;
+
+        f1 = funcao(x1);
+        f2 = funcao(x2);
+
+        if f1 &gt; f2
+            a = x1;
+        else
+            b = x2;
+        end
+        fprintf('Final: %d iterações, intervalo [%f, %f]\n', k, a, b);
+    end
+
+    min = (a + b) / 2;
+end</code></pre>
+    </section>
+
+    
+    </section>
+
+  </div>
+</body>
+</html>
