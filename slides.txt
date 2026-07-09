@@ -1,0 +1,2659 @@
+OTIMIZAÇÃO NÃO LINEAR
+Prof. Dr. Carlos Alberto Bavastri
+Programa de Pós Graduação em Engenharia Mecânica
+Universidade Federal do Paraná
+OTIMIZAÇÃO
+PROGRAMAÇÃO NÃO LINEAR
+A) USANDO INFORMAÇÃO DE DERIVADA
+B) SEM USO DE INFORMAÇÃO DE DERIVADA
+--Com restrições
+Sem restrições
+PROBLEMA GERAL DE OTIMIZAÇÃO
+min f  x 
+with x subject to :
+h i  x   0
+g j  x   0
+R n
+where
+ f : R n  R
+i  1, 2,.., m i
+j  m i  1, m i  2,.., p
+PROBLEMA GERAL DE OTIMIZAÇÃO
+- Função Objetivo,
+ f  x 
+Função que se quer achar o ponto ótimo
+ x *
+- Região viável,
+ 
+Região formada por todos os pontos “x” tal que satisfazem todas
+as restrições
+ 
+ m
+ p
+  
+   x / x     h i  x   0      g j  x   0   
+ 
+ i  1
+ j  m 1
+  
+EXEMPLO: MINIMIZAR
+f  x 1 , x2 , x 3   x 1 x 2 x 3
+Sujeito a :
+1) x 1  x2 x 1  0
+2) x 1 x 2  x 3 4  0
+3)  x 1  0
+4) x 1  x 2  x 3  0
+5) x 1 x 3  x2  0
+ h 1  x 1 , x2 , x 3   x 1  x2 x 1
+ h 2  x 1 , x2 , x 3   x 1 x 2  x 34
+ h 3  x 1 , x 2 , x3    x 1
+ g 4  x 1 , x2 , x 3   x 1  x2  x3
+ g 5  x 1 , x2 , x3   x 1 x 3  x2
+DOMÍNIO E ANÁLISE EMR 2 :
+ x 1 
+x  
+ x 2 
+R n
+R1   x 1 / x 1  R
+R 2    x 1 , x 2  / x 1 e x 2  R
+
+R n    x 1 , x2 ,..., xn  / x 1 , x 2 ,..., x n  R
+EXEMPLO ANTERIOR
+f  x 1 , x2 , x 3   x 1 x 2 x 3
+Sujeito a :
+1) x 1  x2 x 1  0
+2) x 1 x 2  x 3 4  0
+3)  x 1  0
+4) x 1  x 2  x 3  0
+5) x 1 x 3  x2  0
+ h 1  x 1 , x2 , x 3   x 1  x2 x 1
+ h 2  x 1 , x2 , x 3   x 1 x 2  x 34
+ h 3  x 1 , x 2 , x3    x 1
+ g 4  x 1 , x2 , x 3   x 1  x2  x3
+ g 5  x 1 , x2 , x3   x 1 x 3  x2
+VETORES
+- Cada ponto do espaço é representado por um vetor:
+→ Representação po coluna
+VETORES BÁSICOS UNITÁRIOS
+→ i-ésima fila
+MULTIPLICAÇÃO DE UM ESCALAR POR UM VETOR
+escalar
+VETOR NULO
+PRODUTO INTERNO OU PRODUTO ESCALAR
+-
+ É uma função que associa dois vetores a um escalar. A função é do
+tipo:
+-
+ O resultado é um número escalar.
+PROPRIEDADES
+→ Comuta va
+PROPRIEDADES
+ÂNGULOS ENTRE DOIS VETORES
+VETOR UNITÁRIO
+EXEMPLO
+- Dados dois vetores:
+EXEMPLO
+Analise:
+1
+ORTOGONALIDADE
+-
+Conjunto aberto que não tem
+fronteira, a fronteira não pertence à
+hiperesfera.
+d
+-
+d
+0
+ a
+Esfera roda no plano e hiperesfera roda no hiperplano (plano n-1)
+EXEMPLO
+2
+1
+1
+2
+2
+2
+EXEMPLO
+3
+2
+1
+1
+ 2
+ 3
+EXEMPLO
+-3
+ -2
+ -1
+Pontos exteriores
+-1
+- Para saber quais são os
+pontos interiores, testamos a
+origem:
+Pontos interiores
+Fronteira
+-
+Ponto interior de um conjunto/região: um ponto é dito interior se
+existe uma vizinhança deste ponto inteiramente contida no conjunto.
+-
+Ponto de fronteira de um conjunto/região: se a menor vizinhança
+deste ponto não está inteiramente contida neste conjunto.
+ou também
+SEGMENTO DE RETA
+- Computacionalmente é melhor trabalhar com escalonamento segundo
+vetor unitário
+EXEMPLO
+- Achar a reta que passa pelos pontos abaixo:
+EXEMPLO
+CONJUNTO CONEXO
+- Quando quaisquer dois pontos do conjunto podem ser ligadas por uma
+polinomial de segmentos de reta inteiramente contida no conjunto.
+HIPERPLANO
+- É definido como sendo o conjunto de pontos dado por:
+Equação linear do hiperplano
+EXEMPLO
+EXEMPLO
+SIGNIFICADO
+-
+-
+-
+Semi espaço fechado
+Semi espaço aberto
+Conjunto convexo
+EXEMPLO
+POLITOPO
+EXEMPLO
+DIMENSÃO DO HIPERPLANO
+0
+ 2
+“Um hiperplano é sempre
+um espaço menor do que
+o espaço no qual me
+encontro.”
+DIMENSÃO DO HIPERPLANO
+EXEMPLO
+FUNÇÃO
+EXEMPLO
+EXEMPLO
+GRÁFICO DE UMA FUNÇÃO
+EXEMPLO
+-
+No caso de querer achar o mínimo, a constante não aponta para o valor
+de x para o qual f(x) é mínimo; o que varia é o valor do mínimo ou o
+valor de f(x) para o ponto mínimo.
+EXEMPLO
+CURVA DE NÍVEL
+FUNÇÃOCONVEXA
+1
+2
+EXEMPLO NÚMERICO
+- Dada a função
+na direção
+EXEMPLO NÚMERICO
+EXEMPLO NÚMERICO
+EXEMPLO NÚMERICO
+EXEMPLO NÚMERICO
+g) Qualificar o ponto extremo inferior
+EXEMPLO NÚMERICO
+EXEMPLO NÚMERICO
+CONCEITOExemplo:
+PRODIENTE
+GRADIENTE
+GRADIENTE
+GRADIENTE
+GRADIENTE
+“O máximo crescimento está dado por a” -direção do gradiente em um ponto
+• Se eu quero maximizar devo ir no sentido do gradiente, se quiser o mínimo
+pego um passo infinitesimal no sentido contrário ao gradiente.
+•Só avalio a vizinhança do ponto, longe do ponto o gradiente não tem
+informação da função.
+GRADIENTE
+GRADIENTE
+Vetor gradiente é ortogonal as curvas de nível
+GRADIENTE
+Matriz Hessiana: é uma matriz quadrada(nxn) obtida pela derivada segunda
+da função, como abaixo, dado o vetor gradiente:
+• Admite novo gradiente
+GRADIENTE
+Posso formar uma matriz com:
+EXEMPLO:
+Logo a função não tem mínimo.
+EXEMPLO:
+d) Achar o vetor gradiente ao longo da reta do item (b)
+EXEMPLO:
+É genérico, isto é a derivada
+direcional é um ponto da reta
+Ponto extremo: pode ser máximo,
+mínimo ou inflexão.
+EXEMPLO:
+EXEMPLO:
+h) Modificar o ponto externo, obtido no item (f)
+EXEMPLO:
+Para o mínimo
+EXEMPLO:
+• Para achar o mínimo ao longo da reta só é necessário
+achar o gradiente da função normal e da reta.
+CÁLCULO DE DERIVADA POR VARIAÇÃO FINITA:
+CÁLCULO DE DERIVADA POR VARIAÇÃO FINITA
+Por variação finita:
+Derivada aproximada
+CÁLCULO DO VETOR GRADIENTE POR VARIAÇÃO FINITA
+CÁLCULO DA MATRIZ HESSIANA POR VARIAÇÃO FINITA
+A i-nésima linha da matriz Hessiana é dada por:
+linha
+ Obtemos uma linha da matriz Hessiana
+PROGRAMA
+entra
+Sub-rotina:
+sai
+PROGRAMA
+FUNÇÃO QUADRÁTICA GERAL
+É uma função da forma:
+De forma estendida:
+VETOR GRADIENTE DA FUNÇÃO QUADRÁTICA
+Vetor gradiente da função quadrática é:
+Hessiana
+Vetor gradiente
+VETOR GRADIENTE DA FUNÇÃO QUADRÁTICA
+Se Q é simétrico
+Quantificando o ponto:
+CONDIÇÃO DE SILVESTER
+CONDIÇÃO DE SILVESTER
+Exemplo:
+Para ser negativo:
+-, + , -, +..
+Definido seminegativo: o mesmo que definido negativo porém com
+alguns zeros.
+Os pontos extremos são máximos
+PONTO EXTREMO
+Para otimização:
+EXEMPLO
+>0
+a)Achar o vetor gradiente
+b)Achar a matriz Hessiana
+>0
+EXEMPLO
+EXEMPLO
+d) Qualificar o ponto extremo
+OBS: Função banana, difícil
+achar o mínimo segundo
+gradiente (caso especial)
+APROXIMAÇÃO DE FUNÇÕES
+- Basta truncar os termos de segunda ordem em diante na série de Taylor:
+-
+-
+A variação linear serve para ver quais são os casos piores em forma
+rápida (filtro);
+Esses casos críticos são analisados mais detalhadamente com outros
+softwares (mais refinados).
+- Basta truncar os termos de terceira ordem em diante na série de Taylor:
+NEWTON-RAPHSON
+- Desenvolvida por Newton e Raphson para encontrar as raízes de uma função:
+QUALIFICAR O PONTO EXTREMO
+INTERPRETAÇÃO GRÁFICA: MÉTODO DE NEWTON
+Direção de Newton e também
+o tamanho do passo que deve
+ser dado de uma vez só
+- O que faz Newton é rodar o gradiente e
+posicioná-lo no ótimo tanto em direção
+quanto em módulo (se a função for
+quadrática).
+- Os pontos em cima da reta ao longo da reta estão dados por:
+- Basta truncar os termos de segunda ordem em diante:
+- Basta truncar o criki:
+NOÇÃO DO MÉTODO DE NEWTON AO LONGO DA RETA
+PARTE II
+OTIMIZAÇÃO UNIDIMENSIONAL
+- Noção de mínimo geral para a função 𝑓( 𝑥) = 𝑅 → 𝑅
+𝑥* é o mínimo de 𝑓( 𝑥) se:
+𝑓 𝑥 ∗ ≤ 𝑓( 𝑥)
+ V
+ x 𝜖 Ω
+- Noção de mínimo para a função de 𝑓(𝑥) = 𝑅 → 𝑅
+OTIMIZAÇÃO UNIDIMENSIONAL
+OTIMIZAÇÃO UNIDIMENSIONAL
+Onde:
+X1* - mínimo global
+X2* - ponto de máximo local
+X3* - ponto de mínimo local
+O mínimo entre [a,b] é 𝑎 = 𝑥 ∗
+𝑑𝑓 𝑥
+𝑑𝑥𝑥∗
+=
+ 0
+OTIMIZAÇÃO UNIDIMENSIONAL
+- Conclusão geral:
+Os pontos extremos são dados por:
+𝑑𝑓 𝑥
+- Quando
+ =
+ 0
+𝑑𝑥 𝑥∗
+- Se 𝑥 ∗ ∉ Ω ⟶ o ponto ótimo está na fronteira - (ou “a” ou “b”).
+-Conclusão geral para Rn :
+- Quando
+ 𝛻𝑓(𝑥) 𝑥∗ = 0
+- Se 𝑥 ∗ ∉ Ω → O ponto está na fronteira.
+FUNÇÃO UNIMODAL NO 𝑅1
+- É uma função no intervalo considerado que possui um único mínimo e o
+sinal de derivada não muda o esquerdo e o direito do mínimo.
+FUNÇÃO UNIMODAL NO 𝑅1
+FUNÇÃO UNIMODAL NO 𝑅1
+- Sempre é possível achar um intervalo que dentro dele a função seja
+unimodal;
+-Há vários métodos de busca do ponto ótimo de uma função no intervalo
+considerado.
+Algoritmo de busca do intervalo que contém o ponto de mínimo:
+[a,b] com a < b.
+[
+ ]
+a
+ b
+Característica
+- A função deve ser unimodal
+- Não usa derivada
+FUNÇÃO UNIMODAL NO 𝑅1
+Filosofia :
+FUNÇÃO UNIMODAL NO 𝑅1
+Filosofia :
+Se em 𝑥 1 → 𝑓 𝑥 1 < 𝑓 𝑥0 → sigo no mesmo
+sentido
+Se 𝑥2 → 𝑓 𝑥2 < 𝑓 𝑥 1 → segue o mesmo
+sentido
+Até chegarmos a 𝑥 𝑘−1 e 𝑥𝑘+1 ao redor de 𝑥 𝑘 →
+𝑥 𝑘−1 = 𝑎
+𝑥 𝑘−2 = 𝑏
+FUNÇÃO UNIMODAL NO 𝑅1
+Pode acontecer:
+FUNÇÃO UNIMODAL NO 𝑅1
+Pode acontecer:
+Se 𝑥 1 → 𝑓 𝑥 1 > 𝑓 𝑥 0 → Δ𝑥 = −Δ𝑥
+Queremos o intervalo onde x encontra o mínimo sempre
+consideramos [(a < b)] como condição:
+Assim temos:
+𝑏 = 𝑥𝑘−1
+𝑎 = 𝑥𝑘+1
+FUNÇÃO UNIMODAL NO 𝑅1
+Outra condição a ser levada em conta:
+FUNÇÃO UNIMODAL NO 𝑅1
+Outra condição a ser levada em conta:
+Algoritmo:
+1º Passo
+ 2º Passo
+• 𝑥 0 → ponto inicial
+de busca.
+• Δ𝑥 > 0 (pode ser
+Δx = 1)
+• 𝑥 𝑘+1 = 𝑥𝑘 + Δ𝑥
+• Se 𝑓 𝑥 𝑘+1 >
+𝑓 𝑥𝑘
+• Faz-se
+• 𝑏 = 𝑥 𝑘+1
+• Δ𝑥 = −Δ𝑥
+• (Ir ao 3º Passo)
+• K = 0
+• se 𝑓 𝑥𝑘+1 ≤
+𝑓 𝑥𝑘
+(ir ao 4º Passo)
+3º Passo
+• 𝑥 𝑘+1 = 𝑥𝑘 + Δ𝑥
+• Se 𝑓 𝑥 𝑘+1 ≤
+𝑓 𝑥𝑘
+(ir ao 4º Passo)
+• Se 𝑓 𝑥𝑘+1 >
+𝑓 𝑥𝑘
+• faça 𝑎 = 𝑥 𝑘+1
+• Fim
+FUNÇÃO UNIMODAL NO 𝑅1
+Outra condição a ser levada em conta:
+Algoritmo:
+4º Passo
+ 5º Passo
+6º Passo
+• 𝑘 =𝑘+1
+• Se 𝑓(𝑥𝑘+1 ) ≤
+𝑓 𝑥 𝑘
+• Vá ao 4º Passo
+• 𝑥𝑘+1 = 𝑥𝑘 + Δ𝑥
+• Se não vá ao 6º
+Passo
+• Se 𝑥𝑘+1 > 𝑥 𝑘−1 ;
+Faça:
+• 𝑎 = 𝑥 𝑘−1
+• 𝑏 = 𝑥 𝑘+1
+• Stop
+• Se 𝑥𝑘+1 < 𝑥 𝑘−1
+;Faça:
+• 𝑎 = 𝑥 𝑘+1
+• 𝑏 = 𝑥𝑘−1
+FUNÇÃO UNIMODAL NO 𝑅1
+Método de busca do ponto ótimo:
+1. Método da seção áurea;
+2. Método da bisseção ou de Bolzano;
+3. Método da dicotomia;
+4. Métodos de Fibonacci;
+5. Método de Davis, Swan e Campey (DSC);
+6. Método de Powell;
+MÉTODO DA SEÇÃO ÁUREA
+Seja o intervalo:
+MÉTODO DA SEÇÃO ÁUREA
+Seja o intervalo:
+A divisão Áurea é:
+𝑐𝑎
+ 𝑏𝑎
+ Proposição usada na parte envolvida
+=
+com a natureza de crescimento.
+𝑏𝑎
+ 𝑐𝑏
+Sendo chamada de proposição áurea
+ou nº de ouro.
+Obs.: Fazendo o segmento 𝑐𝑎 = 1
+(unitário).
+1
+𝑥
+=
+𝑥
+𝑦
+→ 𝑦 = 𝑥 2
+𝑥 + 𝑦 = 1 → 𝑥 + 𝑥 2 = 1
+MÉTODO DA SEÇÃO ÁUREA
+𝑥 2 + 𝑥 − 1 = 0
+ Aplicando baskara.
+𝑥=
+−1 ±1 2 − 4(1)(−1)
+2∗1
+𝑥 1=
+−1+2
+5
+≅ 0,618
+−1 ± 5
+𝑥=
+2
+Solução:
+𝑥 ≅ 0,618
+𝑦 ≅ 0,382
+𝑥2=
+−1−2
+5
+≅ 𝑁º𝑠 𝑛𝑒𝑔𝑎𝑡𝑖𝑣𝑜𝑠 𝑛ã𝑜 𝑖𝑛𝑡𝑒𝑟𝑒𝑠𝑠𝑎𝑚
+Todo aquele que é dividido
+seguindo estes valores se
+chamam divisão áurea.
+MÉTODO DA SEÇÃO ÁUREA
+Características do método da seção áurea:
+• Usa somente informações de f(x)
+• Não usa derivadas
+• Deve –se conhecer o intervalo que contém o mínimo
+• A função f(x) deve ser unimodal no intervalo de busca
+• Usa divisão áurea na busca do mínimo
+MÉTODO DA SEÇÃO ÁUREA
+Filosofia:
+MÉTODO DA SEÇÃO ÁUREA
+-Filosofia:
+Compara 𝑥 1 → 𝑓 𝑥 1 < 𝑓 𝑎 → 𝑥 1 = 𝑎, Onde 𝑥 1 entra em [a,b] , segundo a
+divisão áurea,
+Ficando com um novo intervalo [a, b] , que vai até o mínimo ficar entre um
+intervalo bem pequeno.
+MÉTODO DA SEÇÃO ÁUREA
+Algoritmo:
+1º Passo:
+Obtém-se o intercalo [a, b] que contém o ponto mínimo.
+2º Passo:
+Adota-se 𝜖 > 0
+3º Passo: Critério de Parade.
+𝑏−𝑎 ≤𝜀
+Se for verdadeiro:
+∗ 𝑎+𝑏
+𝑥 =
+ , e PARE.
+2
+Se for falso, vá ao 4º Passo.
+MÉTODO DA SEÇÃO ÁUREA
+4ºPasso:
+Coloca-se dois pontos 𝑥 1 𝑒 𝑥 2 dentro do intervalo [a, b] de acordo com a divisão
+áurea.
+𝑥 1 = 𝑎 + 0,382 ∗ 𝑏 − 𝑎 = 0,618 ∗ 𝑎 + 0,382 ∗ 𝑏
+𝑥 2 = 𝑏 − 0,382 ∗ 𝑏 − 𝑎 = 0,382 ∗ 𝑎 + 0,618 ∗ 𝑏
+5º Passo:
+Calcula-se 𝑓 𝑥 1 𝑒 𝑓 𝑥2 e compara-se;
+Se 𝑓 𝑥 1 > 𝑓 𝑥 2 ,
+ faz–se, 𝑎 = 𝑥 1
+Vá ao 3º passo.
+Se 𝑓 𝑥 1 ≤ 𝑓 𝑥 2 ,
+ faz-se, 𝑏 = 𝑥2 , vá ao 3º passo
+Se estou no Rn em vez de trabalhar com x se utiliza 𝜆.
+MÉTODO DA SEÇÃO ÁUREA
+Convergência:
+MÉTODO DA SEÇÃO ÁUREA
+Convergência:
+Número mínimo de interações:
+Para entrar na precisão 𝜀:
+𝜀
+0,618𝑘 ∗
+ 𝑏−𝑎
+ ≤ 𝜀 𝑜𝑢 0,618𝑘 ≤
+𝑏−𝑎
+Será aplicado Log nos dois lados e como log
+de um número < 1 é negativo deve-se
+mudar a desigualdade.
+𝑘 𝜀
+ln(0,618 ) ≥ ln
+𝑏−𝑎
+𝜀
+𝑘 ≥ −2,077 ∗ ln(
+ ).
+𝑏−𝑎
+Convergência:
+Número mínimo de interações:
+Exemplo:
+𝑏−𝑎 =1
+𝜀 = 0,001
+0,001
+𝑘 ≥ −2,077 ∗ ln
+1
+𝑘 ≥ 14,35,
+nº mínimo de interações = 15
+MÉTODO DA BISSEÇÃO OU BOLZANO
+Característica:
+• Faz-se uso da derivada;
+• Deve-se conhecer o intervalo que contém o mínimo;
+• A função 𝑓 𝑥 deve ser unimodal no intervalo;
+MÉTODO DA BISSEÇÃO OU BOLZANO
+Filosofia:
+MÉTODO DA BISSEÇÃO OU BOLZANO
+Filosofia:
+Se tg 𝛼 o gradiente em 𝑥 é negativo deve ir para a direita, até encontrar o
+mínimo. Se o gradiente for positivo deve ir para a esquerda até encontrar
+o mínimo.
+MÉTODO DA BISSEÇÃO OU BOLZANO
+Algoritmo:
+1º Passo:
+Obtém-se o intervalo [a, b] que contém o ponto mínimo.
+2º Passo:
+Adota-se:
+𝜀>0
+ALGORITMO:
+3º passo:
+4º passo:
+5º passo: critério de Parada
+• Se não, vá ao sexto passo.
+6º passo:
+vá ao terceiro passo.
+ALGORITMO:
+Obs: No critério de parada
+vamos ter problema com
+1º que nunca poderia rodar o programa.
+CONVERGÊNCIA
+Idem anterior só que agora as diminuições são de 50% em cada
+iteração.
+Iterações como mínimo
+MÉTODO DE DICOTOMIA
+Característica:
+• Não usa derivada.
+• Deve se conhecer o intervalo que se encontra o mínimo.
+• A função deve ser unimodal no intervalo de busca.
+Filosofia:
+MÉTODO DE DICOTOMIA
+Critério de parada:
+ALGORITMO:
+1º passo:
+2º passo:
+3º passo:
+4º passo: critério de parada.
+• Se for sim, faz cálculo de:
+ • Se for não, vá ao quinto passo.
+Escolher o menor como
+sendo o ÓTIMO e FIM.
+ALGORITMO:
+Convergência:
+Início
+1ª iteração
+2ª iteração
+3ª iteração
+k ésima iteração
+MÉTODOS DE FIBONACCI:
+Característica:
+• Não uso de derivadas.
+• A função deve ser unimodal no intervalo de busca.
+• Deve-se conhecer o intervalo que contém o mínimo.
+• Utiliza-se uma série de Fibonacci que depende da precisão adotada
+e do tamanho do intervalo.
+Critério de parada:
+N-1 iterações
+EXEMPLO:
+FILOSOFIA:
+ALGORITMO:
+1º passo:
+2º passo:
+3º passo:
+Gerar uma série de Fibonacci:
+4º passo:
+ALGORITMO:
+5º passo: critério de parada
+Compara-se k+1=N
+• Se for não, vá ao sexto passo.
+• Se for sim, faça o cálculo de:
+Escolhe o menor para o ótimo e fim.
+6º passo: compare
+Vá ao 7º passo.
+Vá ao 7º passo.
+ALGORITMO:
+7º passo:
+Convergência:
+Início
+1ª iteração
+2ª iteração
+MÉTODO DE DAVIS, SWAN E CAMPRY(DSC):
+Característica:
+• Não uso de derivadas.
+• Deve-se conhecer o intervalo que contém o mínimo.
+• A função deve ser unimodal no intervalo considerado e ser do tipo:
+e a função dentro deve passar por um zero.
+FILOSOFIA DO MÉTODO:
+A função quadrática genérica é:
+FILOSOFIA DO MÉTODO:
+A função quadrática particular que passa pelos três pontos é:
+Quantificando o ponto extremo:
+FILOSOFIA DO MÉTODO:
+ALGORITMO:
+Passo 0:
+𝑥0 → 𝑝𝑜𝑛𝑡𝑜 𝑖𝑛𝑖𝑐𝑖𝑎𝑙 𝑑𝑒 𝑏𝑢𝑠𝑐𝑎
+∆𝑥 > 0 → 𝑝𝑎𝑠𝑠𝑜 𝑑𝑒 𝑏𝑢𝑠𝑐𝑎
+𝜀 > 0 → 𝑝𝑟𝑒𝑐𝑖𝑠ã𝑜 𝑎𝑑𝑜𝑡𝑎𝑑𝑎
+𝐼 = 1 → 𝑐𝑜𝑛𝑡𝑎𝑑𝑜𝑟 𝑑𝑒 𝑖𝑡𝑒𝑟𝑎çõ𝑒𝑠
+Passo 1:
+Obtém-se o intervalo [a, b] que contém o mínimo.
+Passo 2: Faça
+𝑐=𝑏
+𝑎+𝑐
+𝑏=
+2
+Passo 3: Achar 𝑥𝑞∗ usando a equação A.
+ALGORITMO:
+Passo 4: Comparar
+𝐼≥2
+𝑛ã𝑜 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 6
+𝑠𝑖𝑚 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 5
+Passo 5: Critério de parada
+𝑥 𝑞∗ (𝐼) − 𝑥 𝑞∗ (𝐼−1) ≤ 𝜀
+e/ou
+𝑓(𝑥 𝑞∗ (𝐼) ) − 𝑓(𝑥𝑞∗ 𝐼−1 ) ≤ 𝜀
+𝑛ã𝑜 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 6
+𝑠𝑖𝑚 → 𝑓𝑎ç𝑎 𝑥 ∗ = 𝑥 𝑞∗ 𝑒 𝑝𝑎𝑟𝑒
+Passo 6: Faça
+𝑥 0 = 𝑥 𝑞∗
+𝑥𝑞∗ −𝑎
+∆𝑥 =
+ OBS: R> 1
+𝑅
+𝐼 = 𝐼 + 1 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 1
+MÉTODO DE POWELL
+Características:
+- Não uso derivada de f(x);
+- Não necessita de intervalo de busca;
+-
+ A função deve ser unimodal e do tipo:
+-
+ Utiliza-se três pontos quaisquer pelos quais passa uma função
+quadrática q(x) e acha o ponto ótimo pelo cálculo de
+𝑑𝑞(𝑥)
+=0
+𝑑𝑥
+OBS: Para agilizar o processo utilizamos o intervalo de busca.
+MÉTODO DE POWELL
+- Filosofia:
+--Quem está mais longe de 𝑥𝑞∗ neste caso é 𝑥 1 , que passa a ocupar a
+posição de 𝑥𝑞∗ ;
+Ajusta-se uma função quadrática para os novos 3 pontos:
+𝑞 𝑥 = 𝑑0 + 𝑑1 + 𝑑2 𝑥 2
+MÉTODO DE POWELL
+- Achar o ponto ótimo de q(x):
+𝑑𝑞(𝑥)
+= 0 = 0 + 𝑑 1 + 2𝑑2 𝑥 = 0
+𝑑𝑥
+𝑑 1
+𝑥𝑞∗ = −
+2𝑑2
+- Substituindo, tem-se:
+∗
+ 1
+ 𝑥
+ 2
+ 2
+ −
+ 𝑥
+3
+ 2
+ 𝑓
+ 𝑥
+ 1
+ +
+ 𝑥
+3
+ 2
+ −
+ 𝑥
+ 1
+ 2
+ 𝑓
+ 𝑥
+ 2
+ +
+ 𝑥
+ 1
+ 2
+ −
+ 𝑥
+2
+ 2
+ 𝑓 𝑥 3
+𝑥 =
+2 𝑥 2 − 𝑥3 𝑓 𝑥 1 + 𝑥 3 − 𝑥 1 𝑓 𝑥 2 + 𝑥 1 − 𝑥 2 𝑓 𝑥 3
+B
+MÉTODO DE POWELL
+Algoritmo:
+Passo 1: Obtém-se o intervalo [a, b] que contém o mínimo;
+𝑎+𝑏
+Passo 2: Faz –se 𝑥 1 = 𝑎, 𝑥 2 = 𝑏 𝑒 𝑥 3 =
+2
+MÉTODO DE POWELL
+Passo 3: Passa-se uma função quadrática q(x) pelos três pontosonde o ponto mínimo é dado pela expressão B.
+𝑥 1 𝑥2 𝑥3 ,
+Passo 4: Critério de parada
+Busca-se o ponto 𝑥 𝑖 do conjuntoe compara-se:
+𝑥 1 𝑥2 𝑥3que tem o menor valor de f(x)
+𝑥𝑖 − 𝑥𝑞∗ ≤ 𝜀
+𝑠𝑖𝑚
+ →
+ 𝑓𝑎𝑧
+ −
+ 𝑠𝑒
+ 𝑥
+ ∗ = 𝑥𝑞
+ ∗ → 𝑓𝑖𝑚
+𝑛ã𝑜 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 5
+Passo 5: Abandona-se o 𝑥 𝑗 do conjunto 𝑥 1 𝑥 2 𝑥 3 que tem
+0 > 𝑣𝑎𝑙𝑜𝑟 𝑑𝑒 𝑓 𝑥 e faz-se 𝑥 𝑗 = 𝑥 𝑞∗ e vá ao passo 3.
+OBS: Este método também é conhecido por DSC-Powell ou COGINS
+MÉTODO DE NEWTON
+Característica:
+- Utiliza a primeira e a segunda derivada;
+- A função f(x) deve ser unimodal do tipo
+- Utiliza-se uma função quadrática q(x) extraída da série de Taylor;
+- Acha o ponto ótimo de q(x) pelo cálculo
+ 𝑑𝑞(𝑥)
+=0
+𝑑𝑥
+- Não necessita de intervalo de busca.
+- OBS: Usaremos o intervalo de busca para garantir a convergência.
+MÉTODO DE NEWTON
+Filosofia: Já vista na expansão da série de Taylor.
+Algoritmo:
+Passo 1: obtém-se o intervalo [a, b] que contém o mínimo
+MÉTODO DE NEWTON
+Passo 2: Faz-se
+Passo 3:
+𝑎+𝑏
+𝑥 0 =
+ 𝑒𝑘=1
+2
+𝑓′(𝑥𝑘−1 )
+𝑥 𝑘 = 𝑥 𝑘−1 −
+𝑓"(𝑥𝑘−1 )
+Passo 4: critério de parada
+𝑓′(𝑥𝑘−1 )
+−
+ ≤ 𝜀 𝑜𝑢
+𝑓"(𝑥𝑘−1 )
+𝑓 𝑥 𝑘 − 𝑓(𝑥𝑘−1 ) ≤ 𝜀
+𝑠𝑖𝑚 → 𝑓𝑎𝑧 − 𝑠𝑒 𝑥 ∗ = 𝑥𝑘 → 𝑓𝑖𝑚
+𝑛ã𝑜 → 𝑓𝑎𝑧 − 𝑠𝑒 𝑘 = 𝑘 + 1 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 3
+MÉTODO DE CEIFADOR
+Característica:
+- Não usa derivada;
+- Simples de programar;
+- A função deve ser unimodal e do tipo
+- Não necessita do intervalo de busca.
+- OBS: Usaremos o intervalo de busca.
+MÉTODO DE CEIFADOR
+Filosofia:
+∆𝑥
+⊗= ∆𝑥 = −
+𝑅
+R é um número
+(geralmente maior que 1)
+--No momento em que 𝑓 𝑥 𝑘+1mínimo.
+aumenta, é porque passou por um
+Vou para a esquerda de 𝑥 𝑘+1 quando f(𝑥𝑘+1 ) aumenta de novo e
+aplica ⊗
+MÉTODO DE CEIFADOR
+Algoritmo:
+Passo 1: obtém-se o intervalo [a, b] que contém o mínimo.
+Passo 2:
+OBS: R=S; k=0
+𝜀 > 0 (precisão adotada)
+𝑎+𝑏
+𝑥0 =
+2
+𝑏−𝑎
+∆𝑥 =
+𝑅
+MÉTODO DE CEIFADOR
+Passo 3: 𝑥𝑘+1 = 𝑥𝑘 + ∆𝑥
+Passo 4: Compara-se
+- Se 𝑓(𝑥𝑘+1 ) ≤ 𝑓(𝑥𝑘 ), faça k=k+1 e vá ao passo 3;
+- Se 𝑓(𝑥𝑘+1 ) > 𝑓(𝑥𝑘 ), vá ao passo 5.
+Passo 5: Critério de parada
+Compara-se ∆𝑥 ≤ 𝜀
+𝑠𝑖𝑚 → 𝑓𝑎ç𝑎 𝑥 ∗ = 𝑥𝑞 → 𝑓𝑖𝑚
+∆𝑥
+𝑛ã𝑜 → 𝑓𝑎ç𝑎 ∆𝑥 = −
+ → 𝑝𝑎𝑠𝑠𝑜 3
+𝑅
+PARTE III
+OTIMIZAÇÃO MULTIDIMENSIONAL
+Sem restrições: minimizar 𝑓 𝑥 = 𝑅𝑛 → 𝑅
+- Objetivo: o ponto extremo ótimo (mínimo, máximo ou sela) está onde
+∇𝑓 𝑥 = 0
+- Filosofia: Achar uma sucessão de pontos 𝑥𝑘 tal que f(𝑥 𝑘 ) descreça até
+chegar no ponto 𝑥 ∗ onde ∇𝑓 𝑥 ∗ = 0 e a matriz Hessiana H(𝑥 ∗ ) é
+positiva definida ou definida semi positiva.
+-Há dois métodos para resolver isso:
+- Com uso de derivada;
+- Sem uso de derivada.
+RESUMO
+--O ponto ótimo (𝑥 ∗ ) tem ∇𝑓 𝑥ou sela;
+Qualificar o ponto ótimo 𝑥 ∗ :
+= 0 e 𝑥 ∗ pode ser de máximo, mínimo
+H 𝑥 ∗ =
+𝑛 𝑥 𝑛𝑑𝑒𝑓𝑖𝑛𝑖𝑑𝑜 𝑝𝑜𝑠𝑖𝑡𝑖𝑣𝑜 𝑜𝑢 𝑠𝑒𝑚𝑖𝑝𝑜𝑠𝑖𝑡𝑖𝑣𝑜 → 𝑥 ∗ é 𝑚í𝑛𝑖𝑚𝑜
+𝑑𝑒𝑓𝑖𝑛𝑖𝑑𝑜 𝑛𝑒𝑔𝑎𝑡𝑖𝑣𝑜 𝑜𝑢 𝑠𝑒𝑚𝑖𝑛𝑒𝑔𝑎𝑡𝑖𝑣𝑜 → 𝑥 ∗ é 𝑚á𝑥𝑖𝑚𝑜
+𝑖𝑛𝑑𝑒𝑓𝑖𝑛𝑖𝑑𝑜 → 𝑥 ∗ é 𝑑𝑒 𝑠𝑒𝑙𝑎
+- Ou uso de qualificação gráfica:
+RESUMO
+- Devo fazer 𝑓(𝑥 ∗ ∓ ε𝑒 𝑖 ) ≥ 𝑓 𝑥 ∗ ∀ 𝑖 = 1, 𝑛
+- Se for sim, o ponto 𝑥 ∗ é o mínimo;
+- Se for não, testar: 𝑓(𝑥 ∗ ∓ ε𝑒 𝑖 ) ≤ 𝑓 𝑥 ∗ ∀ 𝑖 = 1, 𝑛
+- Se for sim, o ponto 𝑥 ∗ é máximo;
+- Se for não, o ponto 𝑥 ∗ é sela.
+MÉTODOS QUE USAM DERIVADAS
+1. MÉTODO DO GRADIENTE NULO
+- Suponhamos que deseja-se encontrar min 𝑓 𝑥= 𝑅 𝑛 → 𝑅
+𝜕𝑓 𝑥
+𝜕𝑥 1
+𝜕𝑓 𝑥
+𝑓 𝑥 = 𝜕𝑥2
+ =0
+⋮
+𝜕𝑓 𝑥
+𝜕𝑥𝑛
+1. MÉTODO DO GRADIENTE NULO
+- Teremos um sistema de “n” equações
+𝜕𝑓 𝑥
+=0
+𝜕𝑥1
+𝜕𝑓 𝑥
+- 𝑛 𝑒𝑞𝑢𝑎çõ𝑒𝑠
+ =0
+𝜕𝑥2
+𝜕𝑓 𝑥
+=0
+𝜕𝑥3
+---𝑚í𝑛𝑖𝑚𝑜
+A solução dará um 𝑥 ∗ = 𝑚á𝑥𝑖𝑚𝑜
+𝑠𝑒𝑙𝑎
+A técnica para resolver esse sistema de n equações é demorada;
+Podemos usar técnica de otimização.
+2. MÉTODO QUE USA GRADIENTE
+-São métodos que usam informação do gradiente para encontrar o
+ponto ótimo.
+Característica
+- Usa informação da derivada primeira;
+- A função 𝑓 𝑥 deve ser unimodal em qualquer direção a partir de 𝑥 ∗ ;
+- A direção de busca é a direção unitária do gradiente
+∇𝑓( 𝑥 𝑘 )
+𝑑𝑢 = −
+ é negativo porque quero minimizar (vetor unitário)
+∇𝑓( 𝑥 𝑘 )
+-
+-
+Faz uma busca unidirecional na direção do gradiente.
+OBS: Há vários métodos de gradiente.
+2.1. MÉTODO DA DESCIDA MAIS RÁPIDA, OU MÉTODO DO GRADIENTE
+COM 𝜆 OTIMIZADO
+Características:
+- Usa a direção unitária do gradiente e faz uma otimização nesse direção
+até achar 𝜆 ∗ 𝑘 .
+Algoritmo:
+- Entramos com 𝑓 𝑥- Fazer
+= 𝑅 𝑛 → 𝑅 e ∇𝑓 𝑥 𝜖 𝑅 𝑛 ;
+𝑥 0 → 𝑝𝑜𝑛𝑡𝑜 𝑖𝑛𝑖𝑐𝑖𝑎𝑙 𝑑𝑒 𝑏𝑢𝑠𝑐𝑎
+𝜀 > 0 → 𝑝𝑟𝑒𝑐𝑖𝑠ã𝑜 𝑎𝑑𝑜𝑡𝑎𝑑𝑎
+k=0
+2.1. MÉTODO DA DESCIDA MAIS RÁPIDA, OU MÉTODO DO GRADIENTE
+COM 𝜆 OTIMIZADO
+Passo 1: calcular ∇𝑓 𝑥 𝑘
+Passo 2: critério de parada
+- Comparar ∇𝑓 𝑥 𝑘
+ ≤ 𝑛𝜀 sendo n a dimensão do sistema 𝑅 𝑛
+e/ou ∇𝑖𝑓 𝑥 𝑘
+ ≤ 𝜀 ∀ 𝑖 = 1, 𝑛 sendo i o i-ésimo componente do
+gradiente.
+𝑠𝑖𝑚 → 𝑥 ∗ = 𝑥 𝑘 → 𝑓𝑖𝑚
+𝑛ã𝑜 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 3
+2.1. MÉTODO DA DESCIDA MAIS RÁPIDA, OU MÉTODO DO GRADIENTE
+COM 𝜆 OTIMIZADO
+Passo 3: minimizar 𝑓
+-
+-
+-
+-
+Seção Áurea
+Powell
+Dicotomia
+Fibonacci
+𝑥 𝑘 − 𝜆
+𝑘
+∇𝑓(∇𝑓
+𝑥 𝑘 )
+𝑥 𝑘
+através de:
+Obtendo 𝜆∗ 𝑘
+Passo 4: Faz-se
+𝑘+1
+ 𝑘−
+ ∗ ∇𝑓( 𝑥 𝑘
+ )
+𝑥
+ = 𝑥 𝜆𝑘
+∇𝑓 𝑥 𝑘
+k=1
+2.1. MÉTODO DA DESCIDA MAIS RÁPIDA, OU MÉTODO DO GRADIENTE
+COM 𝜆 OTIMIZADO
+Passo 5: Compara-se
+𝑘=𝑛
+𝑛ã𝑜 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 1
+𝑠𝑖𝑚 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 6
+Por isso foi criado o passo 6
+2.1. MÉTODO DA DESCIDA MAIS RÁPIDA, OU MÉTODO DO GRADIENTE
+COM 𝜆 OTIMIZADO
+Passo 6: Tentativa de quebra do condicionamento
+Faz-se
+𝑥 𝑛 − 𝑥 0
+𝑠= ⊙
+𝑥 𝑛
+ − 𝑥
+ 0
+𝑥 𝑛 = 𝑥 0
+Já que devido a ⊗ chegaria a uma
+precisão 𝜀 contornando o cubo
+como louco para quebrar isto ⊙
+-Minimizar 𝑓(𝑥 0 + 𝜆 𝑠) → obtém-se o 𝜆∗ , k=0
+𝑥 0 = 𝑥 0 + 𝜆 ∗ 𝑠 → 𝑣á 𝑎𝑜 𝑝𝑎𝑠𝑠𝑜 1
+2.2. MÉTODO GRADIENTE USANDO UMA APROXIMAÇÃO QUADRÁTICA DE f(x)
+NA DIREÇÃO UNITÁRIA DO GRADIENTE COM 𝜆∗ DE QUADRÁTICA
+Filosofia:
+ALGORITMO:
+Início: Entrar com a expressão
+𝑓 𝑥 : 𝑅 𝑛 → 𝑅
+∇𝑓(𝑥)
+𝐻(𝑥)
+Faz-se
+𝑥 0
+𝜀>0
+𝑘=0
+1º passo: Calcule
+∇𝑓( 𝑥)
+𝐻(𝑥)
+ALGORITMO:
+2º passo: critério de parada
+Item anterior, se for
+• Sim, imprimir resultado. FIM
+• Não, siga para o 3º passo.
+3º passo:
+Calcular 𝜆 ∗ 𝑞 𝑑𝑎 𝑓𝑢𝑛çã𝑜 𝑞( 𝑥 𝑘 + 𝜆𝑞 𝑠 𝑘 ) na direção unitária do gradiente.
+∇𝑓(
+ 𝑥
+ 𝑘 )
+𝑠 𝑘 =
+∇𝑓( 𝑥 𝑘 )
+Obs: assunto já visto em Série de Taylor
+∇𝑓(
+𝑥
+ 𝑘 )𝑡 ∙ 𝑠 𝑘
+𝜆 ∗ 𝑞 = −𝑡
+𝑠 𝑘 ∙ 𝐻( 𝑥 𝑘 ) ∙ 𝑠 𝑘
+ALGORITMO:
+4º passo: faz
+𝑥 𝑘+1 = 𝑥 𝑘 + 𝜆 ∗ 𝑞 𝑠 𝑘
+𝑘 =𝑘+1
+5º passo:
+𝐶𝑜𝑚𝑝𝑎𝑟𝑒 𝑠𝑒 𝑘 = 𝑛
+• Se for não, vá ao 1º passo
+• Se for sim, vá ao 6º passo.
+6º passo:
+Quebra de condicionamento. Faz-se
+𝑥 𝑛 − 𝑥 0
+𝑠 𝑘
+ =𝑥 𝑛
+ − 𝑥 0
+ALGORITMO:
+𝑥 0 = 𝑥 𝑛
+∇𝑓( 𝑥 0 )𝑡 ∙ 𝑠 𝑘
+𝜆 ∗ 𝑞 = −
+𝑡
+𝑠 𝑘 ∙ 𝐻(𝑥 0 ) ∙ 𝑠 𝑘
+𝑥 0 = 𝑥 0 + 𝜆∗ 𝑞 𝑠 𝑘
+𝑘 = 0, 𝑣á 𝑎𝑜 1º 𝑝𝑎𝑠𝑠𝑜
+DIREÇÕES CONJUGADAS:
+As direções 𝑎 𝑒 𝑏 são conjugados de uma função quadrática
+𝑓 𝑥 = 𝑎 + 𝑣 𝑡 ∙ 𝑥 + 𝑥 ∙ 𝑄 ∙ 𝑥 com a Hessiana
+𝐻 𝑥 = 2𝑄 𝑠𝑒:
+𝑎 𝑡 ∙ 𝐻 𝑥 ∗ ∙ 𝑏 = 0
+• 𝑎 𝑒 𝑏 são direções conjugadas, caso particular seria a ortogonalidade
+onde 𝐻 𝑥 ∗ = 𝐼
+𝑎𝑡 ∙ 𝑏 = 0
+• Obs: Se 𝐻 𝑥 ∗ = 𝐼
+𝑎 𝑡 ∙ 𝐼 ∙ 𝑏 = 0 → 𝑎𝑡 ∙ 𝑏 = 0
+𝑎 ⊥ 𝑏 são ortogonais
+TEOREMA:
+Usando direções conjugadas em funções quadráticas, obtém-se o mínimo
+em:
+𝑘 𝑑𝑖𝑟𝑒çõ𝑒𝑠 ≤ 𝑛
+Demonstração na página 88 Himmelblou
+Método do Gradiente Conjugado
+3
+(Método
+ de Fletcher-Reeves)
+Característica:
+• Conjugado a direção do gradiente no ponto encontrado.
+∇𝑓 𝑥 𝑘+1 com a direção anterior 𝑠 𝑘
+• Usa informação da derivada.
+ALGORITMO:
+Início: Entrar com a expressão de 𝑓 𝑥 : 𝑅 𝑛 → 𝑅
+Temos que entrar com ∇𝑓 𝑥
+𝑥 0 → 𝑝𝑜𝑛𝑡𝑜 𝑖𝑛𝑖𝑐𝑖𝑎𝑙 𝑑𝑒 𝑏𝑢𝑠𝑐𝑎
+𝜀>0
+𝑘=0
+1º passo: Faz-se
+𝑠 0 = −∇𝑓( 𝑥 0 )
+ALGORITMO:
+2º passo: Faz se uma direção
+𝑑=𝑠 𝑘
+𝑠
+ 𝑘
+3º passo: Minimizar 𝑓( 𝑥 𝑘 + 𝜆𝑘 𝑑 𝑘 ), através de algum processo de busca
+unidimensional
+Assim obtém-se o 𝜆∗ 𝑘
+4º passo: calcula-se
+𝑥 𝑘+1 = 𝑥 𝑘 + 𝜆∗ 𝑘 𝑑 𝑘
+5º passo: critério de parada
+Se for:
+• Sim, imprimir resultado. PARE
+• Não, siga para o 6º passo.
+ALGORITMO:
+6º passo:
+Calcule-se um escalar 𝛽 𝑘 de tal forma que 𝑠 𝑘 e 𝑠 𝑘+1 sejam direções
+conjugadas em relação a matriz H(𝑥 𝑘+1 ) → 𝑑 𝑖𝑡 𝐻𝑑 𝑗 = 0 ∀ 𝑖 ≠ 𝑗
+𝛽 𝑘=
+∇
+𝑡 𝑓(𝑥 𝑘+1 )∇𝑡 𝑓(𝑥 𝑘 )∙∙∇𝑓( 𝑥 𝑘+1 )
+∇𝑓( 𝑥 𝑘 )
+=
+∇𝑓(𝑥 𝑘+1 )
+∇𝑓( 𝑥 𝑘 )
+2
+≥0
+𝛽 𝑘 ≥ 0 sempre
+∇𝑓(𝑥 𝑘+1 )
+𝛼
+𝛽 = tan 𝛼
+∇𝑓(𝑥 𝑘 )
+ALGORITMO:
+7º passo:
+A direção 𝑠 𝑘+1 conjugado com a direção 𝑠 𝑘 é dado pela expressão
+abaixo:
+𝑠 𝑘+1 = −∇𝑓(𝑥 𝑘+1 )+ 𝛽 𝑘 ∙ 𝑠 𝑘
+𝑠 𝑘+1 é o conjugado da direção 𝑠 𝑘
+𝑘 =𝑘+1
+8º passo: compare-se
+𝑘=𝑛
+• Se for > vá ao 2º passo.
+• Se for = vá ao 9º passo.
+9º passo: Quebra de condicionamento
+Faz-se 𝑠 0 = 𝑥 𝑛 − 𝑥 0
+𝑠 0
+𝑠 0
+ =𝑠
+ 0
+ 𝑓𝑎𝑧 − 𝑠𝑒 𝑥 0 = 𝑥 𝑛
+𝑘 = 0, 𝑣á 𝑎𝑜 2º 𝑝𝑎𝑠𝑠𝑜
+EXEMPLO:
+4
+ MÉTODO DE NEWTON
+Característica:
+• Usa informações da 1º e 2º derivadas.
+• Necessita inverter a matriz Hessiana em cada passo.
+• O método usa uma função quadrática extraída da série de Taylor
+• Agrupa a direção ótima e passo ótimo em só uma variável ∆ 𝑥
+• Para função quadrática converge em uma só iteração
+Filosofia: já visto na série de Taylor.
+𝐻 −1 é 𝑢𝑚𝑎 𝑚𝑎𝑡𝑟𝑖𝑧 𝑟𝑜𝑡𝑎𝑐𝑖𝑜𝑛𝑎𝑙 𝑞𝑢𝑒 𝑟𝑜𝑡𝑎 𝑜 𝑔𝑟𝑎𝑑𝑖𝑒𝑛𝑡𝑒 𝑛𝑎 𝑑𝑖𝑟𝑒çã𝑜 𝑑𝑒
+𝑜𝑛𝑑𝑒 𝑒𝑠𝑡á 𝑜 𝑚í𝑛𝑖𝑚𝑜.
+ALGORITMO:
+1º passo: Entrar com a expressão
+𝑓 𝑥 : 𝑅 𝑛 → 𝑅
+∇𝑓 𝑥 ∈ ℝ𝑛
+𝐻 𝑥 nxn
+𝑘=0
+𝑥 0 ⇒ 𝑝𝑜𝑛𝑡𝑜 𝑖𝑛𝑖𝑐𝑖𝑎𝑙 𝑑𝑒 𝑏𝑢𝑠𝑐𝑎
+Calcular
+∇𝑓 𝑥 0
+2º passo: Calcular
+𝐻(𝑥 𝑘 )
+3º passo: Calcular a inversa
+𝐻 −1 ( 𝑥 𝑘 )
+4º passo: Faz-se
+𝑥 𝑘+1 = 𝑥 𝑘 − 𝐻 −1 (𝑥 𝑘 ) ∙ ∇𝑓𝑥 𝑘
+ALGORITMO:
+5º passo: calcular
+∇𝑓 𝑥 𝑘+1
+6º passo: critério de parada ∇𝑓 𝑥 𝑘+1 → 0 𝑧𝑒𝑟𝑜
+• Se for sim, imprimir resultado. PARE
+• Se for não, vá ao 7º passo.
+7º passo: faz-se
+𝑘 = 𝑘 + 1, 𝑒 𝑣𝑜𝑙𝑡𝑒 𝑝𝑎𝑟𝑎 2º 𝑝𝑎𝑠𝑠𝑜.
+Variantes de Newton
+Variante I:
+Pode-se inverter a matriz Hessiana e usa-la como constante
+durante o processo.
+VARIANTES DE NEWTON:
+Variante II:
+Mantém-se o inverso da matriz Hessiana constante durante
+algumas iterações e após recalcula-se a nova matriz H e continua-se o
+processo.
+Variante III:
+Usa-se a direção indicada pelo método de Newton:
+𝐻 −1 (𝑥 𝑘 )∇𝑓(𝑥 𝑘 )
+𝑑𝑢 = −𝐻 −1 (𝑥 𝑘
+ )∇𝑓(𝑥 𝑘 )
+Método de quase Newton:
+𝑑 = 𝑛 (𝑥 𝑘 )∇𝑓( 𝑥 𝑘 ) direção de busca
+a) Se 𝑛 𝑥 𝑘 = 𝐼 ⇒ 𝑑= ∇𝑓(𝑥 𝑘 )
+Método do gradiente
+MÉTODO DE QUASE NEWTON:
+b)
+c)
+Se 𝐼 < 𝑛Se 𝑛 𝑥 𝑘Newton
+𝑥 𝑘 ≤ 𝐻 −1 (𝑥 𝑘 ) ⇒ Método de quase Newton
+= 𝐻 −1 (𝑥 𝑘 ) ⇒ 𝑑 = 𝐻 −1 (𝑥 𝑘 ) ∇𝑓(𝑥 𝑘 ) ⇒ Método de
+Filosofia de quase Newton:
+Aplicar o melhor artificio de um enchimento da matriz 𝜂 𝑥 𝑘 de modo
+que ela tenda para 𝐻 −1 (𝑥 𝑘 )
+Demonstração: pág 105 A nonlinear programing “himmelblau”
+∇𝑓(𝑥 𝑘+1 )
+∆𝑥 𝑘
+𝑥 𝑘+1
+ ∇𝑓( 𝑥 𝑘 )
+𝑥 𝑘
+0
+FILOSOFIA DE QUASE NEWTON:
+∆𝑥 𝑘 = 𝑥 𝑘+1 − 𝑥 𝑘
+∆𝑓 𝑥 𝑘 = ∇𝑓(𝑥 𝑘+1 ) − ∇𝑓(𝑥 𝑘 )
+segunda demonstração
+𝜂 𝑥 𝑘+1 = 𝜂 𝑥 𝑘 + ∆𝜂 𝑥 𝑘 onde 𝜂 tende para 𝐻 −1 (𝑥 𝑘 )
+solução geral
+1
+ ∆
+𝑥
+ 𝑘 𝑦 𝑡
+ 𝜂
+ 𝑥
+ 𝑘 ∆𝑓 𝑥 𝑘 𝑧 𝑡
+∆𝜂 𝑥 𝑘 =
+ −
+𝑤 𝑦 𝑡
+ ∆𝑓 𝑥
+ 𝑘
+ 𝑧𝑡 ∆𝑓 𝑥 𝑘
+Fórmula Geral
+ A
+FILOSOFIA DE QUASE NEWTON:
+Onde:
+w é um escalar
+𝑦 𝑒 𝑧 são vetores colunas
+A escolha adequada de 𝑦 𝑒 𝑧, é indicada por várias autores, gerando
+vários métodos de quase-newton.
+Os métodos são:
+a) Método de Brayden
+w=1
+𝑦 = 𝑧 = ∆𝑥 − 𝜂 𝑥 𝑘 ∆𝑓 𝑥 𝑘
+Isto é levado a A
+FILOSOFIA DE QUASE NEWTON:
+b) Método de Pletcher-Powell
+w=1
+𝑦 = ∆ 𝑥
+𝑧 = 𝜂 𝑥 𝑘 ∆𝑓 𝑥 𝑘
+c) Método de Pearson
+c.1) Método de Pearson Nº 2
+w=1
+𝑦 = 𝑧 = ∆𝑥
+c.2) Método de Pearson Nº 3
+w=1
+𝑦 = 𝑧 = 𝜂 𝑥 𝑘 ∆𝑓 𝑥 𝑘
+FILOSOFIA DE QUASE NEWTON:
+c.2) Método de Pearson Nº 4, ou Método de Newton Rpapsson
+Projetado.
+𝑤→∞
+𝑧 = 𝜂 𝑥 𝑘 ∆𝑓 𝑥 𝑘
+Algoritmo de QUASE-NEWTON:
+1º passo: Entrar com a expressão
+𝑓 𝑥 : 𝑅 𝑛 → 𝑅
+∇𝑓 𝑥 ∈ 𝑅 𝑛
+Fazer:
+𝑥 0 ⇒ 𝑝𝑜𝑛𝑡𝑜 𝑖𝑛𝑖𝑐𝑖𝑎𝑙 𝑑𝑒 𝑏𝑢𝑠𝑐𝑎
+𝜀>0
+𝑘=0
+𝜂 𝑥 0 = 𝐼 (𝐼𝑑𝑒𝑛𝑡𝑖𝑑𝑎𝑑𝑒)
+ALGORITMO:
+2º passo: direção unitária de busca
+𝜂
+ 𝑥
+ 𝑘 ∆𝑓 𝑥 𝑘
+𝑑𝑢 𝑘 = −
+𝜂 𝑥 𝑘 ∆𝑓 𝑥 𝑘
+no começo d𝑢 é a direção do gradiente já que 𝜂 𝑥 0 = 𝐼
+3º passo: minimizar 𝑓(𝑥 𝑘 + 𝜆𝑘 𝑑𝑢)
+Através de qualquer método de busca unidimensional (Powell) obtendo-
+se o 𝜆∗ 𝑘
+ALGORITMO:
+4º passo: faz-se
+𝑥 𝑘+1 = 𝑥 𝑘 + 𝜆𝑘 𝑑𝑢 𝑘
+5º passo: Calcula-se o gradiente em 𝑥 𝑘+1
+∇𝑓(𝑥 𝑘+1 )
+6º passo: Fazer
+∆𝑓 𝑥 𝑘 = ∇𝑓(𝑥 𝑘+1 ) − ∇𝑓(𝑥 𝑘 )
+∆𝑥 𝑘 = 𝑥 𝑘+1 − 𝑥 𝑘 = 𝜆 ∗ 𝑘 𝑑𝑢 𝑘
+7º passo: Critério de Parada
+• Se for sim, imprimir resultado. FIM
+• Se for não, vá ao 8º passo.
+8º passo: Critério de Parada
+𝜂 𝑥 𝑘+1 = 𝜂 𝑥 𝑘 + ∆𝜂 𝑥 𝑘
+Obs: devo calcular ∆𝜂 𝑥 𝑘 na fórmula A antes apresentada, usando
+algum método apresentado para determinar as cte(w, 𝑦 𝑒 𝑧)
+ALGORITMO:
+9º passo:
+Testar a singularidade da matriz 𝜂 𝑥 𝑘+1
+→ 𝑐𝑎𝑙𝑐𝑢𝑙𝑎𝑚𝑜𝑠 𝑜 𝑑𝑒𝑡 𝜂 𝑥 𝑘+1
+Teste:
+𝑑𝑒𝑡 𝜂 𝑥 𝑘+1 ≤ 𝜀
+• Se for sim, faça
+𝜂 𝑥 𝑘+1 = 𝐼,
+𝑘 = 𝑘 + 1, 𝑣á 𝑎𝑜 𝑠𝑒𝑔𝑢𝑛𝑑𝑜 𝑝𝑎𝑠𝑠𝑜.(segue segundo o gradiente)
+• Se não, faça
+𝑘 = 𝑘 + 1, 𝑣á 𝑎𝑜 𝑠𝑒𝑔𝑢𝑛𝑑𝑜 𝑝𝑎𝑠𝑠𝑜.
+MÉTODO QUE NÃO USA DERIVADA:
+Há vários métodos:
+• Método da direção aleatória:
+Característica:
+Gera direções aleatórias e a busca é feita numa dessas direções.
+ALGORITMO:
+1º passo: Entrar com a expressão
+𝑓 𝑥 : 𝑅 𝑛 → 𝑅
+𝑥 0 ⇒ 𝑝𝑜𝑛𝑡𝑜 𝑖𝑛𝑖𝑐𝑖𝑎𝑙 𝑑𝑒 𝑏𝑢𝑠𝑐𝑎
+𝜀>0
+𝑘=0
+𝑅 > 1(𝑢𝑠𝑎𝑑𝑜 𝑛𝑜 𝑐𝑟𝑖𝑡é𝑟𝑖𝑜 𝑑𝑒 𝑝𝑎𝑟𝑎𝑑𝑎)
+ALGORITMO:
+2º passo: gera-se a direção aleatória
+𝑠 𝑘 ∈ 𝑅𝑛
+𝑠 1𝑘
+𝑠 2𝑘
+𝑠 3𝑘
+𝑠 𝑘 = ⋮ onde, 𝑠 𝑘 é obtido por qualquer processo rondomico.
+𝑠 𝑖𝑘
+⋮
+𝑠 𝑛𝑘
+3º passo: faz-se
+𝑠
+ 𝑘
+𝑠 𝑘 =𝑠
+ 𝑘
+Direção unitária
+ALGORITMO:
+4º passo: comparação
+• Se 𝑘 = 0, vá ao 6º passo.
+• Se 𝑘 > 0, vá ao 5º passo.
+5º passo: compara-se
+𝟑𝟎° ≤
+𝒔𝒌
+∡𝒔𝒌−𝟏
+≤ 𝟏𝟓𝟎°
+ALGORITMO:
+• Se for sim, vá ao 6º passo.
+• Se for não, vá ao 2º passo.
+6º passo: minimizar 𝑓(𝑥 𝑘 + 𝜆𝑘 𝑠 𝑘 )
+Através de qualquer processo unidimensional que não use derivada,
+assim obtém-se 𝜆 ∗ 𝑘 .
+7º passo: Faz-se
+𝑥 𝑘+1 = 𝑥 𝑘 +𝜆𝑘 𝑠 𝑘
+8º passo: Compare-se
+• Se 𝒌 < 𝑹, vá ao 10º passo.
+• Se 𝒌 ≥ 𝑹, vá ao 9º passo.
+ALGORITMO:
+9º passo: Critério de parada
+Compare-se
+ 𝑘
+ 𝑖=𝐾−𝑅 𝜆 𝑗 ∗
+ ≤ 𝑅 ∙∈
+• Se for sim, faz-se 𝑥 ∗ = 𝑥 𝑘+1 e FIM.
+• Se for não, vá ao 10º passo.
+10º passo: Faz-se
+𝑘 = 𝑘 + 1, 𝑣á 𝑎𝑜 2º 𝑝𝑎𝑠𝑠𝑜.
+FILOSOFIA CRITÉRIO DE PARADA:
+⇒”a” ponto está na vizinhança do ótimo, outro critério seria:
+𝑥 𝑘 − 𝑥 𝑘−𝑅 ≤ 𝑅 ∙ 𝜖
+MÉTODO DE POWELL:
+Características:
+Usa as direções dos eixos básicos e minimiza a função nesta direção.
+Há três variantes:
+- Variante cíclica: As direções são
+𝑒 1 , 𝑒 2 , 𝑒 3 … 𝑒𝑖 … 𝑒 𝑛
+Obs: Recomenda-se a quebra de condicionamento após “m” direções de
+busca.
+- Variante Dupla Barredura:
+𝑒 1 , 𝑒 2 , 𝑒3 … 𝑒 𝑖 … 𝑒 𝑛−2 , 𝑒 𝑛−1 , 𝑒 𝑛
+- Variante Gauss Southwell:
+No ponto 𝑥 𝑘 , 𝑐𝑎𝑙𝑐𝑢𝑙𝑎 − 𝑠𝑒:
+MÉTODO DE POWELL:
+- Variante Gauss Southwell:
+No ponto 𝑥 𝑘 , 𝑐𝑎𝑙𝑐𝑢𝑙𝑎 − 𝑠𝑒:
+∇𝑓 =
+∇ 1 𝑓( 𝑥 𝑘 )
+∇2 𝑓(𝑥 𝑘 )
+⋮
+∇ 𝑖 𝑓(𝑥 𝑘 )
+⋮
+∇𝑛 𝑓(𝑥 𝑘 )
+Achar o componente “j” do vetor gradiente, tal que:
+∇ 𝑗 𝑓Direção de busca é:
+𝑥 𝑘= 𝑚á𝑥∇𝑖 𝑓𝑒 𝑗
+𝑥 𝑘, ∀ 𝑖 = 1, 𝑛
+MÉTODO DE POWELL:
+Exemplo:
+Foi aplicado as três variantes em uma função cuja iterações
+estão na página 160 do xerox.
+MÉTODO DE HOOKE E JEEVES
+Característica:
+- Não usa derivada
+- Não faz busca unidimensional
+- Faz uma pesquisa com um curto passo sobre cada eixo binário, se
+houver sucesso muda-se o ponto
+MÉTODO DE HOOKE E JEEVES
+Filosofia:
+- 3ª folha do xerox
+MÉTODO DE HOOKE E JEEVES
+Algoritmo:
+Passo 1: Entrar com a expressão de:
+1. 𝑓 𝑥 = 𝑅 𝑛 → 𝑅;
+2. 𝑥 𝑜 é o ponto inicial de partida;
+3. 𝜀 > 0 precisão;
+4. 𝑥 𝑏𝑎𝑠𝑒 = 𝑥 𝑜 ;
+5. Δ > 0 (Passo inicial de busca);
+Passo 2:
+1. Fazer uma busca exploradora completa em cada eixo básico a
+partir do 𝑥 𝑏𝑎𝑠𝑒 ;
+MÉTODO DE HOOKE E JEEVES
+Algoritmo:
+Passo 3: Fazer a comparação:
+1. 𝑓 𝑥 𝑛 < 𝑓 𝑥 𝑏𝑎𝑠𝑒
+Último ponto de busca exploratória
+2.
+ SE
+1. Sim, então, vá ao 5º Passo
+2. Não, então, vá ao 4ºPasso
+MÉTODO DE HOOKE E JEEVES
+Algoritmo:
+Passo 4: Critério de Parada:
+1. Δ ≤ 𝜀
+2. SE:
+1. Sim, faça 𝑥 ∗ = 𝑥 𝑏𝑎𝑠𝑒 = Fim
+Δ
+2.
+ Não, faça Δ =
+ vá ao 2ºPasso
+𝑅
+Obs: 𝑅 ≥ 2
+MÉTODO DE HOOKE E JEEVES
+Algoritmo:
+Passo 5: Faça:
+1. 𝑠 = 𝑥 𝑛 − 𝑥 𝑏𝑎𝑠𝑒 ;
+Passo 6: Faça:
+1. 𝑥 𝑏𝑎𝑠𝑒 = 𝑥 𝑛 ;
+2. 𝑓 𝑥 𝑏𝑎𝑠𝑒 = 𝑓(𝑥 𝑛 );
+Passo 7: Faça:
+1. 𝑥 0 = 𝑥 𝑏𝑎𝑠𝑒 + 𝑠;
+MÉTODO DE HOOKE E JEEVES
+Algoritmo:
+Passo 8: Fazer uma busca exploratória completa em torno de cada eixo
+básico, a partir de 𝑥 𝑏𝑎𝑠𝑒 .
+Passo 9: Comparar:
+1. 𝑓 𝑥 𝑛 < f 𝑥 𝑏𝑎𝑠𝑒
+último ponto de busca exploratória do 8ºPasso.
+2. Se:
+1. Sim, vá ao 5ºPasso;
+2. Não, vá ao 2ºPasso;
+MÉTODO DE POLIEDRO RÍGIDO
+• Filosfia: Ver xerox.
+• Algoritmo: Ver xerox.
+MÉTODO DE POLIEDRO FLEXÍVEL
+• Ver tudo no xerox.
+IV PARTE
+Otimização multidimensional com restrições
+PROBLEMA GERAL DE OTIMIZAÇÃO
+• Minimizar 𝑓 𝑥 = 𝑅 𝑛 → 𝑅
+ (Função objetivo)
+• Sujeito a:
+ℎ 𝑖 𝑥 = 0,
+ ∀ 𝑖 = 1, 𝑚
+ (restrições de igualdade)
+𝑔 𝑖 𝑥 ≥ 0
+ ∀ 𝑖 = 𝑚 + 1, 𝑝, (restrições de desigualdade)
+Há duas divisões:
+-Programação Linear(P.L.);
+-Programação não Linear(P.N.L.);
+PROGRAMAÇÃO LINEAR (P.L.)
+- É quando a função objetivo e as restrições são lineares.
+Exemplo:
+Maximizar
+Sujeito a:
+𝑧 = 5 ∗ 𝑥 1 + 2 ∗ 𝑥2
+𝑥 1 ≤ 3
+𝑥 2 ≤ 4
+𝑥 1 + 2 ∗ 𝑥 2 ≤ 9
+𝑥 1 ≥ 0
+𝑥 2 ≥ 0
+Problema
+original
+PROGRAMAÇÃO LINEAR (P.L.)
+- Graficando:
+PROGRAMAÇÃO LINEAR (P.L.)
+- Cujo ponto ∈ Ω satisfaz a região viável
+- Gradiente de z:
+5
+∇Z =
+ = 𝑐𝑡𝑒, para ver onde se encontram os pontos extremos,
+2
+usamos as curvas de nível que são ⊥ 𝑎 ∇𝑍 e os pontos extremos ficam
+a vista.
+PROGRAMAÇÃO LINEAR (P.L.)
+- Conclusões gerais:
+- A região viável ômega Ω é um politofro, ou seja, um poliedro
+irregular convexo no 𝑅 𝑛 .
+- O vetor gradiente da função objetivo é um vetor cte e ortogonal as
+curvas de nível da função objetivo.
+- As curvas de nível da função objetivo são hiperplanas paralelas.
+- O ponto ótimo está sempre localizado na fronteira da região viável
+Ω.
+MÉTODO SIMPLEX
+- É um método para resolver a programação linear;
+- O método caminha pelas arestas até chegar ao vértice ótimo
+- O método opera com restrições de igualdade
+Variáveis de folga:
+- São variáveis positivas que entram nas restrições de desigualdade para
+torna-las igualdades.
+MÉTODO SIMPLEX
+Variáveis de folga:
+- Introduzindo no problema original as variáveis de folga do exemplo,
+temos o seguinte problema modificado:
+Maximizar 𝑍 = 5 ∗ 𝑥 1 + 2 ∗ 𝑥 2
+Sujeito a:
+𝑥 1 + 𝑥 3 = 3
+𝑥 2 + 𝑥4 = 4
+𝑥 1 + 2 ∗ 𝑥2 + 𝑥 5 = 9
+𝑥 1 , 𝑥 2 , 𝑥 3 , 𝑥 4 , 𝑥 5 ≥ 0
+Problema modificado
+MÉTODO SIMPLEX
+Variáveis de folga:
+- Colocando na forma matricial:
+𝑥 1
+𝑥 2
+𝑚á𝑥 𝑍 = 5 2 0 0 0 ∗ 𝑥 3
+𝑥 4
+𝑥 5
+𝑐 𝑡
+Sujeito a:
+𝑥 1
+1 0 1 0 0
+ 𝑥 2
+ 3
+0 1 0 1 0 ∗ 𝑥 3 = 4
+1 2 0 0 1
+ 𝑥 4
+ 9
+𝑥 5
+𝐴
+𝑥
+𝐵
+MÉTODO SIMPLEX
+Forma geral:
+𝑚á𝑥 𝑍 = 𝑐 𝑡 ∗ 𝑥
+Sujeito a:
+𝐴 ∗ 𝑥 = 𝐵, com
+𝑥≥0
+Na forma SIMPLEX 𝐵 ≥ 0 também.
+- A resolução do método SIMPLEX é feita através de quadros.
+MÉTODO SIMPLEX
+Exemplo: O quadro do exercício anterior é:
+Valor de Z
+𝒁
+ 𝒙 𝟏
+ 𝒙𝟐
+ 𝒙𝟑
+ 𝒙𝟒
+ 𝒙𝟓
+ B
+Base 1
+ -5
+ -2
+ 0
+ 0
+ 0
+ 0
+ F.Obj.
+𝒙𝟑
+ 0
+ 1
+ 0
+ 1
+ 0
+ 0
+ 3
+𝒙𝟒
+ 0
+ 0
+ 1
+ 0
+ 1
+ 0
+ 4
+ restrições
+𝒙𝟓
+ 0
+ 1
+ 2
+ 0
+ 0
+ 1
+ 9
+𝐵
+𝐴
+Gráfico 1
+Função Objetivo ⇒ 𝑍 − 5 ∗ 𝑥 1 − 2 ∗ 𝑥2 = 0
+MÉTODO SIMPLEX
+Base:
+- O número de variáveis da base é dado pelo nº de restrições.
+- As variáveis que ocupam a Base são representações dos vetores colunas
+L.I. da matriz A.
+- As variáveis que não estão na base tem “valores nulos”.
+- Para operar o método SIMPLEX as colunas das variáveis que estão na
+Base devem ser todas zeradas e ter coeficiente 1 na posição de Base.
+MÉTODOBase:
+SIMPLEX
+𝑥 1
+ 0
+𝑥2
+ 0
+𝑥 = 𝑥3 = 3
+𝑥4
+ 4
+𝑥5
+ 9
+Variáveis originais
+Variáveis de folga
+MÉTODO SIMPLEX
+- Regras de operação Método SIMPLEX:
+1. Escolha da variável que deve entrar na Base:
+• Escolhe-se a variável que tem o maior coeficiente negativo no
+Pinie da função objetivo.
+• 𝑐 𝑗 = min 𝑐 𝑖 < 0 ∀ 𝑖 = 1, 𝑛 + 𝑚
+• Assim “𝑥𝑖 ” entra na Base.
+MÉTODO SIMPLEX
+- Regras de operação Método SIMPLEX:
+2. Escolha da variável que deve sair da Base:
+𝑏 𝑖
+•
+ Escolhe-se a variável que tem a menor razão
+ com a ij > 0,
+𝑎𝑖𝑗
+onde “i” é a linha da variável que está sendo testada para sair da
+Base, e “j” é a coluna da variável que vai entrar na Base.
+𝑏𝑘
+ 𝑏
+𝑖•
+ = min , 𝑐𝑜𝑚 𝑎𝑖𝑗 > 0 ∀ 𝑖 = 1, 𝑚
+𝑎𝑘𝑗
+ 𝑎𝑖𝑗
+MÉTODO SIMPLEX
+⇒ 𝑥𝑘 𝑠𝑎𝑖 𝑑𝑎 𝐵𝑎𝑠𝑒
+Z
+ 𝒙𝟏
+ 𝒙𝟐
+ 𝒙𝟑
+ 𝒙𝟒
+ 𝒙𝟓
+ B
+Base
+ 1
+ 0
+ -2
+ 5
+ 0
+ 0
+ 15
+𝒙𝟏
+ 0
+ 1
+ 0
+ 1
+ 0
+ 0
+ 3
+𝒙𝟒
+ 0
+ 0
+ 1
+ 0
+ 1
+ 0
+ 4
+𝒙𝟓
+ 0
+ 0
+ 2
+ -1
+ 0
+ 1
+ 6
+Do gráfico “1” o nº negativo “mais grande” é de:
+𝑥 1 ⇒ 𝑥 1 entra na Base
+Quem sai?
+Z
+MÉTODO SIMPLEX
+- Quem sai = ?
+3
+=3
+𝑏 𝑖
+ 1
+= {9
+ ⇒ 𝑥3 ⇒ sai da Base
+𝑎𝑖𝑗
+ =9
+1
+Agora vamos ao gráfico novo:
+- Se “𝑥 1 ” tem o valor 1 ⇒ copiamos a linha
+- Como abaixo de “𝑥 1 ” tem zero copiamos a linha
+- Como abaixo de abaixo temos um 1 e teríamos que ter um zero ⇒
+multiplicamos por (-1) a 1ª linha e zeramos a 3ª linha, idem para a linha
+acima de “𝑥 1 ” (-5) temos que zerar como fizemos com a 3ª linha.
+MÉTODO SIMPLEX
+- Agora ficou:
+𝑥 1
+ 3
+𝑥 2
+ 0
+𝑥 = 𝑥 3 = 0
+𝑥 4
+ 4
+𝑥 5
+ 6
+V. Original
+folga
+MÉTODO SIMPLEX
+• Uma forma de ver se estou no ótimo é procurar na linha de Base, se
+tenho valores (-), todavia é que outras variáveis querem entrar na
+Base.
+Z
+ 𝒙𝟏
+ 𝒙𝟐
+ 𝒙 𝟑
+ 𝒙𝟒
+ 𝒙 𝟓 B
+Base
+ 1
+ 0
+ 0
+ 9
+ 0
+ 1
+ 21
+𝒙𝟏
+ 0
+ 1
+ 0
+ 1
+ 0
+ 0
+ 3
+𝒙𝟒
+ 0
+ 0
+ 0
+ ½
+ 1
+ -1/2
+ 1
+𝒙𝟐
+ 0
+ 0
+ 1
+ -1/2
+ 0
+ ½
+ 3
+𝑥 1∗
+ 3
+𝑥2
+ ∗
+ 0
+𝑥 = 𝑥3 ∗
+ = 0
+𝑥4∗
+ 1
+𝑥5∗
+ 0
+V. Original
+folga
+MÉTODO SIMPLEX
+- Não pertence mais vetores para entrar na Base, Já que não tem mais
+valores < 0 sobre a linha da Base.
+𝑥 1∗
+ 3
+𝑥= ∗ =
+𝑥 2
+ 3
+𝑍 𝑚á𝑥 ∗
+ = 21
+Solução do problema original
+Analise de casos especiais
+- Solução ótimas múltiplas:
+- Atingindo o quadro final da solução ótima, se as variáveis que não
+estiverem na Base tiverem coeficientes nulos na função objetivo
+(linha de Base) ⇒ “significa solução múltipla”.
+MÉTODO SIMPLEX
+• Exemplo: Supor o seguinte quadro final do Método SIMPLEX.
+Z
+ 𝒙𝟏
+ 𝒙𝟐
+ 𝒙𝟑
+ 𝒙𝟒
+ 𝒙𝟓
+ B
+Base
+ 1
+ 0
+ 0
+ 0
+ 0
+ 1
+ 18
+𝒙𝟏
+ 0
+ 1
+ 0
+ 1
+ 0
+ 0
+ 4
+𝒙𝟒
+ 0
+ 0
+ 0
+ 3/2
+ 0
+ -1/2
+ 3
+𝒙𝟐
+ 0
+ 0
+ 1
+ -3/2
+ 0
+ ½
+ 3
+𝑥 1∗
+ 4
+𝑥2
+ ∗
+ 3
+ ∗
+ 4
+∗
+ 𝑥 𝑜𝑟𝑖𝑔
+ =
+𝑥 = 𝑥3 = 0
+ 3
+𝑥4∗
+ 3
+ 𝑍 𝑚á𝑥 ∗
+ = 18
+𝑥5∗
+ 0
+MÉTODO SIMPLEX
+Exemplo:
+- “𝑥 3 ” não está na base e tem zero sobre a linha de base (ou
+coeficiente da função objetivo)
+⇒Solução múltipla:
+- Como “𝑥 3 ” está fora da base e o coeficiente 𝑐 3 = 0 na função
+objetivo, fica caracterizado Solução múltipla.
+Se “𝑥 3 ” entra na Base, ele não modificará o valor da função objetivo,
+tendo outra solução ótima.
+⇒ Para obter o outro vértice da região Ω, devemos forçar “𝑥 3 ” a entrar
+na Base.
+MÉTODO SIMPLEX
+Exemplo:
+𝑆𝑒 𝑥3 𝑒𝑛𝑡𝑟𝑎 𝑛𝑎 𝐵𝑎𝑠𝑒
+𝑥 4 𝑆𝑎𝑖
+Z
+ 𝒙 𝟏
+ 𝒙𝟐
+ 𝒙𝟑
+ 𝒙𝟒
+ 𝒙𝟓
+ B
+Base
+ 1
+ 0
+ 0
+ 0
+ 0
+ 1
+ 18
+𝒙𝟏
+ 0
+ 1
+ 0
+ 0
+ -2/3
+ 1/3
+ 2
+𝒙𝟑
+ 0
+ 0
+ 0
+ 1
+ 2/3
+ -1/3
+ 2
+𝒙𝟐
+ 0
+ 0
+ 1
+ 0
+ 1
+ 0
+ 6
+MÉTODOExemplo:
+SIMPLEX
+𝑥 1∗
+ 4
+𝑥2
+ ∗
+ 3
+𝑥 = 𝑥3 ∗
+ = 0
+𝑥4∗
+ 3
+𝑥5∗
+ 0
+𝑥 𝑜𝑟𝑖𝑔
+ ∗
+ =
+2
+6
+MÉTODOExemplo:
+SIMPLEX
+MÉTODOSoluçãoSIMPLEX
+ilimitada:
+MÉTODO SIMPLEX
+Solução ilimitada:
+- Máx valor de “Z” se encontra no infinito.
+- Esta solução é indicado no quadro quando a única variável a entrar
+na Base tem coeficientes:
+• 𝑎𝑖𝑗 < 0, ∀ 𝑖 = 1, 𝑚
+Busca do ponto inicial viável:
+- O método SIMPLEX é constituído de duas etapas:
+-1ª Fase ou Fase “W”:
+-O algoritmo busca uma solução viável para o conjunto original
+de restrições.
+- 2ªFase ou Fase “Z”:
+- Com a solução obtida na primeira fase, esta etapa otimiza a
+função objetivo original resolvendo o problema original
+desejado.
+MÉTODOExemplo:
+Sujeito a:
+SIMPLEX
+𝑚á𝑥 𝑍 = 5𝑥 1 + 2𝑥 2
+𝑥 1 ≤ 3
+𝑥 2 ≤ 4
+𝑥 1 + 2𝑥 2 ≥ 9
+𝑥 1 ≥ 0
+𝑥 2 ≥ 0
+MÉTODOExemplo:
+SIMPLEX
+MÉTODO SIMPLEX
+Exemplo:
+- Transforma o problema original, introduzindo as variáveis de
+folga.
+𝑚á𝑥 𝑍 = 5𝑥 1 + 2𝑥 2
+Sujeito a:
+𝑥 1 + 𝑥 3 = 3
+𝑥 2 + 𝑥4 = 4
+𝑥 1 + 2𝑥2 − 𝑥5 = 9
+𝑥 1 , 𝑥 2 , 𝑥3 , 𝑥 4 , 𝑥 5 ≥ 0
+⇒ 𝑥 1 𝑒 𝑥 2 são zeros já que não pertencem a Base.
+𝑥3 = 3
+𝑥4 = 4
+𝑥5 = −9, não pode por definição de vetor de Base ⇒
+0
+ 𝑥 1
+⇒A origem
+ = = 𝑥, não é um ponto viável.
+0
+ 𝑥2
+PROBLEMA DE OTIMIZAÇÃO COM RESTRIÇÕES
+FORMULAÇÃO PADRÃO
+min 𝑓 𝑜𝑏𝑗 𝑥 : 𝑅 𝑛 → 𝑅 = 𝑓(𝑥 1 𝑥2 … 𝑥𝑛 )
+Onde 𝑥 = (𝑥 1 𝑥 2 … 𝑥 𝑛 ) é o vetor projeto sujeito a
+ℎ𝑖 𝑥 = 0 𝑐𝑜𝑚 𝑖 = 1 𝑎 𝑝 → 𝑟𝑒𝑠𝑡𝑟𝑖çõ𝑒𝑠 𝑑𝑒 𝑖𝑔𝑢𝑎𝑙𝑑𝑎𝑑𝑒
+𝑔 𝑖 𝑥 ≤ 0 𝑐𝑜𝑚 𝑖 = 1 𝑎 𝑚 → 𝑟𝑒𝑠𝑡𝑟𝑖çõ𝑒𝑠 𝑑𝑒 𝑑𝑒𝑠𝑖𝑔𝑢𝑎𝑙𝑑𝑎𝑑𝑒
+REGRA DE RESTRIÇÕES
+EXEMPLO 1
+min 𝑓 𝑥)=(𝑥 1 − 1,5 2 + 𝑥 2 − 1,5 2
+𝑔 1 𝑥 = 𝑥 1 + 𝑥2 − 2 ≤ 0
+Sujeito a
+ 𝑔 2 𝑥 = −𝑥 1 ≤ 0
+𝑔 3 𝑥 = −𝑥2 ≤ 0
+- Solução:
+EXEMPLO 2
+min 𝑓 𝑥)=(𝑥 1 − 2 2 + 𝑥2 − 2 2
+Sujeito a𝑔 1 𝑥 = 𝑥 1 + 𝑥 2 − 2 ≤ 0
+𝑔 2
+ 𝑥 = −𝑥 1 + 𝑥2 + 3 ≤ 0
+𝑔 3 𝑥 = −𝑥 1 ≤ 0
+𝑔 4 𝑥 = −𝑥 2 ≤ 0
+Não há intersecção, então
+S é um conjunto vazio e
+não há solução possível
+CONDIÇÃO NECESSÁRIA – RESTRIÇÕES DE IGUALDADE
+EXEMPLO 3
+min 𝑓 𝑥)=(𝑥 1 − 1,5 2 + 𝑥 2 − 1,5 2
+Sujeito a h 𝑥 1 𝑥 2 = ℎ(𝑥) = 𝑥 1 + 𝑥2 − 2 = 0
+MULTIPLICADORES DE LAGRANGE
+Introdução
+- Para derivar as condições necessárias e introduzir os multiplicadores de
+Lagrange, assume-se que h(𝑥) pode ser resolvido através de uma variável em
+termos das outras
+𝑥 2 = 𝜙(𝑥 1 )
+sendo 𝜙 uma função apropriada de 𝑥 1
+-Neste exemplo, teremos 𝑥2 = 𝜙 𝑥 1 = −𝑥 1 + 2 , substituindo 𝑥 2 na função
+objetivo tem-se
+min 𝑓 𝑜𝑏𝑗 𝑥 = 𝑓(𝑥 1 , 𝜙 𝑥 1 )
+MULTIPLICADORES DE LAGRANGE
+- No exemplo 3:
+𝑓 𝑥 1 )=(𝑥 1 − 1,5 2 + 𝑥 2 − 1,5 2 = 𝑥 1 − 1,5 2 + −𝑥 1 + 2 − 1,5 ²
+-Sendo a condição necessária de otimalidade dada por
+𝑑𝑓
+= 0 → 𝑥 1∗ = 1
+𝑑𝑥 1
+𝑥2∗ = −𝑥 1 + 2 = 1
+𝑑 2 𝑓
+- Como
+ > 0, garante-se que 𝑥 ∗ = (1,1) é um mínimo.
+𝑑𝑥1 ²
+MULTIPLICADORES DE LAGRANGE
+-Se obter a forma explícita de 𝑥2 = 𝜙(𝑥 1 ) não é possível, como ocorre na
+maioria do casos, usam-se os multiplicadores de Lagrange.
+- Usando a regra da cadeia, na diferenciação de f obtém-se:
+𝑑𝑓(𝑥 1 𝑥2 ) 𝜕𝑓(𝑥 1 𝑥 2 ) 𝜕𝑓(𝑥 1 𝑥2 ) 𝑑𝑥 2
+=
+ +
+𝑑𝑥 1
+ 𝜕𝑥 1
+ 𝜕𝑥2 𝑑𝑥 1
+-Substituindo o ponto (𝑥 1 , 𝑥2 ) por 𝑥 ∗ = (𝑥 1∗ , 𝑥2∗ ) a seguinte relação deve ser
+satisfeita:
+𝜕𝑓(𝑥 1 ∗ , 𝑥2 ∗ ) 𝜕𝑓(𝑥 1 ∗ , 𝑥 2 ∗ ) 𝑑𝜙
++
+ =0
+𝜕𝑥 1
+ 𝜕𝑥2
+ 𝑑𝑥 1
+- Como 𝜙 não é conhecido, precisamos eliminar este termo da equação acima.
+MULTIPLICADORES DE LAGRANGE
+- Para tal, considere a seguinte relação:
+𝑑ℎ(𝑥 1 ∗ , 𝑥 2 ) 𝜕ℎ(𝑥 1 ∗ , 𝑥2 ∗ ) 𝜕𝑓(𝑥 1 ∗ , 𝑥2 ) 𝑑𝜙
+=
+ +
+ =0
+𝑑𝑥 1
+ 𝜕𝑥 1
+ 𝜕𝑥 2
+ 𝑑𝑥 1
+𝑑𝜙
+ 𝑑ℎ
+- Para achar
+ , supondo que
+ ≠0
+𝑑𝑥1
+ 𝑑𝑥1
+𝑑𝜙
+𝑑𝑥 1
+=−
+𝜕ℎ(𝑥 1 ∗ , 𝑥 2 ∗ )/𝜕𝑥 1
+𝜕ℎ(𝑥 1 ∗ , 𝑥2 ∗ )/𝜕𝑥2
+- Assim, verifica-se que
+𝜕𝑓(𝑥 1 ∗ , 𝑥2 ∗ )𝜕𝑥 1
+−
+𝜕𝑓𝑥 1 ∗ , 𝑥2 ∗
+𝜕𝑥 2
+𝜕ℎ𝜕ℎ𝑥 1 ∗ , 𝑥2 ∗
+𝜕𝑥 1
+𝑥 1 ∗ , 𝑥2 ∗
+𝜕𝑥2
+=0
+ ⨂
+MULTIPLICADORES DE LAGRANGE
+-Definindo os multiplicadores de Lagrange
+∗𝜕𝑓(𝑥 1 , 𝑥 2 )/𝜕𝑥2
+𝑣=
+ ∗𝜕ℎ(𝑥 1 , 𝑥2 )/𝜕𝑥2
+-A equação ⨂ pode ser reescrita como
+𝜕𝑓(𝑥 1 ∗ , 𝑥2 ∗ )
+ 𝜕ℎ+𝑣
+𝜕𝑥 1
+𝑥 1 ∗ , 𝑥 2 ∗
+𝜕𝑥 1
+= 0 (𝑎)
+𝜕𝑓(𝑥 1 ∗ , 𝑥2 ∗ )
+𝜕𝑥2
++𝑣
+𝜕ℎ𝑥 1 ∗ , 𝑥2 ∗
+𝜕𝑥2
+= 0 (𝑏)
+- As equações (a) e (b) são as condições necessárias de otimalidade para o
+problema.
+- Qualquer ponto que viola essas condições não pode ser considerado um ponto
+de mínimo do problema
+MULTIPLICADORES DE LAGRANGE
+𝜕𝑓(1,1)
+ 𝜕ℎ 1,1
+- Para o problema anterior
+ = −1 ,
+ = 1 𝑒 𝑣 ∗ = 1
+𝜕𝑥2
+ 𝜕𝑥2
+- Usando as equações (a) e (b), temos:
+𝜕𝑓(𝑥 1 ∗ , 𝑥 2 ∗ )
+ 𝜕ℎ 𝑥 1 ∗ , 𝑥 2 ∗
++𝑣
+𝜕𝑥 1
+ 𝜕𝑥 1
+𝜕𝑓(𝑥 1 ∗ , 𝑥 2 ∗ )
+ 𝜕ℎ 𝑥 1 ∗ , 𝑥 2 ∗
++𝑣
+𝜕𝑥 2
+ 𝜕𝑥2
+ℎ 𝑥 1 𝑥2 = 0
+2 𝑥 1 − 1,5 + 𝑣 = 0
+2 𝑥 2 − 1,5 + 𝑣 = 0
+𝑥 1 + 𝑥2 − 2 = 0
+=0
+=0
+𝑥 1 ∗ = 𝑥2 ∗ = 1 𝑒 𝑣 ∗ = 1
+SIGNIFICADO GEOMÉTRICO DAS EQUAÇÕES DE LAGRANGE
+-A equação de Lagrange é definida por
+𝐿 𝑥 1 𝑥2 𝑣 = 𝑓 𝑥 1 𝑥2+ v h(𝑥 1 𝑥2 )
+- E as condições necessárias de otimalidade dadas por
+𝜕𝐿(𝑥 1 ∗ , 𝑥 2 ∗ )
+𝜕𝑥 1
+𝜕𝐿(𝑥 1 ∗ , 𝑥 2 ∗ )
+𝜕𝑥2
+=0
+=0
+-Em notação vetorial, o gradiente de L deve ser zero para o ponto candidato a
+máximo
+∇𝑓 𝑥 ∗ + 𝑣∇ℎ 𝑥 ∗ = 0
+∇𝐿 𝑥 1 ∗ , 𝑥2 ∗ = 0
+SIGNIFICADO GEOMÉTRICO DAS EQUAÇÕES DE LAGRANGE
+--Sendo
+Reagrupando,
+𝜕𝑓(𝑥 1 ∗ , 𝑥2 ∗ )
+∗
+ 𝜕𝑥 1
+∇𝑓 𝑥 =
+ ∗ ∗𝜕𝑓(𝑥 1 , 𝑥2 )
+𝜕𝑥2
+𝜕ℎ(𝑥 1 ∗ , 𝑥2 ∗ )
+∗
+ 𝜕𝑥 1
+∇ℎ 𝑥 =
+ ∗ ∗𝜕ℎ(𝑥 1 , 𝑥2 )
+𝜕𝑥2
+∇𝑓 𝑥 ∗ = −𝑣 ∇ℎ 𝑥 ∗
+- É possível mostrar que v, para restrições de igualdade, é livre em sinal e pode
+tomar qualquer valor.
+TEOREMA DE MULTIPLICADORES DE LAGRANGE
+-Considerando o problema de otimização dado por f(𝑥) sujeito a ℎ𝑖 𝑥 = 0 e
+supondo que 𝑥 ∗ é mínimo local, existe um único conjunto de multiplicadores,
+𝑣 𝑗 , com j=1 a p, tal que
+𝑝
+𝜕𝑓(𝑥 ∗ )
+ 𝜕ℎ 𝑗 (𝑥 ∗ )
++
+ 𝑣 𝑗
+ = 0, 𝑖 = 1 𝑎 𝑛
+𝜕𝑥𝑖
+ 𝜕𝑥𝑖
+𝑗
+ℎ𝑖
+ 𝑥 ∗
+ = 0, 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑝
+-Usando a eq. De Lagrange esta condição pode ser reescrita como
+𝑝
+𝐿 𝑥 𝑣 =𝑓 𝑥 +
+ 𝑣 𝑗 ℎ 𝑗 𝑥 = 𝑓 𝑥 + 𝑣 𝑇 ℎ(𝑥)
+𝑗=1
+∇𝐿 𝑥 𝑣= 0 𝑜𝑢
+𝜕𝐿(𝑥 ∗ , 𝑣 ∗ )
+= 0, 𝑖 = 1 𝑎 𝑛
+𝜕𝑥 𝑖
+TEOREMA DE MULTIPLICADORES DE LAGRANGE
+-E diferenciando L em relação a v, as restrições de igualdade também são
+satisfeitas
+𝜕𝐿(𝑥 ∗ , 𝑣 ∗)
+= 0 → ℎ 𝑗 𝑥 ∗ = 0, 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑝
+𝜕𝑣 𝑗
+CONDIÇÃO NECESSÁRIA PARA RESTRIÇÕES DE DESIGUALDADE
+KARUSH-KUHN-TUCKER (KKT)
+-Dada as restrições de desigualdade 𝑔 𝑖 𝑥 ≤ 0, é possível transformar as
+mesmas em restrições de igualdade usando uma variável chamada de variável
+de folga (slock)
+𝑔 𝑖 𝑥 + 𝑆𝑖 = 0
+-Como g𝑖 𝑥 ≤ 0, 𝑆𝑖 tem que ser maior que zero
+- Se 𝑆𝑖 = 0, 𝑔 𝑖 𝑥 = 0 → 𝑟𝑒𝑠𝑡𝑟𝑖çã𝑜 𝑎𝑡𝑖𝑣𝑎
+- Se 𝑆𝑖 > 0, 𝑔 𝑖 𝑥 ≤ 0 → 𝑟𝑒𝑠𝑡𝑟𝑖çã𝑜 𝑖𝑛𝑎𝑡𝑖𝑣𝑎
+-A restrição de que 𝑆𝑖 > 0 pode ser eliminada se usarmos 𝑆𝑖² com variável
+de folga. Assim, 𝑔 𝑖 𝑥 ≤ 0 se transforma em
+𝑔 𝑖 + 𝑆𝑖 2 = 0
+CONDIÇÃO NECESSÁRIA PARA RESTRIÇÕES DE DESIGUALDADE
+KARUSH-KUHN-TUCKER (KKT)
+-Desta forma, ao transformar 𝑔 𝑖 𝑥 ≤ 0 em 𝑔 𝑖 + 𝑆𝑖 2 = 0 é possível usar o
+teorema de multiplicadores de Lagrange para tratar esta restrição e derivar,
+assim, as condições necessárias de otimalidade como antes.
+-Um conjunto novo de “m” equações são necessárias para determinar as
+𝜕𝐿
+variáveis de folga que são obtidas através de
+ = 0 com i=1 a m.
+𝜕𝑆𝑖
+--Note que, uma vez que o ponto ou vetor de projeto é especificado, a equação
+𝑔 𝑖 + 𝑆𝑖 2 = 0 pode ser usada para achar 𝑆𝑖 2 .
+Se 𝑆𝑖 2 < 0, o ponto candidato não é um ponto de mínimo.
+-Há uma outra condição adicional ao usar os multiplicadores de Lagrange com
+restrições de desigualdade:
+𝜇𝑗∗ ≥ 0, 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑚
+EXEMPLO
+Seja 𝑓 𝑥)=(𝑥 1 − 1,5 2 + 𝑥2 − 1,5 2 sujeito a g 𝑥 = 𝑥 1 + 𝑥2 − 2 ≤ 0
+L = 𝑥 1 − 1,5 2 + 𝑥2 − 1,5 2 + 𝜇(𝑥 1 + 𝑥2 − 2 + 𝑆 2 )
+Sendo a condição necessária dada por
+𝜕𝐿
+= 2 𝑥 1 − 1,5 + 𝜇 = 0
+𝜕𝑥 1
+𝜕𝐿
+= 2 𝑥 1 − 1,5 + 𝜇 = 0
+𝜕𝑥2
+𝜕𝐿
+= 𝑥 1 + 𝑥2 − 2 + 𝑆² = 0
+𝜕𝜇
+𝜕𝐿
+= 2𝜇𝑆 = 0
+𝜕𝑆
+- Estas equações devem res resolvidas simultaneamente. Notar que as eqs. são
+não lineares. Assim, teremos muitas raízes.
+EXEMPLO
+- Solução 1:
+𝑥 1∗ = 𝑥2∗ = 1,5
+𝜇 ∗ = 0
+𝑆 2 = −1, então 𝑔 𝑖 𝑥 = −𝑆 2 = 1 > 0, então 𝑥 ∗ não é um ponto candidato a
+mínimo
+Notar que
+∗ 2(𝑥 1 − 1,5)
+ −1
+ 1
+∇𝑓 𝑥 =
+ =
+ e ∇𝑔 =
+2(𝑥2 − 1,5)
+ −1
+ 1
+TEOREMA KKT – CONDIÇÃO DE OTIMALIDADE
+- Seja 𝑥 ∗ um ponto viável, tal que é um ponto mínimo de f(𝑥) sujeito a
+ℎ 𝑖 𝑥 = 0 𝑐𝑜𝑚 𝑖 = 1 𝑎 𝑝
+𝑔 𝑖 𝑥 ≤ 0 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑚
+- Existem multiplicadores de Lagrange 𝑣𝑝𝑥1
+ ∗
+ e 𝜇𝑚𝑥1
+ ∗
+ tal que a função L é
+estacionária com relação a 𝑥 𝑟 , 𝑣𝑖 , 𝜇𝑗 𝑒 𝑆 𝑗 para o ponto 𝑥 ∗ .
+FUNÇÃO DE LAGRANGE
+𝑝
+ 𝑚
+𝐿 𝑥 , 𝑣, 𝜇, 𝑆 = 𝑓 𝑥 +
+ 𝑣𝑖 ℎ𝑖 𝑥 +
+ 𝜇𝑗 (𝑔 𝑖 𝑥 + 𝑆 𝑗2 )
+𝑗=1
+ 𝑗=1
+=𝑓 𝑥
+ + 𝑣 𝑇 ℎ 𝑥
+ + 𝜇 𝑇 (𝑔 𝑥 + 𝑆 2 )
+CONDIÇÃO DE GRADIENTE
+𝑝
+ 𝑚
+𝜕𝐿
+ 𝜕𝑓
+ ∗ 𝜕ℎ
+ 𝜕𝑔 𝑗
+=
+ +
+ 𝑣 𝑖
+ +
+ 𝜇𝑗∗
+ = 0 𝑐𝑜𝑚 𝑟 = 1 𝑎 𝑛
+𝜕𝑥 𝑟 𝜕𝑥𝑟
+ 𝜕𝑥𝑟
+ 𝜕𝑥 𝑟
+𝑖=1
+ 𝑗=1
+𝜕𝐿
+= 0 → ℎ𝑖 𝑥 ∗ = 0 𝑐𝑜𝑚 𝑖 = 1 𝑎 𝑝
+𝜕𝑣𝑖
+𝜕𝐿
+= 0 → (𝑔 𝑖 𝑥 ∗ + 𝑆 𝑗2 ) = 0 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑚
+𝜕𝜇 𝑗
+TESTE DE VIABILIDADE DO PONTO PARA AS RESTRIÇÕES
+𝑆 𝑗2 ≥ 0 𝑜𝑢 𝑔 𝑗 𝑥 ≤ 0 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑚
+CONDIÇÃO PARA A VARIÁVEL DE FOLGA
+𝜕𝐿
+= 0 → 2𝜇𝑗∗ 𝑆 𝑗 = 0 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑚
+𝜕𝑆 𝑗
+CONDIÇÃO PARA O MULTIPLICADOR DE LAGRANGE PARA RESTRIÇÕES DE
+DESIGUALDADE
+𝜇 𝑗∗ ≥ 0 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑚
+TESTE DE REGULARIDADE
+-O gradiente das restrições ativas devem ser linearmente independentes. Neste
+caso, os multiplicadores de Lagrange para as restrições são únicos.
+- Nota: Das equações correspondentes à condição do gradiente, resulta que
+𝑝
+ 𝑚
+𝜕𝑓
+ ∗ 𝜕ℎ𝑖
+ 𝜕𝑔 𝑟
+−
+ =
+ 𝑣𝑖
+ +
+ 𝜇𝑟∗
+ 𝑐𝑜𝑚 𝑗 = 1 𝑎 𝑛
+𝜕𝑥 𝑗
+ 𝜕𝑥 𝑗
+ 𝜕𝑥 𝑗
+𝑖=1
+ 𝑟=1
+o que mostra que no ponto estacionário a direção de descida mais rápida da
+função objetivo é uma combinação linear do gradiente das restrições com
+multiplicadores de Lagrange como escalares. Se os gradiente das restrições são LI,
+os multiplicadores são únicos.
+ALTERNATIVA PARA A CONDIÇÃO NECESSÁRIA KKT
+--Vimos, da condição de KKt, que as variáveis de folga aparecem em duas
+equações
+𝑔 𝑥 ∗ + 𝑆𝑖 2 = 0 𝑒 𝜇𝑖∗ 𝑆𝑖 = 0
+É possível que ambas equações possam ser escritas sem a presença destas
+variáveis de folga.
+-O propósito da equação 𝑔 𝑥 ∗ + 𝑆𝑖 2 = 0, com i=1 a m, é assegurar que o
+ponto candidato a máximo satisfaça todas as restrições de desigualdade. Esta
+equação pode ser escrita como 𝑆𝑖 2 = −𝑔 𝑖 𝑥 ∗ e uma vez que 𝑆𝑖 2 ≥ 0,
+− 𝑔 𝑖 𝑥 ∗ ≥ 0 ou 𝑔 𝑖 𝑥 ∗ ≤ 0 ∀ 𝑖 = 1 𝑎 𝑚
+ALTERNATIVA PARA A CONDIÇÃO NECESSÁRIA KKT
+- Assim, 𝑔 𝑖 𝑥 ∗ + 𝑆𝑖 2 = 0 pode ser substituído por 𝑔 𝑖 𝑥 ∗ ≤ 0.
+- A outra condição envolvendo a variável de folga é 𝜇 𝑖∗𝑆𝑖 = 0, com i=1 a m.
+- Multiplicando a equação acima por Si, temos 𝜇𝑖∗ 𝑆𝑖² = 0
+- Substituindo 𝑆𝑖 2 = −𝑔 𝑖 𝑥 ∗ tem-se 𝜇𝑖∗ 𝑔 𝑖 𝑥 ∗ = 0, com i=1 a m.
+- Desta forma é possível eliminar a variável de folga.
+PROBLEMA
+min f(𝑥) sujeito a ℎ𝑖 𝑥 = 0, i=1 a p e 𝑔 𝑖 𝑥 ≤ 0, com j=1 a m
+PRINCÍPIO LAGRANGEANO
+𝑝
+ 𝑚
+𝐿=𝑓+
+ 𝑣 𝑖 ℎ𝑖 +
+ 𝜇 𝑗 𝑔 𝑗
+𝑖=1
+ 𝑗=1
+CONDIÇÃO GRADIENTE
+𝑝
+ 𝑚
+𝛿𝐿
+ 𝛿𝑓
+ ∗
+ 𝛿ℎ𝑖
+ ∗
+ 𝛿𝑔 𝑗
+=0→
+ +
+ 𝑣𝑖 +
+ 𝑢 𝑗 = 0 com r = 1 até n
+𝛿𝑥𝑖
+ 𝛿𝑥𝑟
+ 𝛿𝑥𝑟
+ 𝛿𝑥 𝑟
+𝑖=1
+ 𝑗=1
+TESTANDO/CHECANDO VIABILIDADE
+𝑔 𝑖 𝑥 ∗ ≤ 0
+ 𝑐𝑜𝑚 𝑗 = 1 𝑎𝑡é 𝑚
+CONDIÇÃO PARA VARIÁVEL DE FOLGA
+𝜇𝑗∗ ∗
+ 𝑔 𝑖 𝑥 ∗ = 0
+ com j = 1 até m
+𝑗
+CONDIÇÃO DE NÃO NEGATIVIDADE PARA O MULTIPLICADOR DE LAGRANGE
+PARA RESTRIÇÕES DE DESIGUALDADE
+𝜇𝑗∗ ≥ 0
+ 𝑐𝑜𝑚 𝑗 = 1 𝑎𝑡é 𝑚
+TESTE DE REGULARIDADE
+Verifica que o gradiente de restrições ativa sejam L. I.(Solução única)
+EXEMPLO:
+min 𝑓 𝑥, 𝑦 = (𝑥 − 10) 2 +(𝑦 − 8)2
+Sujeita a:
+𝑔 𝑖 = 𝑥 + 𝑦 − 12 ≤ 0
+𝑔 =𝑥−8≤0
+SOLUÇÃO:
+As condições KKT são:
+1. Lagrangiano
+𝐿 = (𝑥 − 10) 2 + 𝑦 − 8 2 + 𝑢 1 𝑥 + 𝑦 − 12+ 𝑢2 (𝑥 − 8)
+SOLUÇÃO:
+2.
+3.
+4.
+Condição Gradiente
+𝛿𝐿
+= 2 𝑥 − 10 + 𝑢 1 + 𝑢2 = 0
+𝛿𝑥
+𝛿𝐿
+= 2 𝑦 − 8 + 𝑢 1 = 0
+𝛿𝑦
+Cheque viabilidade
+𝑔 1 ≤ 0 𝑒 𝑔 2 ≤ 0
+Condição de variável de folga 𝑢 1 𝑔 1 = 0 𝑒 𝑢2 𝑔 2 = 0
+5.
+6.
+Não negatividade dos M. e L.
+𝑢 1 e 𝑢2Checar regularidade
+≥ 0
+SOLUÇÃO:
+A condição 4 nos leva aos seguintes casos:
+a) 𝑢 1 = 0 𝑒 𝑢2 = 0 𝑎𝑚𝑏𝑎𝑠 𝑟𝑒𝑠𝑡𝑟𝑖çõ𝑒𝑠 𝑖𝑛𝑎𝑡𝑖𝑣𝑎𝑠
+b) 𝑢 1 = 0 𝑒 𝑔 2 = 0 (𝑔 1 𝑖𝑛𝑎𝑡𝑖𝑣𝑎 𝑒 𝑔 2 𝑎𝑡𝑖𝑣𝑎)
+c) 𝑔 1 = 0 𝑒 𝑢2 = 0 (𝑔 1 𝑎𝑡𝑖𝑣𝑎 𝑒 𝑔 2 𝑖𝑛𝑎𝑡𝑖𝑣𝑎)
+d) 𝑔 1 = 0 𝑒 𝑔 2 = 0 (𝑔 1 𝑎𝑡𝑖𝑣𝑎 𝑒 𝑔 2 𝑎𝑡𝑖𝑣𝑎)
+CASO A:
+ 𝑢 1 = 0 𝑒 𝑢2 = 0
+A equação 2 levam a 𝑥 = 10 𝑒 𝑦 = 8
+Checando a viabilidade para este ponto de
+𝑔 1 = 6 > 0 𝑒 𝑔 2 = 2 > 0
+Não é um ponto candidato porque viola 𝑔 𝑖 ≤ 0 !
+CASO B: 𝑢 1 = 0 𝑒 𝑔 2 = 0
+𝑔 2 = 0 → 𝑥 = 8
+A equação 2 de 𝑦 = 8 𝑒 𝑢2 = 4
+Para esse ponto (8,8), 𝑔 𝑖 = 4 > 0 o qual é uma violação das condições de
+KKT → 8,8 não é candidato
+CASO C: 𝑔 1 = 0 𝑒 𝑢 2 = 0
+A equação 2 de 𝑔 𝑖 = 0 → 𝑥 = 7 𝑒 𝑦 = 5 com 𝑢1 = 6 > 0
+Checando a viabilidade nota-se que 𝑔 1 = −1 < 0 → satisfaz
+Uma vez que temos uma restrição de desigualdade ativa a questão de
+independência linear é satisfeita
+∴ 𝑜 𝑝𝑜𝑛𝑡𝑜 7,5 é 𝑐𝑎𝑛𝑑𝑖𝑑𝑎𝑡𝑜!
+CASO D: 𝑔 1 = 0 𝑒 𝑔 2 = 0
+→𝑥 =8𝑒𝑦 =4
+Dado a equação 2: 𝑢 1 = 8 𝑒 𝑢2 = −4 < 0
+Violando as condições KKT não é candidato!
+CONDIÇÕES DE 2º ORDEM PARA OTIMIZAÇÃO COM RESTRIÇÕES
+Soluções das condições necessárias são pontos /projetos candidatos a
+mínimo local!
+Como em problema sem restrições, a informação de derivada de segunda
+ordem da função em 𝑥 ∗ será usada para determinar se o ponto ótimo é
+um mínimo local!
+No problema de otimização sem restrições, existe um teorema que
+garante que “a parte quadrática de expansão na Série de Taylor deve ser
+positiva em 𝑥 ∗ para todas as direção não nulas”
+CONDIÇÕES DE 2º ORDEM PARA OTIMIZAÇÃO COM RESTRIÇÕES
+Em problema de otimização com restrições devemos constar também
+restrições ativa para 𝑥 ∗ para determinar possíveis direções!
+“Devem se considerar apenas 𝑥 = 𝑥 ∗ + 𝑑, na vizinhança de 𝑥 ∗ que
+satisfaça as equações de restrições ativas”
+Assim qualquer 𝑑 ≠ 0 que satisfaça as condições de 1ª ordem de
+restrições ativas deve estar no hiperplano tangente às restrições.
+CONDIÇÕES DE 2º ORDEM PARA OTIMIZAÇÃO COM RESTRIÇÕES
+Ou,e
+matematicamente:
+∇ℎ𝑖𝑇 ∙ 𝑑 = 0
+∇𝑔 𝑖𝑇 ∙ 𝑑 = 0
+Essas equações são determinadas para as direções de “𝑑“ que definem a
+região viável ao redor de 𝑥 ∗ .
+Nota: apenas as restrições de desigualdade ativa são para determinar “ 𝑑”
+Para derivar as condições de 2ª ordem, escrevemos, a expansão em Série
+de Taylor da função de Lagrange e consideramos apenas as 𝑑 que
+satisfazem as condições acima. Assim,
+“𝒙∗ é um ponto de mínimo local se o termo de 2ª ordem da Série de
+Taylor é positivo ∀ 𝒅 no hiperplano tangente as restrições”
+TEOREMA: Condição necessária de 2ª ordem para o problema geral de
+restrições.
+Seja 𝑥 ∗ que satisfaz a condição necessária KKT de 1ª ordem para o
+problema de otimização geral.
+Definindo a matriz Hessiana da função de Lagrange para 𝑥 ∗ como:
+𝑝
+ 𝑚
+∇2 𝐿 = ∇2 𝑓 +
+ 𝑣𝑖 ∗ ∇2 ℎ𝑖 +
+ 𝑢 𝑗 ∗ ∇2 𝑔 𝑖
+𝑖=1
+ 𝑗=1
+Seja também as direções viáveis, 𝑑 ≠ 0, tal que satisfaz o sistema de
+equações lineares para o ponto 𝑥 ∗ do tipo
+∇ℎ𝑖𝑇 ∙ 𝑑 = 0 com i = 1 até p
+∇𝑔 𝑖𝑇 ∙ 𝑑 = 0 para toda as restrições de desigualdade ativas (tal que
+𝑔 𝑖 (𝑥 ∗ )=0)
+→ 𝑠𝑒 𝑥 ∗ é um mínimo local do problema de otimização, deve-se
+comprimir que: 𝑄 ≥ 0 𝑜𝑛𝑑𝑒 𝑄 = 𝑑 𝑇 ∙ ∇2 𝐿( 𝑥 ∗ ) ∙ 𝑑
+Nota: qualquer ponto que não satisfaz a equação acima, não pode ser
+um ponto de mínimo local
+TEOREMA: Condição necessária para o problema de restrições geral
+Seja 𝑥 ∗ um ponto tal que satisfaz as condições de 1ª ordem KKT para o
+problema de otimização geral.
+Definindo a matriz Hessiana da função de Lagrange L para 𝑥 ∗ como acima
+e definindo as direções viáveis não nula, 𝑑 ≠ 0, as soluções dos sistemas
+lineares:
+∇ℎ𝑖𝑇 ∙ 𝑑 = 0 com i = 1 até p
+e
+∇𝑔 𝑖𝑇 ∙ 𝑑 = 0 para as restrições ativas com 𝑢𝑖∗ > 0
+Também seja:
+∇𝑔 𝑖𝑇 ∙ 𝑑 ≤ 0 para as restrições ativas com 𝑢𝑖∗ = 0
+Se
+𝑄 > 0, onde 𝑄 = 𝑑 𝑇 ∙ ∇2 𝐿( 𝑥 ∗ ) ∙ 𝑑
+TEOREMA: Condição necessária para o problema de restrições geral
+𝑥 ∗ é um ponto de mínimo local isolado(i.e. não existe outro
+ponto de mínimo na vizinhança de 𝑥 ∗ )
+Ir para 12’
+EXEMPLO 5.5 PÁG 182
+Considere o problema de otimização dado por:
+min 𝑓(𝑥) = 𝑥 12 + 𝑥22 − 3𝑥 1 𝑥2
+Sujeito a
+𝑔 𝑥 = 𝑥 12 + 𝑥22 − 6 ≤ 0
+Testar/corroborar a condição suficiente para o candidato a min.
+SOLUÇÃO
+Os pontos que satisfazem as condições necessárias KKT são:
+I. 𝑥 ∗ = 0,0 , com 𝑢 ∗ = 0
+II.
+ 𝑥 ∗ =
+ 3, 3 , com 𝑢 ∗ = 1 2
+III. 𝑥 ∗ = − 3, − 3 , com 𝑢 ∗ = 1 2
+Como pode ser observado na figura, o ponto (0,0) não satisfaz a condição
+KKT suficiente:
+SOLUÇÃO
+As matrizes Hessianas de 𝑓 𝑥 e das restrições são:
+2 −3
+∇2 𝑓 =
+−3 2
+2 0
+∇2 𝑔 =
+0 2
+Os autovetores de ∇2 𝑔 são
+2
+2
+e de ∇2 𝑓 =
+−1
+5
+TEOREMA: Condição suficiente forte
+Seja 𝑥 ∗ que satisfaz a condição necessária KKT de 1ª ordem para o
+problema de projeto ótimo geral. Definindo a matriz Hessiana ∇2 𝐿 𝑥 ∗
+para a função de Lagrange no ponto 𝑥 ∗ .
+𝑝
+ 𝑚
+∇2 𝐿 = ∇2 𝑓 +
+ 𝑣 𝑖 ∗ ∇2 ℎ𝑖 +
+ 𝑢 𝑗 ∗ ∇2 𝑔 𝑖
+𝑖=1
+ 𝑗=1
+→ ∇2 𝐿(𝑥 ∗ ) é positiva definida, 𝑥 ∗ é um ponto de mínimo do lado.
+A hessiana do Langrangiano é:
+∇2 𝐿 = ∇2 𝑓 + 𝑢∇2 𝑔 =
+2 + 2𝑢
+−3
+−3
+2 + 2𝑢
+TEOREMA: Condição suficiente forte
+Para o ponto 𝑥 ∗ = 0,0 e 𝑢 ∗ = 0
+2 −3
+ ∗∇2 𝐿 = ∇2 𝑓 =
+ tal que 𝑢 = 0
+−3 2
+Assim, como 𝑢 ∗ = 0 o problema se torna se restrições
+∴ ∇ 2 𝑓 𝑥 ∗ deve ser positiva definida
+Para que 𝑥 ∗ seja um ponto de “mínimo”
+Como os autovetores de ∇2 𝑓 𝑥 ∗ são (-1) e (5) e a matriz Hessiana
+∇2 𝑓 𝑥 ∗ é indefinida → o ponto 𝑥 ∗ viola a condição de 2ª ordem
+necessária e de suficientemente forte.
+→ 𝑥 ∗ = 0,0 não é um mínimo local.
+SOLUÇÃO DE PONL COM RESTRIÇÕES SENDO TONL SEM RESTRIÇÕES
+Métodos de transformação para passar de um 𝑃𝑂𝑁𝐿 ∗ com restrições
+para um PONL sem restrições.
+→Método de penalidades: “aplicada a ≠ restrições”
+• Se só temos 𝑔 𝑖 (𝑥) ≤ 0 → este método é conhecido como método de
+barreiras externas.
+• Método de barreiras: só aplicável a restrições de desigualdades:
+→ 𝑓𝑢𝑛çã𝑜 𝑏𝑎𝑟𝑟𝑒𝑖𝑟𝑎 𝑖𝑛𝑣𝑒𝑟𝑠𝑎
+→ 𝑓𝑢𝑛çã𝑜 𝑏𝑎𝑟𝑟𝑒𝑖𝑟𝑎 𝑙𝑜𝑔𝑎𝑟𝑖𝑡𝑚𝑖𝑐𝑎
+𝑔 𝑖 (𝑥) ≤ 0
+Nota: PONL → Problema de otimização não linear
+SOLUÇÃO DE PONL COM RESTRIÇÕES SENDO TONL SEM RESTRIÇÕES
+→Método dos multiplicados: Uso conceito de multiplicados de Lagrange
+A ideia é:
+Partindo do problema
+min 𝑓 𝑥 : 𝑅 4 → 𝑅 = 𝑓(𝑥)
+Sujeito a com 𝑥 = 𝑣𝑒𝑡𝑜𝑟 𝑝𝑟𝑜𝑗𝑒𝑡𝑜
+ℎ𝑖 𝑥 = 0 𝑐𝑜𝑚 𝑖 = 1 𝑎𝑡é 𝑝
+e
+𝑔 𝑗 𝑥 ≤ 0 𝑐𝑜𝑚 𝑖 = 1 𝑎𝑡é 𝑚
+Converter para o PONL:
+𝜙 𝑥, 𝑟 = 𝑓 𝑥 + P(h 𝑥 , 𝑔 𝑥 , 𝑟)
+SOLUÇÃO DE PONL COM RESTRIÇÕES SENDO TONL SEM RESTRIÇÕES
+Converter para o PONL:
+𝜙 𝑥, 𝑟 = 𝑓 𝑥 + P(h 𝑥 , 𝑔 𝑥 , 𝑟)
+Onde:
+𝑟 é o vetor de parâmetro de penalidade
+P é um valor real de função cujo objetivo é impor uma
+penalidade sobre a função objetivo e controlado por 𝑟 .
+A função P depende do método usado.
+1. MÉTODO DA FUNÇÃO PENALIDADE
+A ideia básica é um método baseado em penalizar a 𝑓 𝑜𝑏𝑗 𝑥
+através de uma função P de forma tal que se as restrições são violadas, a
+função objetivo é penalizada somando um valor positivo dado por P.
+Várias funções penalidades podem ser diferentes → uma dela é
+conhecida como função de perda quadrática.
+𝑝
+ 𝑚
+P h 𝑥 ,𝑔 𝑥 , 𝑟 𝑒
+ ℎ𝑖( 𝑥) 2 +
+ 𝑔𝑖(𝑥) 2 +
+𝑖=1
+ 𝑗=1
+“Apenas se a restrição é violada”
+1. MÉTODO DA FUNÇÃO PENALIDADE
+Vantagens:
+• Aplicável tanto para ℎ𝑖 𝑥 quanto para 𝑔 𝑖 𝑥
+• Ponto de partida qualquer
+• A função objetivo não precisa estar definido na região inviável
+2. MÉTODO DA FUNÇÃO BARREIRA
+1.
+Função barreira inversa
+P 𝑔 𝑥 , 𝑟=
+1
+𝑟
+𝑚
+𝑖=1
+−1
+𝑔 𝑖 (𝑥)
+2. MÉTODO DA FUNÇÃO BARREIRA
+2.
+ Função barreira logarítmica
+𝑚
+1
+P 𝑔 𝑥 , 𝑟 =
+ log(𝑔 𝑖 (𝑥))
+𝑟
+𝑖=1
+Vantagem/desvantagem:
+• O método é aplicável em 𝑔 𝑖 𝑥 apenas
+• O ponto de partida deve ser viável
+• O método interage só com a região viável
+3. Métodos Multiplicados (or apresented lograngian methos)
+𝑝
+ 𝑝
+1
+ 1
+P h 𝑥 ,𝑔 𝑥 , 𝑟 =
+ 𝑟 𝑖 ′
+ (ℎ𝑖 + 𝜃 𝑖 ′ )2 +
+ 𝑟 𝑖 (𝑔 𝑖 + 𝜃 𝑖 ) 2
+2
+ 2
+𝑖=1
+ 𝑗=1
+2. MÉTODO DA FUNÇÃO BARREIRA
+𝑝
+ 𝑝
+1
+ 1
+P h 𝑥 ,𝑔 𝑥 , 𝑟 =
+ 𝑟 𝑖 ′
+ (ℎ𝑖 + 𝜃 𝑖 ′ )2 +
+ 𝑟 𝑖 (𝑔 𝑖 + 𝜃 𝑖 ) 2
+2
+ 2
+𝑖=1
+ 𝑗=1
+Onde 𝜃 𝑖 , 𝑟 𝑖 , 𝜃 𝑖′ e 𝑟 𝑖′ são parâmetros associados com a
+i-ésimas restrições de desigualdade e igualdade,
+respectivamente.
+Se 𝜃 𝑖 = 𝜃 𝑖′ =0 e 𝑟 𝑖 = 𝑟 𝑖′ e r → este método → 1

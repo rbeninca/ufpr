@@ -1,0 +1,80 @@
+# Stack Klipper + Moonraker + Mainsail em Docker (TV Box Amlogic S905X / Armbian)
+# Baseado no projeto prind: https://github.com/mkuf/prind
+#
+# ATENÇÃO: arquivo RECONSTRUÍDO a partir do relatório_config.md (Parte 2).
+# O compose real está no box em /mnt/data/prind/docker-compose.yaml.
+# Conferir/substituir por aquele quando o TV Box estiver acessível.
+#
+# Subir:   docker compose --profile mainsail up -d
+# Status:  docker compose --profile mainsail ps
+# Logs:    docker compose logs -f klipper
+
+services:
+  # Prepara permissões/pastas dos sockets e diretórios compartilhados.
+  init:
+    image: alpine:latest
+    command: >
+      sh -c "mkdir -p /run/klipper /data/gcodes &&
+             chown -R 1000:1000 /run/klipper /data"
+    volumes:
+      - run:/run/klipper
+      - /mnt/data/gcodes:/data/gcodes
+
+  klipper:
+    image: mkuf/klipper:latest
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    command:
+      - "-I"
+      - "/run/klipper/printer.sock"
+      - "-a"
+      - "/run/klipper/api.sock"
+      - "/opt/printer_config/printer.cfg"
+    devices:
+      # Placa Creality 4.2.2 (STM32F103) — ajustar conforme o /dev real do MCU.
+      - /dev/serial/by-id/usb-Klipper_stm32f103xe:/dev/ttyMCU
+    volumes:
+      - run:/run/klipper
+      - ./config:/opt/printer_config
+      - /mnt/data/gcodes:/data/gcodes
+
+  moonraker:
+    image: mkuf/moonraker:latest
+    depends_on:
+      klipper:
+        condition: service_started
+    volumes:
+      - run:/run/klipper
+      - ./config:/opt/printer_config
+      - /mnt/data/gcodes:/data/gcodes
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.moonraker.rule=PathPrefix(`/websocket`) || PathRegexp(`^/(printer|api|access|machine|server)`)"
+      - "traefik.http.services.moonraker.loadbalancer.server.port=7125"
+
+  mainsail:
+    image: ghcr.io/mainsail-crew/mainsail:latest
+    profiles: ["mainsail"]
+    depends_on:
+      moonraker:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mainsail.rule=PathPrefix(`/`)"
+      # Porta real da imagem mainsail:latest é 8080 (corrigida de 80 no relatório).
+      - "traefik.http.services.mainsail.loadbalancer.server.port=8080"
+
+  traefik:
+    image: traefik:latest
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+volumes:
+  run:
