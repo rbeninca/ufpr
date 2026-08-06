@@ -287,7 +287,7 @@
                 </div>
                 <div class="card gold">
                     <h4>sqp</h4>
-                    <p>Programação Quadrática Sequencial. Aproxima $f$ por <strong>parábolas</strong> e as restrições por retas, resolvendo um subproblema por iteração (BFGS). <strong>Rigoroso com as restrições</strong>.</p>
+                    <p><strong>S</strong>equential <strong>Q</strong>uadratic <strong>P</strong>rogramming (Programação Quadrática Sequencial). Aproxima $f$ por <strong>parábolas</strong> e as restrições por retas, resolvendo um subproblema por iteração (BFGS). <strong>Rigoroso com as restrições</strong>.</p>
                 </div>
                 <div class="card green">
                     <h4>trust-region-reflective</h4>
@@ -300,31 +300,34 @@
         <!-- SLIDE 7: INTERIOR-POINT ANIMADO -->
         <section class="compact">
             <h2>interior-point: a Barreira</h2>
-            <div class="two-col">
-                <div class="col-text" style="flex:1;">
-                    <p>Em vez de tratar $c(x)\le 0$ diretamente, resolve-se uma sequência de problemas <strong>sem restrição</strong>, com um termo de barreira:</p>
-                    <div class="formula-box">
-                        $\min_x \; f(x) - \mu \displaystyle\sum_i \ln\big(-c_i(x)\big)$
-                    </div>
-                    <ul>
-                        <li>Perto da fronteira, $\ln(\cdot) \to -\infty$ → custo <strong>explode</strong>: o ponto nunca sai da zona viável.</li>
-                        <li>O parâmetro $\mu$ é <strong>reduzido gradualmente</strong> ($\mu \to 0$), afrouxando a barreira.</li>
-                        <li>A trajetória resultante é o <span class="highlight">caminho central</span>, que termina no ótimo — mesmo colado na restrição.</li>
-                    </ul>
-                </div>
-                <div class="col-img" style="flex:1.05;">
-                    <div class="canvas-container">
-                        <canvas id="cvBarrier" width="460" height="400"></canvas>
+            <!-- Faixa superior: ideia + formula ocupando a largura toda -->
+            <p style="margin:0 0 6px;"><strong>A ideia:</strong> em vez de <em>verificar</em> a restrição a cada passo, ela é <span class="highlight">incorporada à função objetivo</span> como penalização — a <strong>barreira</strong>. O problema restrito vira uma sequência de problemas <strong>sem restrição</strong>:</p>
+            <div class="formula-box" style="margin:6px 0; text-align:center;">
+                $\min_x \; \underbrace{f(x)}_{\text{objetivo}} \; \underbrace{-\; \mu \displaystyle\sum_i \ln\big(-c_i(x)\big)}_{\text{barreira (penalização)}}$
+            </div>
+
+            <!-- Faixa inferior: figura a esquerda, leitura + consequencia a direita -->
+            <div class="two-col" style="gap:22px; align-items:stretch; margin-top:4px;">
+                <div class="col-img" style="flex:0 0 40%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvBarrier" width="440" height="330"></canvas>
                     </div>
                     <button class="anim-ctrl" data-anim="barrier">▶ Repetir animação</button>
+                </div>
+                <div class="col-text" style="flex:1; font-size:0.92em;">
+                    <p style="margin:0 0 8px;"><strong>Na figura:</strong> o ponto azul desce pelo <span class="highlight">caminho central</span>, sempre por dentro da zona viável. A cada etapa $\mu$ diminui, a barreira (laranja) afina e o ponto <strong>encosta na fronteira vermelha</strong> — até parar em $x^*$.</p>
+                    <div class="formula-box small-text" style="margin:0;">
+                        
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- SLIDE 8: SQP ANIMADO -->
         <section class="compact">
-            <h2>sqp: Parábola a Cada Passo</h2>
-            <p>A cada iteração o <code>sqp</code> troca o problema difícil por um <strong>problema fácil e local</strong>: aproxima $f$ por uma <span class="highlight">quadrática</span> e as restrições por <strong>retas</strong>, resolve esse subproblema, dá o passo, e repete.</p>
+            <h2>SQP: Parábola a Cada Passo</h2>
+            <p><strong>SQP</strong> = <span class="highlight">Sequential Quadratic Programming</span> — <em>Programação Quadrática Sequencial</em>. A sigla descreve o método: resolve uma <strong>sequência</strong> de subproblemas <strong>quadráticos</strong>.</p>
+            <p>A cada iteração o <code>'sqp'</code> troca o problema difícil por um <strong>problema fácil e local</strong>: aproxima $f$ por uma <span class="highlight">parábola</span> e as restrições por <strong>retas</strong>, resolve esse subproblema, dá o passo, e repete.</p>
             <div class="canvas-container">
                 <canvas id="cvSqp" width="900" height="330"></canvas>
             </div>
@@ -1007,8 +1010,9 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
 
         grade(ctx, w, h, 40);
 
-        // fronteira da restricao: uma reta inclinada; viavel = abaixo dela
-        const fr = { x1: 40, y1: 120, x2: 420, y2: 300 };
+        // fronteira da restricao: uma reta inclinada; viavel = abaixo dela.
+        // Coordenadas relativas ao canvas para o desenho acompanhar o tamanho.
+        const fr = { x1: w*0.09, y1: h*0.33, x2: w*0.95, y2: h*0.82 };
         const yFront = (x) => fr.y1 + (x - fr.x1) * (fr.y2 - fr.y1) / (fr.x2 - fr.x1);
 
         // regiao inviavel (acima da reta) hachurada
@@ -1028,11 +1032,11 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
         // a fronteira
         ctx.strokeStyle = cores.verm; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(fr.x1, fr.y1); ctx.lineTo(fr.x2, fr.y2); ctx.stroke();
-        rotulo(ctx, 'c(x) = 0  (fronteira)', 226, 176, cores.verm, 'bold 12px Arial');
-        rotulo(ctx, 'c(x) > 0 : inviável', 60, 60, '#c0392b', '12px Arial');
+        rotulo(ctx, 'c(x) = 0 (fronteira)', w*0.50, yFront(w*0.50) - 8, cores.verm, 'bold 12px Arial');
+        rotulo(ctx, 'c(x) > 0 : inviável', w*0.11, h*0.14, '#c0392b', '12px Arial');
 
         // curvas de nivel de f, cujo otimo irrestrito esta ACIMA da fronteira
-        const ot = { x: 250, y: 130 };
+        const ot = { x: w*0.55, y: h*0.34 };
         ctx.strokeStyle = '#dbe3ec'; ctx.lineWidth = 1.1;
         for (let r = 1; r <= 8; r++) {
             ctx.beginPath(); ctx.ellipse(ot.x, ot.y, r*26, r*22, 0, 0, Math.PI*2); ctx.stroke();
@@ -1044,13 +1048,14 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
         rotulo(ctx, 'mín. irrestrito (inviável)', ot.x - 60, ot.y - 16, cores.cinza, '11px Arial');
 
         // solucao restrita: ponto sobre a fronteira, mais proximo do otimo
-        const sol = { x: 248, y: yFront(248) };
+        const solX = w*0.55;
+        const sol = { x: solX, y: yFront(solX) };
 
         // caminho central: pontos para mu decrescente, aproximando da fronteira
         const mus = [0.60, 0.40, 0.25, 0.14, 0.07, 0.03, 0.01, 0.0];
         const caminho = mus.map(mu => ({
-            x: sol.x + (100 - 100*(1 - mu)) * 0.15,
-            y: sol.y + 130 * mu                      // quanto maior mu, mais longe da borda
+            x: sol.x + w*0.034*mu,
+            y: sol.y + h*0.40*mu                     // quanto maior mu, mais longe da borda
         }));
 
         // rastro do caminho central
@@ -1067,14 +1072,13 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
         rotulo(ctx, 'μ = ' + mus[n].toFixed(2), at.x + 12, at.y + 4, cores.azul, 'bold 13px Arial');
 
         // "parede" de barreira: intensidade cresce quando mu diminui
-        const alturaMur = 60 * (1 - mus[n]/0.6);
+        const alturaMur = h*0.18 * (1 - mus[n]/0.6);
         ctx.save();
-        const grad = ctx.createLinearGradient(0, 0, 0, -1);
         ctx.globalAlpha = 0.10 + 0.25*(1 - mus[n]/0.6);
         ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2;
-        for (let x = 60; x <= 400; x += 20) {
+        for (let x = w*0.13; x <= w*0.92; x += 20) {
             const y = yFront(x);
-            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + alturaMur*0.5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + alturaMur); ctx.stroke();
         }
         ctx.restore();
 
@@ -1082,8 +1086,8 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
             ponto(ctx, sol.x, sol.y, cores.verde, 7);
             rotulo(ctx, 'x*  (μ → 0)', sol.x + 14, sol.y - 8, '#1e7e44', 'bold 13px Arial');
         }
-        rotulo(ctx, 'caminho central', 40, h - 40, cores.azul, 'bold 12px Arial');
-        rotulo(ctx, 'nunca sai da zona viável', 40, h - 22, '#666', '11px Arial');
+        rotulo(ctx, 'caminho central', w*0.04, h - 26, cores.azul, 'bold 12px Arial');
+        rotulo(ctx, 'nunca sai da zona viável', w*0.04, h - 10, '#666', '11px Arial');
     });
 
     /* =======================================================================
