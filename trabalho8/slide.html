@@ -887,8 +887,10 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
         };
 
         const tt = suave(t);
-        const bolaA = descer(1.4, 26, tt);   // cai no minimo local da esquerda
-        const bolaB = descer(9.6, 26, tt);   // cai no minimo global (direita)
+        // x0 escolhidos pelas bacias: 1.4 cai no vale raso da esquerda (f=+0,37);
+        // 3.4 cai no vale central, que e o minimo global real (f=-0,63).
+        const bolaA = descer(1.4, 26, tt);   // fica preso no minimo LOCAL
+        const bolaB = descer(3.4, 26, tt);   // alcanca o minimo GLOBAL
 
         // rastro das duas bolas
         const rastro = (b, cor) => {
@@ -906,16 +908,16 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
         // pontos de partida
         ponto(ctx, px(1.4), py(fx(1.4)), '#c0392b', 5);
         rotulo(ctx, 'x₀ = 1,4', px(1.4) - 26, py(fx(1.4)) - 14, '#c0392b', 'bold 12px Arial');
-        ponto(ctx, px(9.6), py(fx(9.6)), '#1e7e44', 5);
-        rotulo(ctx, 'x₀ = 9,6', px(9.6) - 22, py(fx(9.6)) - 14, '#1e7e44', 'bold 12px Arial');
+        ponto(ctx, px(3.4), py(fx(3.4)), '#1e7e44', 5);
+        rotulo(ctx, 'x₀ = 3,4', px(3.4) - 22, py(fx(3.4)) - 14, '#1e7e44', 'bold 12px Arial');
 
         // bolas em movimento
         ponto(ctx, px(bolaA.x), py(fx(bolaA.x)), cores.verm, 8);
         ponto(ctx, px(bolaB.x), py(fx(bolaB.x)), cores.verde, 8);
 
         if (t > 0.85) {
-            rotulo(ctx, 'mínimo LOCAL', px(bolaA.x) - 44, py(fx(bolaA.x)) + 30, cores.verm, 'bold 13px Arial');
-            rotulo(ctx, 'mínimo GLOBAL', px(bolaB.x) - 46, py(fx(bolaB.x)) + 30, cores.verde, 'bold 13px Arial');
+            rotulo(ctx, 'mínimo LOCAL  f = +0,37', px(bolaA.x) - 60, py(fx(bolaA.x)) + 30, cores.verm, 'bold 13px Arial');
+            rotulo(ctx, 'mínimo GLOBAL  f = −0,63', px(bolaB.x) - 64, py(fx(bolaB.x)) + 34, cores.verde, 'bold 13px Arial');
             rotulo(ctx, 'Mesmo algoritmo, mesma função — respostas diferentes.',
                    px(3.2), 40, '#444', 'italic 14px Arial');
         }
