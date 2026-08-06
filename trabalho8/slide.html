@@ -24,8 +24,19 @@
             --grid-color: #f0f0f0;
         }
         .reveal h1, .reveal h2 { color: var(--ufpr-blue); font-weight: 800; text-transform: uppercase; }
-        .reveal h2 { border-bottom: 3px solid var(--ufpr-blue); display: inline-block; padding-bottom: 5px; margin-bottom: 20px; }
-        .reveal section { text-align: left; padding: 20px; }
+        /* Cabecalho compacto: o tema traz margem/line-height generosos que
+           desperdicavam a faixa entre o titulo e o primeiro paragrafo. */
+        .reveal h2 {
+            border-bottom: 3px solid var(--ufpr-blue);
+            display: inline-block;
+            padding-bottom: 3px;
+            margin: 0 0 10px;
+            line-height: 1.1;
+            font-size: 1.35em;
+        }
+        .reveal section { text-align: left; padding: 8px 20px; }
+        /* Primeiro elemento depois do titulo nao precisa de margem propria */
+        .reveal section > h2 + * { margin-top: 0; }
 
         .reveal section p { margin: 8px 0; }
         .reveal section ul, .reveal section ol { margin: 8px 0; }
@@ -160,6 +171,15 @@
         /* Esconde o botao na propria impressao/PDF */
         @media print { #btnPdf { display: none !important; } }
 
+        /* Com center:false o conteudo sobe para o topo. Capa e encerramento
+           voltam a ser centralizados verticalmente via .slide-centro. */
+        .reveal .slides section.slide-centro {
+            height: 100%;
+            display: flex !important;
+            flex-direction: column;
+            justify-content: center;
+        }
+
         /* Numero do slide */
         .reveal .slide-number {
             background: var(--ufpr-blue);
@@ -181,7 +201,7 @@
     <div class="slides">
 
         <!-- SLIDE 1: CAPA -->
-        <section style="text-align: center;">
+        <section class="slide-centro" style="text-align: center;">
             <h1 style="font-size: 2.1em;">O Solver <code style="color:#b03060">fmincon</code> no MATLAB</h1>
             <h2 style="border:none; color: #555; font-size:1.1em;">Otimização Contínua Determinística </h2>
             <div style="margin-top: 70px;">
@@ -338,24 +358,46 @@
         <!-- SLIDE 9: TRUST REGION ANIMADO -->
         <section class="compact">
             <h2>trust-region: Até Onde Confio?</h2>
-            <div class="two-col">
-                <div class="col-text" style="flex:1;">
-                    <p>A série de Taylor só é boa <strong>perto</strong> do ponto atual. Então define-se um raio $\Delta$ — a <span class="highlight">região de confiança</span> — e só se aceita passo dentro dela:</p>
-                    <div class="formula-box small-text">
-                        $\min_{d} \; f(x_k) + \nabla f^\top d + \tfrac{1}{2}d^\top H d$ <br>
-                        sujeito a $\;\lVert d \rVert \le \Delta_k$
-                    </div>
-                    <ul>
-                        <li>O modelo <strong>acertou</strong> a previsão → <span style="color:var(--math-green)"><strong>aumenta $\Delta$</strong></span> (confio mais, passo maior).</li>
-                        <li>O modelo <strong>errou</strong> → <span style="color:var(--math-red)"><strong>reduz $\Delta$</strong></span> e rejeita o passo.</li>
-                        <li>Contraste com <em>line search</em>: aqui escolhe-se primeiro o <strong>tamanho</strong>, depois a direção.</li>
-                    </ul>
-                </div>
-                <div class="col-img" style="flex:1.05;">
-                    <div class="canvas-container">
-                        <canvas id="cvTrust" width="460" height="400"></canvas>
+            <p style="margin:0 0 8px;">A cada iteração, o algoritmo substitui $f(x)$ por uma <strong>aproximação quadrática local</strong>. Ela só é confiável <span class="highlight">perto</span> de $x_k$ — por isso o passo $p$ fica limitado a uma região de raio $\Delta_k$:</p>
+            <div class="two-col" style="gap:22px; align-items:flex-start; margin-top:2px;">
+                <div class="col-img" style="flex:0 0 38%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvTrust" width="420" height="300"></canvas>
                     </div>
                     <button class="anim-ctrl" data-anim="trust">▶ Repetir animação</button>
+                    <p class="small-text" style="text-align:center; margin-top:2px;">O círculo é $\Delta_k$ · <span style="color:var(--math-green)">verde</span> aceito · <span style="color:var(--math-red)">vermelho</span> rejeitado</p>
+                </div>
+                <div class="col-text" style="flex:1;">
+                    <div class="formula-box" style="margin:0 0 8px; text-align:center;">
+                        $\lVert p \rVert \le \Delta_k$
+                    </div>
+                    <p style="margin:0 0 6px;">Depois do passo, o algoritmo <strong>compara o que foi prometido com o que aconteceu</strong>:</p>
+                    <div class="formula-box" style="margin:0 0 8px; text-align:center;">
+                        $\rho_k = \dfrac{\text{melhora real em } f}{\text{melhora prevista pelo modelo}}$
+                    </div>
+                    <table class="numeric-example" style="font-size:0.62em; margin-top:0;">
+                        <tr>
+                            <th style="width:22%">$\rho_k$</th>
+                            <th style="width:34%">Leitura</th>
+                            <th>Ação</th>
+                        </tr>
+                        <tr>
+                            <td><strong>$\approx 1$</strong></td>
+                            <td class="left">Modelo previu bem</td>
+                            <td class="left" style="color:var(--math-green)"><strong>Aceita</strong> o passo e pode <strong>aumentar $\Delta_k$</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>pequeno</strong></td>
+                            <td class="left">Modelo pouco preciso</td>
+                            <td class="left" style="color:#b9770e"><strong>Reduz $\Delta_k$</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>$< 0$</strong></td>
+                            <td class="left">A função <em>piorou</em></td>
+                            <td class="left" style="color:var(--math-red)"><strong>Rejeita</strong> o passo e <strong>encolhe</strong> a região</td>
+                        </tr>
+                    </table>
+                    <p class="small-text" style="margin:8px 0 0;">O raio $\Delta_k$ representa <strong>até onde o algoritmo confia no seu modelo quadrático</strong> — e é reajustado a cada iteração.</p>
                 </div>
             </div>
         </section>
@@ -415,7 +457,7 @@ x = fmincon(problem);
                 <tr><td><code>grad</code> / <code>hessian</code></td><td class="left">Gradiente e matriz Hessiana avaliados na solução.</td></tr>
             </table>
             <div class="formula-box small-text" style="margin-top:12px;">
-                💡 <strong>Leitura de engenheiro:</strong> $\lambda_i$ é o <strong>preço-sombra</strong> da restrição $i$ — quanto $f$ melhoraria se aquela restrição fosse afrouxada em uma unidade. $\lambda_i = 0$ significa restrição <strong>inativa</strong> (não está "encostando" na solução).
+                💡 <strong></strong> $\lambda_i$ é o <strong>preço-sombra</strong> da restrição $i$ — quanto $f$ melhoraria se aquela restrição fosse afrouxada em uma unidade. $\lambda_i = 0$ significa restrição <strong>inativa</strong> (não está "encostando" na solução).
             </div>
         </section>
 
@@ -601,7 +643,7 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
         </section>
 
         <!-- SLIDE 21: ENCERRAMENTO -->
-        <section style="text-align:center;">
+        <section class="slide-centro" style="text-align:center;">
             <h1 style="font-size:2.4em; border:none;">Dúvidas?</h1>
             <p style="font-size:1.1em; color:#555;">Agradecemos pela atenção!</p>
             <div style="margin-top:60px;">
@@ -617,7 +659,7 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
 <script>
     Reveal.initialize({
         hash: true,
-        center: true,
+        center: false,        // conteudo alinhado ao topo (nao centralizado)
         transition: 'slide',
         slideNumber: 'c/t',   // numero do slide atual / total (ex.: 3/9)
         width: 1100,          // area de conteudo mais larga
@@ -1182,8 +1224,8 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
 
         // sequencia de passos: raio, aceito/rejeitado
         const passos = [
-            { p:[-3.4, 2.4],  d:1.05, ok:true  },
-            { p:[-2.3, 1.5],  d:1.45, ok:true  },
+            { p:[-2.9, 1.9],  d:0.95, ok:true  },
+            { p:[-2.1, 1.4],  d:1.35, ok:true  },
             { p:[-0.9, 0.8],  d:1.95, ok:false },   // modelo errou: encolhe
             { p:[-0.9, 0.8],  d:0.95, ok:true  },
             { p:[-0.15, 0.25],d:1.25, ok:true  },
