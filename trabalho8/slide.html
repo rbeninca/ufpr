@@ -79,6 +79,33 @@
         table.numeric-example th { background: var(--ufpr-blue); color: white; padding: 8px; }
         table.numeric-example td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         table.numeric-example td.left { text-align: left; }
+        /* Coluna de agrupamento (rowspan): rotulo na vertical, economiza largura */
+        table.numeric-example td.grupo {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-size: 0.92em;
+            padding: 4px 2px;
+        }
+        table.numeric-example td.grupo-sol   { background: #eaf1f9; color: var(--ufpr-blue); }
+        table.numeric-example td.grupo-sobre { background: #f3f0e6; color: #8a6d3b; }
+
+        /* Tabela do mu (slide 9): linha em execucao destacada pela animacao */
+        table.tab-mu tr.linha-final td { background: #eaf7ee; }
+        table.tab-mu tr[data-mu] td { transition: background 0.25s, color 0.25s; }
+        table.tab-mu tr.ativa td {
+            background: var(--math-gold) !important;
+            color: #fff; font-weight: 700;
+            box-shadow: inset 0 0 0 1px #d68910;
+        }
+        table.tab-mu tr.ativa td:first-child::before {
+            content: "▶ "; font-size: 0.9em;
+        }
+        /* Linhas ainda nao alcancadas ficam esmaecidas */
+        table.tab-mu tr[data-mu].futura td { opacity: 0.35; }
         table.numeric-example code { color: #b03060; font-size: 0.95em; }
 
         /* Layout de duas colunas (texto + desenho) */
@@ -343,6 +370,69 @@
             </div>
         </section>
 
+        <!-- SLIDE 7b: BARREIRA EM 1D — CONSTRUCAO PASSO A PASSO -->
+        <section class="compact">
+            <h2>A Barreira em um Exemplo Simples</h2>
+            <div class="two-col" style="gap:18px; align-items:flex-start; margin-top:2px;">
+                <div class="col-text" style="flex:0 0 34%; font-size:0.95em;">
+                    <div class="formula-box" style="margin:0 0 6px; padding:8px 12px;">
+                        $\min\; f(x) = (x-3)^2$ <br>
+                        sujeito a $\; x \le 2$ &nbsp;<span class="small-text">isto é, $c(x)=x-2\le 0$</span>
+                    </div>
+                    <p style="margin:0 0 8px;">Sem a restrição a resposta seria $x=3$ — mas é <span style="color:var(--math-red)"><strong>proibido</strong></span>. Veja a barreira nascer:</p>
+                    <ol style="margin:0 0 8px; padding-left:20px; font-size:0.92em;">
+                        <li>só $f(x)$: o mínimo cai <strong>fora</strong>;</li>
+                        <li>soma-se $-\mu\ln(2-x)$;</li>
+                        <li>a soma $B$ tem mínimo <strong>dentro</strong>.</li>
+                    </ol>
+                    <div class="formula-box small-text" style="margin:0; padding:8px 12px;">
+                        Perto de $x=2$: &nbsp;$\ln(2-x) \to -\infty$, <br>logo $-\mu\ln(2-x) \to +\infty$. <br>
+                        <strong>O muro se levanta sozinho.</strong>
+                    </div>
+                </div>
+                <div class="col-img" style="flex:1;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvBarrier1D" width="600" height="330"></canvas>
+                    </div>
+                    <div style="text-align:center; margin-top:4px;">
+                        <button class="anim-ctrl" style="display:inline-block; margin:0 3px;" data-etapa="1">1 · só f(x)</button>
+                        <button class="anim-ctrl" style="display:inline-block; margin:0 3px;" data-etapa="2">2 · + barreira</button>
+                        <button class="anim-ctrl" style="display:inline-block; margin:0 3px;" data-etapa="3">3 · soma B</button>
+                    </div>
+                    <p class="small-text" style="text-align:center; margin:4px 0 0;">$B(x,\mu) = \underbrace{(x-3)^2}_{f(x)} \underbrace{-\;\mu\ln(2-x)}_{\text{barreira}}$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7c: SEQUENCIA DE MU -->
+        <section class="compact">
+            <h2>Reduzindo $\mu$: o Caminho até a Fronteira</h2>
+            <p style="margin:0 0 6px;">Resolver <strong>uma vez</strong> não basta: com $\mu$ grande o muro é grosso e empurra a solução para longe da borda. Então resolve-se <strong>várias vezes</strong>, diminuindo $\mu$:</p>
+            <div class="two-col" style="gap:20px; align-items:flex-start;">
+                <div class="col-img" style="flex:0 0 48%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvBarrierMu" width="520" height="330"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="barrierMu">▶ Repetir animação</button>
+                </div>
+                <div class="col-text" style="flex:1;">
+                    <table class="numeric-example tab-mu" style="font-size:0.62em; margin-top:0;">
+                        <tr><th>$\mu$</th><th>$x^*(\mu)$</th><th>$f(x^*)$</th><th>folga $2-x$</th></tr>
+                        <tr data-mu="0"><td>4,00</td>  <td>1,000</td><td>4,000</td><td>1,000</td></tr>
+                        <tr data-mu="1"><td>1,00</td>  <td>1,634</td><td>1,866</td><td>0,366</td></tr>
+                        <tr data-mu="2"><td>0,25</td>  <td>1,888</td><td>1,237</td><td>0,112</td></tr>
+                        <tr data-mu="3"><td>0,05</td>  <td>1,976</td><td>1,049</td><td>0,024</td></tr>
+                        <tr data-mu="4"><td>0,01</td>  <td>1,995</td><td>1,010</td><td>0,005</td></tr>
+                        <tr data-mu="5" class="linha-final"><td><strong>→ 0</strong></td><td><strong>2,000</strong></td><td><strong>1,000</strong></td><td><strong>0</strong></td></tr>
+                    </table>
+                    <p class="small-text" style="margin:8px 0 0;">Cada linha é <strong>um problema sem restrição</strong> resolvido por Newton. A solução de um vira o ponto de partida do seguinte — por isso a sequência é rápida.</p>
+                    <div class="formula-box small-text" style="margin:8px 0 0;">
+                        A folga <strong>nunca chega a zero</strong> enquanto $\mu > 0$: o ponto fica sempre <strong>estritamente dentro</strong>. Só no limite $\mu \to 0$ ele encosta em $x^*=2$ — o verdadeiro ótimo restrito.
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- SLIDE 8: SQP ANIMADO -->
         <section class="compact">
             <h2>SQP: Parábola a Cada Passo</h2>
@@ -447,22 +537,53 @@ x = fmincon(problem);
         <!-- SLIDE 12: PARAMETROS DE SAIDA -->
         <section class="compact">
             <h2>Parâmetros de Saída</h2>
-            <table class="numeric-example" style="font-size:0.68em;">
-                <tr><th style="width:20%">Variável</th><th>Significado do retorno</th></tr>
-                <tr><td><code>x</code></td>       <td class="left">Vetor com a <strong>solução ótima</strong> encontrada (o mínimo).</td></tr>
-                <tr><td><code>fval</code></td>    <td class="left">Valor escalar da função objetivo avaliada em <code>x</code>.</td></tr>
-                <tr><td><code>exitflag</code></td><td class="left">Inteiro que diz <strong>por que parou</strong>: <span style="color:var(--math-green)"><strong>1</strong> = convergiu</span> · <span style="color:var(--math-gold)"><strong>0</strong> = estourou o limite de iterações</span> · <span style="color:var(--math-red)"><strong>-2</strong> = inviável</span>.</td></tr>
-                <tr><td><code>output</code></td>  <td class="left">Estrutura com informações do processo: nº de iterações, algoritmo usado, avaliações de $f$.</td></tr>
-                <tr><td><code>lambda</code></td>  <td class="left">Multiplicadores de <strong>Lagrange</strong> no ótimo, por restrição.</td></tr>
-                <tr><td><code>grad</code> / <code>hessian</code></td><td class="left">Gradiente e matriz Hessiana avaliados na solução.</td></tr>
+            <table class="numeric-example" style="font-size:0.66em; margin-top:4px;">
+                <tr>
+                    <th style="width:5%"></th>
+                    <th style="width:14%">Variável</th>
+                    <th style="width:28%">O que é</th>
+                    <th>Para que serve na prática</th>
+                </tr>
+                <tr>
+                    <td rowspan="3" class="grupo grupo-sol">A solução</td>
+                    <td><code>x</code></td>
+                    <td class="left">O <strong>ponto ótimo</strong> encontrado (vetor de projeto).</td>
+                    <td class="left">É a resposta: os valores das variáveis que você vai usar.</td>
+                </tr>
+                <tr>
+                    <td><code>fval</code></td>
+                    <td class="left">O <strong>valor de $f$</strong> nesse ponto.</td>
+                    <td class="left">O desempenho atingido — massa, custo, energia.</td>
+                </tr>
+                <tr>
+                    <td><code>exitflag</code></td>
+                    <td class="left"><strong>Por que o algoritmo parou.</strong></td>
+                    <td class="left"><span style="color:var(--math-green)"><strong>1</strong> convergiu</span> · <span style="color:var(--math-gold)"><strong>0</strong> acabaram as iterações</span> · <span style="color:var(--math-red)"><strong>−2</strong> inviável</span>. <strong>Parar não é convergir.</strong></td>
+                </tr>
+                <tr>
+                    <td rowspan="3" class="grupo grupo-sobre">Sobre a solução</td>
+                    <td><code>output</code></td>
+                    <td class="left"><strong>Diagnóstico</strong>: iterações, avaliações de $f$, algoritmo.</td>
+                    <td class="left">Mostra o <em>custo</em> da busca. Muitas avaliações → forneça o gradiente.</td>
+                </tr>
+                <tr>
+                    <td><code>lambda</code></td>
+                    <td class="left">Estrutura com multiplicadores de lagrange, Um número <strong>por restrição</strong>: o quanto ela <strong>influenciou</strong> a solução.</td>
+                    <td class="left">Diz <strong>quais restrições prendem</strong> o projeto (veja abaixo).</td>
+                </tr>
+                <tr>
+                    <td><code>grad</code> / <code>hessian</code></td>
+                    <td class="left"><strong>Inclinação</strong> e <strong>curvatura</strong> de $f$ na solução.</td>
+                    <td class="left">$\nabla f \approx 0$ confirma o ótimo; a curvatura diz se ele é <strong>agudo</strong> ou <strong>plano</strong>.</td>
+                </tr>
             </table>
-            <div class="formula-box small-text" style="margin-top:12px;">
-                💡 <strong></strong> $\lambda_i$ é o <strong>preço-sombra</strong> da restrição $i$ — quanto $f$ melhoraria se aquela restrição fosse afrouxada em uma unidade. $\lambda_i = 0$ significa restrição <strong>inativa</strong> (não está "encostando" na solução).
+            <div class="formula-box small-text" style="margin-top:10px; display:none;">
+                <strong>Entendendo o <code>lambda</code>:</strong> minimizar o <strong>custo</strong> de uma peça com a restrição <em>“massa $\le$ 5 kg”</em>. Se a solução sai com <strong>exatamente 5 kg</strong>, a restrição <strong>está prendendo</strong> o projeto → $\lambda > 0$, e seu valor diz <strong>quanto o custo cairia</strong> se fosse permitido 6 kg. Se sai com 3 kg, o limite não atrapalhou → <span class="highlight">$\lambda = 0$</span>. Em resumo: $\lambda$ mostra <strong>onde vale a pena negociar o requisito</strong>.
             </div>
         </section>
 
         <!-- SLIDE 13: RESTRICOES ATIVAS (ANIMADO) -->
-        <section class="compact">
+        <section class="compact  " style="display: none;">
             <h2>Restrição Ativa e Multiplicadores</h2>
             <p>Na prática, o ótimo restrito quase sempre fica <strong>encostado na fronteira</strong>. Ali o gradiente de $f$ e o da restrição ficam <span class="highlight">paralelos</span> — é exatamente o que dizem as condições de KKT:</p>
             <div class="two-col">
@@ -1133,6 +1254,213 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
     });
 
     /* =======================================================================
+       FIGURA 4b — Slide 7b: barreira em 1D, construida por etapas
+       f(x) = (x-3)^2  sujeito a  x <= 2
+       etapa 1: so f  ·  etapa 2: + barreira  ·  etapa 3: soma B
+       ======================================================================= */
+    let etapaBarreira = 3;          // etapa exibida (3 = figura completa)
+
+    registrar('barrier1d', 'cvBarrier1D', 1400, function (t) {
+        const a = ANIM.barrier1d, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const et = etapaBarreira;
+        const mu = 1.0;
+
+        const f  = (x) => (x-3)*(x-3);
+        const bar= (x) => -mu*Math.log(2-x);          // so vale para x < 2
+        const B  = (x) => f(x) + bar(x);
+
+        const dx0 = -0.3, dx1 = 3.6, vy0 = -0.5, vy1 = 7.5;
+        const px = (x) => 52 + (x-dx0)/(dx1-dx0)*(w-80);
+        const py = (v) => h - 40 - (v-vy0)/(vy1-vy0)*(h-70);
+
+        grade(ctx, w, h, 40);
+
+        // regiao proibida x > 2
+        ctx.fillStyle = 'rgba(231,76,60,0.07)';
+        ctx.fillRect(px(2), 8, px(dx1)-px(2), h-48);
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(px(2), 8); ctx.lineTo(px(2), h-40); ctx.stroke();
+        rotulo(ctx, 'x = 2  (fronteira)', px(2)+6, 22, cores.verm, 'bold 12px Arial');
+        rotulo(ctx, 'proibido', px(2)+6, 40, '#c0392b', '11px Arial');
+
+        // eixos
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(44, h-40); ctx.lineTo(w-18, h-40); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(44, 12); ctx.lineTo(44, h-40); ctx.stroke();
+        texto(ctx, 'x', w-16, h-26, '#666', 'italic 13px Arial');
+
+        const curva = (fn, cor, lw, dash, lim) => {
+            ctx.strokeStyle = cor; ctx.lineWidth = lw;
+            if (dash) ctx.setLineDash(dash);
+            ctx.beginPath();
+            let ini = true;
+            for (let x = dx0; x <= (lim !== undefined ? lim : dx1); x += 0.005) {
+                const v = fn(x);
+                if (!isFinite(v) || v < vy0 - 1 || v > vy1 + 3) { ini = true; continue; }
+                const X = px(x), Y = py(v);
+                ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+            }
+            ctx.stroke(); ctx.setLineDash([]);
+        };
+
+        // --- etapa 1: apenas f(x) ---
+        curva(f, cores.azul, 2.8);
+        rotulo(ctx, 'f(x) = (x−3)²', px(2.55), py(f(2.75))-10, cores.azul, 'bold 13px Arial');
+
+        // minimo irrestrito em x=3 (fora da regiao viavel)
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(px(3)-6, py(0)-6); ctx.lineTo(px(3)+6, py(0)+6);
+        ctx.moveTo(px(3)+6, py(0)-6); ctx.lineTo(px(3)-6, py(0)+6); ctx.stroke();
+        rotulo(ctx, 'mín. de f: x=3', px(3)-30, py(0)+24, cores.cinza, '11px Arial');
+        rotulo(ctx, 'INVIÁVEL', px(3)-16, py(0)+40, cores.verm, 'bold 11px Arial');
+
+        // --- etapa 2: a barreira sozinha ---
+        if (et >= 2) {
+            const tt = (et === 2) ? suave(t) : 1;      // anima so quando entra
+            curva((x) => bar(x)*tt, cores.ouro, 2.4, [7,4], 1.995);
+            rotulo(ctx, '−μ ln(2−x)', px(0.15), py(bar(1.1))+4, '#b9770e', 'bold 13px Arial');
+            rotulo(ctx, 'sobe ao infinito', px(1.30), py(5.4), '#b9770e', '11px Arial');
+            rotulo(ctx, 'junto à fronteira', px(1.30), py(5.0), '#b9770e', '11px Arial');
+        }
+
+        // --- etapa 3: a soma B = f + barreira ---
+        if (et >= 3) {
+            const tt = suave(t);
+            // desenha B progressivamente da esquerda para a direita
+            ctx.strokeStyle = cores.verde; ctx.lineWidth = 3;
+            ctx.beginPath();
+            let ini = true;
+            const xLim = dx0 + tt*(1.995 - dx0);
+            for (let x = dx0; x <= xLim; x += 0.005) {
+                const v = B(x);
+                if (!isFinite(v) || v > vy1 + 3) { ini = true; continue; }
+                const X = px(x), Y = py(v);
+                ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+            }
+            ctx.stroke();
+            rotulo(ctx, 'B(x,μ) = f + barreira', px(0.05), py(6.6), '#1e7e44', 'bold 13px Arial');
+
+            // minimo de B para mu=1: x = 1.634
+            if (tt > 0.92) {
+                const xm = 1.634;
+                ponto(ctx, px(xm), py(B(xm)), cores.verde, 7);
+                ctx.strokeStyle = '#1e7e44'; ctx.lineWidth = 1.4; ctx.setLineDash([4,3]);
+                ctx.beginPath(); ctx.moveTo(px(xm), py(B(xm))); ctx.lineTo(px(xm), h-40); ctx.stroke();
+                ctx.setLineDash([]);
+                rotulo(ctx, 'mín. de B: x ≈ 1,63', px(xm)-52, py(B(xm))-14, '#1e7e44', 'bold 12px Arial');
+                rotulo(ctx, 'dentro da zona viável ✓', px(xm)-56, h-22, '#1e7e44', 'bold 11px Arial');
+            }
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 4c — Slide 7c: familia de curvas B(x,mu) para mu decrescente
+       ======================================================================= */
+    // Marca na tabela do slide 9 a linha correspondente ao mu em execucao.
+    // idx = -1 limpa; idx = mus.length marca a linha final (mu -> 0).
+    function marcarLinhaMu(idx) {
+        document.querySelectorAll('table.tab-mu tr[data-mu]').forEach(tr => {
+            const i = parseInt(tr.dataset.mu, 10);
+            tr.classList.toggle('ativa', i === idx);
+            tr.classList.toggle('futura', idx >= 0 && i > idx);
+        });
+    }
+
+    registrar('barrierMu', 'cvBarrierMu', 9000, function (t) {
+        const a = ANIM.barrierMu, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        const f = (x) => (x-3)*(x-3);
+        const B = (x, mu) => f(x) - mu*Math.log(2-x);
+        // minimo analitico de B: raiz de 2x^2-10x+12-mu=0 menor que 2
+        const xEstrela = (mu) => (10 - Math.sqrt(100 - 8*(12-mu)))/4;
+
+        const mus = [4, 1, 0.25, 0.05, 0.01];
+        const dx0 = 0.2, dx1 = 2.45, vy0 = 0.2, vy1 = 6.5;
+        const px = (x) => 46 + (x-dx0)/(dx1-dx0)*(w-70);
+        const py = (v) => h - 38 - (v-vy0)/(vy1-vy0)*(h-64);
+
+        grade(ctx, w, h, 40);
+
+        // regiao proibida
+        ctx.fillStyle = 'rgba(231,76,60,0.07)';
+        ctx.fillRect(px(2), 8, px(dx1)-px(2), h-46);
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(px(2), 8); ctx.lineTo(px(2), h-38); ctx.stroke();
+        rotulo(ctx, 'x = 2', px(2)+6, 20, cores.verm, 'bold 12px Arial');
+
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(40, h-38); ctx.lineTo(w-16, h-38); ctx.stroke();
+
+        // f(x) de referencia, tracejada
+        ctx.strokeStyle = '#9fb0c4'; ctx.lineWidth = 1.6; ctx.setLineDash([5,4]);
+        ctx.beginPath();
+        for (let x = dx0; x <= dx1; x += 0.01) {
+            const X = px(x), Y = py(f(x));
+            x === dx0 ? ctx.moveTo(X,Y) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+        rotulo(ctx, 'f(x)', px(2.1), py(f(2.15)), '#7f8c9b', 'bold 12px Arial');
+
+        // quantas curvas ja apareceram. Progresso LINEAR para que cada mu
+        // fique o mesmo tempo em cena e a marcacao na tabela acompanhe.
+        const prog = t * mus.length;
+        const tons = ['#f39c12', '#e08e0b', '#c98a1e', '#7fb069', '#27ae60'];
+
+        // destaca na tabela a linha do mu atual (ultima linha quando termina)
+        marcarLinhaMu(t >= 1 ? mus.length : Math.min(mus.length - 1, Math.floor(prog)));
+
+        mus.forEach((mu, i) => {
+            if (prog < i) return;
+            const alpha = Math.min(1, prog - i);
+            ctx.save();
+            ctx.globalAlpha = 0.35 + 0.65*alpha;
+            ctx.strokeStyle = tons[i]; ctx.lineWidth = i === mus.length-1 ? 3 : 2;
+            ctx.beginPath();
+            let ini = true;
+            for (let x = dx0; x <= 1.999; x += 0.004) {
+                const v = B(x, mu);
+                if (!isFinite(v) || v > vy1 + 2) { ini = true; continue; }
+                const X = px(x), Y = py(v);
+                ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // marca o minimo daquela curva
+            const xm = xEstrela(mu);
+            if (alpha > 0.6 && xm > dx0 && xm < 2) {
+                ponto(ctx, px(xm), py(B(xm, mu)), tons[i], 5);
+                if (i === 0 || i === mus.length-1) {
+                    rotulo(ctx, 'μ='+mu, px(xm)-14, py(B(xm,mu))-12, tons[i], 'bold 12px Arial');
+                }
+            }
+        });
+
+        // trilha dos minimos: caminho central
+        if (prog > 1) {
+            ctx.strokeStyle = cores.azul; ctx.lineWidth = 2; ctx.setLineDash([4,3]);
+            ctx.beginPath();
+            let ini = true;
+            mus.forEach((mu, i) => {
+                if (prog < i + 0.6) return;
+                const xm = xEstrela(mu);
+                const X = px(xm), Y = py(B(xm, mu));
+                ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+            });
+            ctx.stroke(); ctx.setLineDash([]);
+        }
+
+        // ponto otimo final x*=2
+        if (t > 0.93) {
+            ponto(ctx, px(2), py(1), cores.verde, 7);
+            rotulo(ctx, 'x* = 2', px(2)-58, py(1)-10, '#1e7e44', 'bold 13px Arial');
+            rotulo(ctx, 'f = 1', px(2)-52, py(1)+8, '#1e7e44', 'bold 12px Arial');
+        }
+        rotulo(ctx, 'μ diminui → o mínimo desliza até a fronteira', 52, h-12, cores.azul, 'bold 12px Arial');
+    });
+
+    /* =======================================================================
        FIGURA 5 — Slide 8: SQP, parabola local a cada iteracao
        ======================================================================= */
     registrar('sqp', 'cvSqp', 3600, function (t) {
@@ -1555,10 +1883,12 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
        ======================================================================= */
     const SLIDE_ANIM = {
         cvIntro: 'intro', cvLocal: 'local', cvZigzag: 'zigzag', cvBarrier: 'barrier',
+        cvBarrier1D: 'barrier1d', cvBarrierMu: 'barrierMu',
         cvSqp: 'sqp', cvTrust: 'trust', cvKkt: 'kkt', cvGrad: 'grad',
         cvStop: 'stop', cvRosen: 'rosen'
     };
 
+    etapaBarreira = 3;              // no quadro estatico/PDF, figura completa
     Object.values(SLIDE_ANIM).forEach(quadroFinal);
 
     const modoPdf = window.location.search.indexOf('print-pdf') !== -1;
@@ -1566,6 +1896,8 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
     function animarSlideAtual(slide) {
         if (!slide || modoPdf) return;
         slide.querySelectorAll('canvas').forEach(cv => {
+            // ao entrar no slide da barreira 1D, comeca da etapa 1
+            if (cv.id === 'cvBarrier1D') etapaBarreira = 1;
             const nome = SLIDE_ANIM[cv.id];
             if (nome && ANIM[nome].dur > 1) tocar(nome);
         });
@@ -1575,10 +1907,19 @@ opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm
     Reveal.on('slidechanged', (e) => animarSlideAtual(e.currentSlide));
 
     // botoes "repetir animacao"
-    document.querySelectorAll('.anim-ctrl').forEach(b => {
+    document.querySelectorAll('.anim-ctrl[data-anim]').forEach(b => {
         b.addEventListener('click', (ev) => {
             ev.stopPropagation();
             tocar(b.dataset.anim);
+        });
+    });
+
+    // botoes de etapa da barreira 1D (slide 7b)
+    document.querySelectorAll('.anim-ctrl[data-etapa]').forEach(b => {
+        b.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            etapaBarreira = parseInt(b.dataset.etapa, 10);
+            tocar('barrier1d');
         });
     });
 </script>
