@@ -19,8 +19,19 @@
     p { margin-bottom: 12px; line-height: 1.6; text-align: justify; font-size: 11pt; }
     ul { list-style-type: disc; margin-left: 20px; margin-bottom: 12px; font-size: 11pt; }
 
-    .link-card { display: block; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; background: #f8fafc; color: #0f172a; text-decoration: none; transition: background .15s ease, border-color .15s ease, transform .08s ease; }
-    .link-card:hover { background: #eef2ff; border-color: #93c5fd; transform: translateY(-1px); }
+    .link-card { display: block; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; background: #f8fafc; color: #0f172a; text-decoration: none; transition: background .15s ease, border-color .15s ease; font-size: 11pt; }
+    .link-card:hover { background: #eef2ff; border-color: #93c5fd; }
+    .link-card code { font-family: 'JetBrains Mono', monospace; font-size: .95em; color: #b03060; }
+
+    /* Botoes de documento dentro de cada cartao */
+    .doc-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .doc-links a {
+      display: inline-block; font-size: 10pt; font-weight: 600; text-decoration: none;
+      color: #1d4ed8; background: #fff; border: 1px solid #bfdbfe;
+      border-radius: 6px; padding: 5px 12px;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
+    }
+    .doc-links a:hover { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
   </style>
 </head>
 <body>
@@ -36,18 +47,41 @@
     <section>
       <h2>Trabalhos</h2>
       <div class="grid grid-cols-1 gap-4">
-        <div>
-          <a class="link-card" href="./trabalho1/" title="Abrir Trabalho 1">
-            <strong>Trabalho 1</strong><br/>
-            Apresentação: Método de Nelder-Mead (Poliedro Flexível)
-          </a>
+
+        <div class="link-card">
+          <strong>Trabalho 1</strong><br/>
+          Método de Nelder-Mead (Poliedro Flexível)
+          <span class="doc-links">
+            <a href="./trabalho1/" title="Relatório do Trabalho 1">📄 Relatório</a>
+            <a href="./trabalho1/slide.html" title="Slides do Trabalho 1">🖥️ Slides</a>
+          </span>
         </div>
-        <div>
-          <a class="link-card" href="./trabalho2/" title="Abrir Trabalho 2">
-            <strong>Trabalho 2</strong><br/>
-            Cálculo numérico do Gradiente e da Matriz Hessiana em MATLAB
-          </a>
+
+        <div class="link-card">
+          <strong>Trabalho 2</strong><br/>
+          Cálculo numérico do Gradiente e da Matriz Hessiana em MATLAB
+          <span class="doc-links">
+            <a href="./trabalho2/" title="Relatório do Trabalho 2">📄 Relatório</a>
+          </span>
         </div>
+
+        <div class="link-card">
+          <strong>Trabalho 3</strong><br/>
+          Método da Dicotomia (Busca Unidimensional)
+          <span class="doc-links">
+            <a href="./trabalho3/" title="Relatório do Trabalho 3">📄 Relatório</a>
+            <a href="./trabalho3/slide.html" title="Slides do Trabalho 3">🖥️ Slides</a>
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Trabalho 8</strong><br/>
+          O Solver <code>fmincon</code> no MATLAB — Otimização Contínua Determinística
+          <span class="doc-links">
+            <a href="./trabalho8/slide.html" title="Slides do Trabalho 8">🖥️ Slides</a>
+          </span>
+        </div>
+
       </div>
     </section>
 
