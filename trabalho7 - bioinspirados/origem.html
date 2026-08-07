@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Infinite Rastrigin Horizon</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        #ui { position: absolute; top: 15px; left: 15px; color: white; font-family: sans-serif; 
+              background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <b>Ambiente Vasto (Procedural)</b><br>
+        • Milhares de árvores via InstancedMesh<br>
+        • Horizonte estendido (Far Plane: 20.000)
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { Sky } from 'three/addons/objects/Sky.js';
+
+        // --- PARÂMETROS DE ESCALA ---
+        const WORLD_SIZE = 2000; // Cenário 20x maior que o anterior
+        const TREE_COUNT = 5000; // Milhares de árvores
+        const PARAMS = {
+            A: 8, freq: 0.015, bowl: 0.005, lakeLevel: 4
+        };
+
+        function getRastriginHeight(x, z) {
+            const nx = x * PARAMS.freq;
+            const nz = z * PARAMS.freq;
+            const rastrigin = (PARAMS.A * 2) + 
+                (Math.pow(nx, 2) - PARAMS.A * Math.cos(2 * Math.PI * nx)) +
+                (Math.pow(nz, 2) - PARAMS.A * Math.cos(2 * Math.PI * nz));
+            const bowlEffect = (x*x + z*z) * PARAMS.bowl;
+            return (rastrigin + bowlEffect);
+        }
+
+        let scene, camera, renderer, mixer, clock, bird;
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+
+            // 1. CÂMERA DE LONGO ALCANCE (Far plane em 20.000)
+            camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1.0, 20000);
+            camera.position.set(200, 150, 400);
+
+            // 2. RENDERIZADOR COM LOGARITHMIC DEPTH BUFFER
+            // Isso evita o "Z-fighting" (piscados no horizonte) em distâncias gigantescas
+            renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            document.body.appendChild(renderer.domElement);
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.maxDistance = 1500; // Limita o zoom out para não sair do mundo
+            clock = new THREE.Clock();
+
+            // 3. CÉU ATMOSFÉRICO (Sky Shader)
+            const sky = new Sky();
+            sky.scale.setScalar(20000);
+            scene.add(sky);
+            
+            const sun = new THREE.Vector3();
+            const uniforms = sky.material.uniforms;
+            uniforms[ 'turbidity' ].value = 10;
+            uniforms[ 'rayleigh' ].value = 3;
+            uniforms[ 'mieCoefficient' ].value = 0.005;
+            uniforms[ 'mieDirectionalG' ].value = 0.7;
+
+            const phi = THREE.MathUtils.degToRad(88);
+            const theta = THREE.MathUtils.degToRad(180);
+            sun.setFromSphericalCoords( 1, phi, theta );
+            uniforms[ 'sunPosition' ].value.copy( sun );
+
+            // Neblina para suavizar o horizonte
+            scene.fog = new THREE.Fog(0x87CEEB, 100, 1800);
+
+            // Luz Solar
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.copy(sun).multiplyScalar(100);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.left = -1000;
+            dirLight.shadow.camera.right = 1000;
+            dirLight.shadow.camera.top = 1000;
+            dirLight.shadow.camera.bottom = -1000;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+            // 4. TERRENO GIGANTE
+            const terrainGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 150, 150);
+            const vertices = terrainGeo.attributes.position.array;
+            for (let i = 0; i < vertices.length; i += 3) {
+                vertices[i + 2] = getRastriginHeight(vertices[i], vertices[i + 1]);
+            }
+            terrainGeo.computeVertexNormals();
+            const terrain = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({ color: 0x2d4c1e }));
+            terrain.rotation.x = -Math.PI / 2;
+            terrain.receiveShadow = true;
+            scene.add(terrain);
+
+            // 5. ÁGUA AMPLIADA
+            const water = new THREE.Mesh(
+                new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
+                new THREE.MeshStandardMaterial({ color: 0x0033ff, transparent: true, opacity: 0.6 })
+            );
+            water.rotation.x = -Math.PI / 2;
+            water.position.y = PARAMS.lakeLevel;
+            scene.add(water);
+
+            // 6. INSTANCED MESH PARA ÁRVORES (Alta Performance)
+            // Renderiza 5000 árvores em um único comando de desenho (Draw Call)
+            const trunkGeo = new THREE.CylinderGeometry(1, 1.5, 10);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4b3621 });
+            const instancedTrees = new THREE.InstancedMesh(trunkGeo, trunkMat, TREE_COUNT);
+            
+            const dummy = new THREE.Object3D();
+            let added = 0;
+            for (let i = 0; i < TREE_COUNT; i++) {
+                const tx = (Math.random() - 0.5) * WORLD_SIZE;
+                const tz = (Math.random() - 0.5) * WORLD_SIZE;
+                const ty = getRastriginHeight(tx, tz);
+
+                if (ty > PARAMS.lakeLevel + 2) {
+                    dummy.position.set(tx, ty + 5, tz);
+                    dummy.scale.setScalar(Math.random() * 0.5 + 0.5);
+                    dummy.updateMatrix();
+                    instancedTrees.setMatrixAt(added++, dummy.matrix);
+                }
+            }
+            instancedTrees.instanceMatrix.needsUpdate = true;
+            instancedTrees.castShadow = true;
+            instancedTrees.receiveShadow = true;
+            scene.add(instancedTrees);
+
+            // 7. PÁSSARO (STORK)
+            const loader = new GLTFLoader();
+            loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Stork.glb', (gltf) => {
+                bird = gltf.scene;
+                bird.scale.set(0.2, 0.2, 0.2);
+                scene.add(bird);
+                mixer = new THREE.AnimationMixer(bird);
+                mixer.clipAction(gltf.animations[0]).play();
+            });
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const elapsed = clock.getElapsedTime();
+
+            if (mixer) mixer.update(delta);
+
+            if (bird) {
+                // Trajetória de voo muito mais ampla
+                const radius = 400;
+                bird.position.x = Math.sin(elapsed * 0.15) * radius;
+                bird.position.z = Math.cos(elapsed * 0.15) * radius;
+                bird.position.y = 80 + Math.sin(elapsed * 0.5) * 20;
+                bird.rotation.y = elapsed * 0.15 + Math.PI;
+            }
+
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

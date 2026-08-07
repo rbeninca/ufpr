@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PSO — Da Matemática à Metáfora</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --azul:#4da3ff; --verde:#2ee6a8; --verm:#ff5a6e; --ouro:#ffc857;
+  --roxo:#b07cff; --tinta:#e8eef7; --fraco:#8ba0bb;
+  --fundo:#070b12; --painel:rgba(10,16,26,.92); --borda:#1e2c40;
+}
+html,body{height:100%;overflow:hidden;background:var(--fundo);color:var(--tinta);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;}
+#cena{position:fixed;inset:0;}
+canvas{display:block;}
+
+/* ---------------- narrativa ---------------- */
+#narra{position:fixed;left:0;right:0;bottom:96px;text-align:center;pointer-events:none;
+  padding:0 8vw;z-index:10;}
+#titulo{font-size:clamp(22px,3.4vw,44px);font-weight:800;letter-spacing:-.02em;
+  opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease;
+  text-shadow:0 4px 30px rgba(0,0,0,.85);}
+#sub{font-size:clamp(13px,1.5vw,19px);color:var(--fraco);margin-top:10px;max-width:820px;
+  margin-left:auto;margin-right:auto;line-height:1.55;opacity:0;transform:translateY(10px);
+  transition:opacity .7s ease .12s,transform .7s ease .12s;text-shadow:0 2px 18px rgba(0,0,0,.9);}
+#narra.on #titulo,#narra.on #sub{opacity:1;transform:none;}
+
+/* ---------------- equação ---------------- */
+#eq{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:11;
+  background:var(--painel);border:1px solid var(--borda);border-radius:14px;
+  padding:18px 20px;min-width:290px;opacity:0;pointer-events:none;
+  transition:opacity .5s ease;backdrop-filter:blur(10px);}
+#eq.on{opacity:1;}
+#eq h4{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--fraco);
+  font-weight:700;margin-bottom:12px;}
+.termo{padding:7px 10px;border-radius:8px;margin:3px 0;font-size:15px;
+  border-left:3px solid transparent;transition:background .3s,border-color .3s,opacity .3s;opacity:.32;}
+.termo.on{opacity:1;background:rgba(255,255,255,.06);}
+.termo.iner.on{border-left-color:var(--azul);}
+.termo.cog.on{border-left-color:var(--verde);}
+.termo.soc.on{border-left-color:var(--verm);}
+.termo.res.on{border-left-color:var(--ouro);}
+.termo .rot{font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--fraco);display:block;margin-bottom:2px;}
+
+/* ---------------- controles ---------------- */
+#barra{position:fixed;left:0;right:0;bottom:0;height:70px;z-index:12;
+  background:linear-gradient(180deg,transparent,rgba(5,9,15,.94)35%);
+  display:flex;align-items:center;justify-content:center;gap:9px;padding:0 20px;}
+.bt{background:rgba(255,255,255,.07);border:1px solid var(--borda);color:var(--tinta);
+  border-radius:9px;padding:9px 17px;font:inherit;font-size:13px;font-weight:600;
+  cursor:pointer;transition:.18s;backdrop-filter:blur(6px);}
+.bt:hover{background:rgba(77,163,255,.22);border-color:var(--azul);}
+.bt:disabled{opacity:.3;cursor:default;}
+.bt.p{background:var(--azul);border-color:var(--azul);color:#04101f;font-weight:700;}
+.bt.p:hover{background:#6fb6ff;}
+
+/* trilha de cenas */
+#trilha{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:12;
+  display:flex;gap:6px;align-items:center;}
+.pt{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);
+  transition:.3s;cursor:pointer;}
+.pt.on{background:var(--azul);width:26px;border-radius:4px;}
+.pt.feito{background:rgba(77,163,255,.5);}
+
+/* ---------------- setup inicial ---------------- */
+#setup{position:fixed;inset:0;z-index:30;background:rgba(5,9,15,.96);
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(14px);}
+#setup.off{display:none;}
+.cartao{background:rgba(13,20,32,.96);border:1px solid var(--borda);border-radius:20px;
+  padding:38px 42px;max-width:560px;width:92%;box-shadow:0 30px 90px rgba(0,0,0,.6);}
+.cartao h1{font-size:27px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;}
+.cartao h1 span{color:var(--azul);}
+.cartao .lead{color:var(--fraco);font-size:14px;line-height:1.6;margin-bottom:26px;}
+.campo{margin-bottom:20px;}
+.campo label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--fraco);font-weight:700;margin-bottom:9px;}
+.fns{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;}
+.fn{background:rgba(255,255,255,.05);border:1px solid var(--borda);border-radius:10px;
+  padding:11px 9px;cursor:pointer;transition:.18s;text-align:center;}
+.fn:hover{border-color:var(--azul);background:rgba(77,163,255,.1);}
+.fn.on{border-color:var(--azul);background:rgba(77,163,255,.2);}
+.fn b{display:block;font-size:13px;font-weight:700;}
+.fn small{display:block;font-size:10px;color:var(--fraco);margin-top:3px;}
+.linha{display:flex;align-items:center;gap:13px;}
+.linha input[type=range]{flex:1;accent-color:var(--azul);cursor:pointer;}
+.linha output{min-width:38px;text-align:right;font-weight:800;color:var(--ouro);
+  font-variant-numeric:tabular-nums;}
+#comecar{width:100%;padding:14px;font-size:15px;margin-top:6px;}
+.nota{font-size:11.5px;color:var(--fraco);margin-top:16px;line-height:1.5;text-align:center;}
+
+/* ---------------- HUD ---------------- */
+#hud{position:fixed;left:22px;top:22px;z-index:11;background:var(--painel);
+  border:1px solid var(--borda);border-radius:12px;padding:13px 16px;font-size:12px;
+  opacity:0;transition:opacity .5s;backdrop-filter:blur(10px);min-width:172px;}
+#hud.on{opacity:1;}
+#hud .l{display:flex;justify-content:space-between;gap:16px;padding:3px 0;}
+#hud .l b{color:var(--fraco);font-weight:600;}
+#hud .l span{font-variant-numeric:tabular-nums;font-weight:700;}
+#hud .l span.d{color:var(--ouro);}
+
+/* placar da cena comparativa */
+/* logo abaixo do HUD: os dois convivem na cena comparativa */
+#placar{position:fixed;left:22px;top:186px;z-index:11;background:var(--painel);
+  border:1px solid var(--borda);border-radius:12px;padding:13px 16px;font-size:12.5px;
+  opacity:0;transition:opacity .5s;backdrop-filter:blur(10px);min-width:212px;
+  pointer-events:none;}
+#placar.on{opacity:1;}
+#placar h4{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--fraco);
+  font-weight:700;margin-bottom:9px;}
+#placar .l{display:flex;align-items:center;gap:8px;padding:3.5px 0;}
+#placar .l i{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+#placar .l b{font-weight:600;color:var(--tinta);flex:1;}
+#placar .l span{font-variant-numeric:tabular-nums;font-weight:800;color:var(--ouro);}
+#placar .obs{font-size:10px;color:var(--fraco);margin-top:8px;line-height:1.4;}
+
+/* separador e grupo de execução */
+.sep{width:1px;height:26px;background:var(--borda);margin:0 3px;}
+.grupo-exec{display:flex;gap:5px;align-items:center;}
+.bt.exec{padding:9px 13px;}
+#bPlay{min-width:44px;font-size:15px;line-height:1;}
+#bPlay.on{background:var(--verde);border-color:var(--verde);color:#04241a;}
+.bt.exec:disabled{opacity:.28;}
+
+/* controle de velocidade */
+.vel{display:flex;align-items:center;gap:8px;padding:0 8px;font-size:11px;color:var(--fraco);}
+.vel label{text-transform:uppercase;letter-spacing:.08em;font-weight:700;font-size:10px;}
+.vel input{width:96px;accent-color:var(--azul);cursor:pointer;}
+.vel output{min-width:34px;text-align:right;font-weight:800;color:var(--ouro);
+  font-variant-numeric:tabular-nums;}
+
+/* paineis de dados e codigo */
+#tabela,#matlab,#comparar{position:fixed;z-index:14;background:var(--painel);
+  border:1px solid var(--borda);border-radius:13px;backdrop-filter:blur(12px);
+  box-shadow:0 20px 60px rgba(0,0,0,.55);display:none;flex-direction:column;}
+#tabela.on,#matlab.on,#comparar.on{display:flex;}
+#comparar{left:50%;transform:translateX(-50%);bottom:86px;width:min(760px,88vw);max-height:56vh;}
+#comparar .corpo{overflow:auto;flex:1;}
+#tabComp{width:100%;border-collapse:collapse;font-size:11.5px;}
+#tabComp th{background:rgba(255,255,255,.05);padding:8px;text-align:left;
+  font-weight:700;position:sticky;top:0;}
+#tabComp th.pso{color:#4da3ff;} #tabComp th.ag{color:#ff9f43;} #tabComp th.gr{color:#b07cff;}
+#tabComp td{padding:6px 8px;border-top:1px solid rgba(255,255,255,.05);
+  vertical-align:top;line-height:1.45;}
+#tabComp td:first-child{color:var(--fraco);font-weight:600;white-space:nowrap;}
+#tabComp tr.num td{font-variant-numeric:tabular-nums;font-weight:700;}
+#tabComp tr.num td.vence{color:var(--verde);}
+#tabComp .ok{color:var(--verde);} #tabComp .nao{color:var(--verm);}
+#tabComp .meio{color:var(--ouro);}
+#tabela{left:22px;bottom:86px;width:min(620px,52vw);max-height:46vh;}
+#matlab{right:22px;bottom:86px;width:min(460px,40vw);max-height:60vh;}
+#tabela .cab,#matlab .cab,#comparar .cab{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--borda);font-size:12.5px;}
+.cab .fase{margin-left:auto;font-size:10.5px;color:var(--ouro);font-weight:700;
+  text-transform:uppercase;letter-spacing:.07em;}
+.cab .fechar{background:none;border:none;color:var(--fraco);cursor:pointer;font-size:15px;
+  padding:0 2px;line-height:1;}
+.cab .fechar:hover{color:var(--verm);}
+#tabela .corpo{overflow:auto;flex:1;}
+#tabela .rodape,#matlab .rodape,#comparar .rodape{padding:7px 14px;border-top:1px solid var(--borda);
+  font-size:10px;color:var(--fraco);}
+#tabDados{width:100%;border-collapse:collapse;font-size:11px;}
+#tabDados th{background:rgba(255,255,255,.05);color:var(--fraco);padding:6px 8px;
+  text-align:right;font-weight:700;position:sticky;top:0;white-space:nowrap;
+  transition:background .3s,color .3s;}
+#tabDados th.ativa{background:rgba(255,200,87,.18);color:var(--ouro);}
+#tabDados td{padding:4px 8px;text-align:right;border-top:1px solid rgba(255,255,255,.04);
+  font-variant-numeric:tabular-nums;transition:background .3s;}
+#tabDados td.ativa{background:rgba(255,200,87,.10);color:var(--ouro);font-weight:700;}
+#tabDados tr.melhor td{background:rgba(46,230,168,.10);}
+#tabDados tr.dest td{background:rgba(255,90,110,.12);}
+#tabDados td:first-child,#tabDados th:first-child{text-align:left;color:var(--fraco);}
+#matCod{margin:0;padding:12px 14px;overflow:auto;flex:1;font-size:11.5px;line-height:1.65;
+  font-family:'Consolas','Monaco',monospace;color:#c3d2e2;}
+#matCod .l{display:block;padding:1px 6px;border-radius:4px;border-left:2px solid transparent;
+  transition:background .3s,border-color .3s;white-space:pre;}
+#matCod .l.on{background:rgba(255,200,87,.14);border-left-color:var(--ouro);color:#fff;}
+#matCod .c{color:#6c8199;}
+#matCod .k{color:#6fb6ff;font-weight:700;}
+#matCod .n{color:#ffc857;}
+
+#legenda{position:fixed;right:26px;bottom:88px;z-index:11;font-size:11.5px;
+  background:var(--painel);border:1px solid var(--borda);border-radius:10px;padding:11px 14px;
+  opacity:0;transition:opacity .5s;backdrop-filter:blur(10px);}
+#legenda.on{opacity:1;}
+#legenda div{display:flex;align-items:center;gap:8px;padding:2.5px 0;}
+#legenda i{width:16px;height:3px;border-radius:2px;}
+
+#rotulo{position:fixed;z-index:11;font-size:11px;font-weight:700;pointer-events:none;
+  background:rgba(6,11,19,.9);border-radius:5px;padding:3px 7px;opacity:0;transition:opacity .3s;}
+.divisor{position:fixed;top:0;bottom:70px;left:50%;width:1px;background:linear-gradient(
+  180deg,transparent,rgba(77,163,255,.5),transparent);z-index:10;opacity:0;transition:opacity .8s;}
+.divisor.on{opacity:1;}
+.lado{position:fixed;top:64px;z-index:11;font-size:12px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;opacity:0;transition:opacity .8s;}
+.lado.on{opacity:1;}
+#ladoE{left:14%;color:var(--verde);}
+#ladoD{right:14%;color:var(--azul);}
+</style>
+</head>
+<body>
+
+<div id="cena"></div>
+
+<div id="hud">
+  <div class="l"><b>iteração</b><span id="hIt">0</span></div>
+  <div class="l"><b>fase</b><span id="hFase">—</span></div>
+  <div class="l"><b>melhor f</b><span id="hF" class="d">—</span></div>
+  <div class="l"><b>avaliações</b><span id="hAv">—</span></div>
+  <div class="l"><b>partículas</b><span id="hN">—</span></div>
+</div>
+
+<div id="legenda">
+  <div><i style="background:#4da3ff"></i> inércia — segue em frente</div>
+  <div><i style="background:#2ee6a8"></i> cognitivo — meu melhor</div>
+  <div><i style="background:#ff5a6e"></i> social — melhor do grupo</div>
+  <div><i style="background:#ffc857"></i> resultante</div>
+</div>
+
+<div id="placar">
+  <h4>Melhor valor encontrado</h4>
+</div>
+
+<div class="divisor" id="divisor"></div>
+<div class="lado" id="ladoE">metáfora</div>
+<div class="lado" id="ladoD">matemática</div>
+<div id="rotulo"></div>
+
+<div id="eq">
+  <h4>Atualização da velocidade</h4>
+  <div class="termo iner"><span class="rot">inércia</span>$w\,v_i$</div>
+  <div class="termo cog"><span class="rot">cognitivo — memória própria</span>$c_1 r_1 (p_i - x_i)$</div>
+  <div class="termo soc"><span class="rot">social — melhor do enxame</span>$c_2 r_2 (g - x_i)$</div>
+  <div class="termo res"><span class="rot">nova velocidade</span>$v_i \leftarrow$ soma</div>
+  <div class="termo res" style="margin-top:8px;"><span class="rot">nova posição</span>$x_i \leftarrow x_i + v_i$</div>
+</div>
+
+<div id="narra"><div id="titulo"></div><div id="sub"></div></div>
+<div id="trilha"></div>
+
+<div id="barra">
+  <button class="bt" id="bAnt">‹ Anterior</button>
+  <button class="bt p" id="bProx">Próxima cena ›</button>
+  <button class="bt" id="bRep">↻ Repetir</button>
+  <span class="sep"></span>
+  <span class="grupo-exec" id="grupoExec">
+    <button class="bt exec" id="bPlay" title="Espaço">▶</button>
+    <button class="bt exec" id="bFase" title="F — próxima fase do ciclo">⏭ fase</button>
+    <button class="bt exec" id="bIter" title="N — uma iteração completa">⏭⏭ iteração</button>
+  </span>
+  <span class="sep"></span>
+  <span class="vel">
+    <label for="vel">velocidade</label>
+    <input type="range" id="vel" min="0" max="5" step="1" value="2">
+    <output id="velV">1×</output>
+  </span>
+  <button class="bt" id="bTab">▦ Tabela</button>
+  <button class="bt" id="bMat">⌨ MATLAB</button>
+  <button class="bt" id="bComp">⚖ Comparar</button>
+  <button class="bt" id="bSetup">⚙ Trocar função</button>
+</div>
+
+<!-- painel: dados passo a passo -->
+<div id="tabela">
+  <div class="cab">
+    <b>Iteração <span id="tabIt">0</span></b>
+    <span class="fase" id="tabFase">—</span>
+    <button class="fechar" data-fecha="tabela">✕</button>
+  </div>
+  <div class="corpo"><table id="tabDados"><thead></thead><tbody></tbody></table></div>
+  <div class="rodape">Uma linha por partícula · a coluna <b>realçada</b> é a que a fase corrente calcula</div>
+</div>
+
+<!-- painel: quadro comparativo dos três métodos -->
+<div id="comparar">
+  <div class="cab">
+    <b>Como os três se comparam</b>
+    <span class="fase" id="compFn">—</span>
+    <button class="fechar" data-fecha="comparar">✕</button>
+  </div>
+  <div class="corpo">
+    <table id="tabComp">
+      <thead><tr>
+        <th>critério</th>
+        <th class="pso">PSO</th>
+        <th class="ag">Genético</th>
+        <th class="gr">Gradiente</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="rodape" id="compNota">—</div>
+</div>
+
+<!-- painel: código MATLAB acompanhando a execução -->
+<div id="matlab">
+  <div class="cab">
+    <b>PSO em MATLAB</b>
+    <span class="fase" id="matFase">executando…</span>
+    <button class="fechar" data-fecha="matlab">✕</button>
+  </div>
+  <pre id="matCod"></pre>
+  <div class="rodape">A linha <b>destacada</b> é a que corresponde à fase em execução na cena</div>
+</div>
+
+<div id="setup">
+  <div class="cartao">
+    <h1>PSO — da <span>matemática</span> à metáfora</h1>
+    <p class="lead">Uma jornada em 8 cenas: do espaço de soluções vazio até o bando de pássaros.
+       Cada partícula que você verá é uma solução real, calculada de verdade.</p>
+    <div class="campo">
+      <label>Função de teste</label>
+      <div class="fns" id="fns"></div>
+    </div>
+    <div class="campo">
+      <label>Número de partículas</label>
+      <div class="linha">
+        <input type="range" id="nPart" min="5" max="80" step="1" value="24">
+        <output id="nPartV">24</output>
+      </div>
+    </div>
+    <button class="bt p" id="comecar">▶ Começar a jornada</button>
+    <p class="nota"><b>←</b> <b>→</b> trocam de cena · <b>Espaço</b> executa/pausa ·
+       <b>F</b> avança uma fase · <b>N</b> uma iteração<br>
+       arraste para girar a câmera · scroll para zoom</p>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+ "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+// clone() simples de Object3D perde bones/skinning: o SkeletonUtils preserva
+import { clone as clonarComEsqueleto } from 'three/addons/utils/SkeletonUtils.js';
+
+/* ============================================================================
+   1. FUNÇÕES DE TESTE
+   A altura na cena usa compressão logarítmica: Rosenbrock vai de 0 a 3609,
+   e sem comprimir o vale (onde tudo acontece) viraria uma linha no chão.
+   ========================================================================== */
+const FUNCS = {
+  rosenbrock:{nome:'Rosenbrock', desc:'vale curvo',  lim:2.0,   otimo:[1,1],
+    f:(x,y)=>Math.pow(1-x,2)+100*Math.pow(y-x*x,2)},
+  rastrigin:{ nome:'Rastrigin',  desc:'muitos vales',lim:5.12,  otimo:[0,0],
+    f:(x,y)=>20+x*x+y*y-10*(Math.cos(2*Math.PI*x)+Math.cos(2*Math.PI*y))},
+  ackley:{    nome:'Ackley',     desc:'funil rugoso',lim:5.0,   otimo:[0,0],
+    f:(x,y)=>{const a=20,b=.2,c=2*Math.PI;
+      return -a*Math.exp(-b*Math.sqrt((x*x+y*y)/2))-Math.exp((Math.cos(c*x)+Math.cos(c*y))/2)+a+Math.E;}},
+  sphere:{    nome:'Sphere',     desc:'tigela simples',lim:5.0, otimo:[0,0],
+    f:(x,y)=>x*x+y*y},
+  himmelblau:{nome:'Himmelblau', desc:'4 ótimos',    lim:5.0,   otimo:[3,2],
+    f:(x,y)=>Math.pow(x*x+y-11,2)+Math.pow(x+y*y-7,2)},
+};
+
+/* ============================================================================
+   2. MOTOR PSO — cálculo real, nada de trajetória roteirizada
+   ========================================================================== */
+function criarRng(seed){
+  let a=seed>>>0;
+  return ()=>{a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};
+}
+class PSO{
+  constructor(fn,n,seed){
+    this.fn=fn; this.lim=fn.lim; this.rng=criarRng(seed);
+    this.W=0.72; this.C1=1.49; this.C2=1.49;
+    this.vmax=0.20*2*this.lim;
+    this.it=0;
+    this.P=[];
+    for(let i=0;i<n;i++){
+      const x=-this.lim+2*this.lim*this.rng(), y=-this.lim+2*this.lim*this.rng();
+      const f=fn.f(x,y);
+      this.P.push({x,y,vx:0,vy:0,px:x,py:y,pf:f,f,
+                   ax:x,ay:y,af:f,          // posição anterior (para interpolar)
+                   iner:{x:0,y:0},cog:{x:0,y:0},soc:{x:0,y:0}});
+    }
+    this.g={x:this.P[0].px,y:this.P[0].py}; this.gf=this.P[0].pf;
+    this.P.forEach(p=>{if(p.pf<this.gf){this.gf=p.pf;this.g={x:p.px,y:p.py};}});
+    this.trilha=[{...this.g,f:this.gf}];
+  }
+  /* uma iteração; guarda os três vetores para a cena poder desenhá-los */
+  passo(){
+    const{W,C1,C2,vmax,lim}=this;
+    for(const p of this.P){
+      p.ax=p.x; p.ay=p.y; p.af=p.f;        // guarda de onde saiu
+      const r1=this.rng(), r2=this.rng();
+      p.iner={x:W*p.vx,           y:W*p.vy};
+      p.cog ={x:C1*r1*(p.px-p.x), y:C1*r1*(p.py-p.y)};
+      p.soc ={x:C2*r2*(this.g.x-p.x), y:C2*r2*(this.g.y-p.y)};
+      let vx=p.iner.x+p.cog.x+p.soc.x, vy=p.iner.y+p.cog.y+p.soc.y;
+      vx=Math.max(-vmax,Math.min(vmax,vx)); vy=Math.max(-vmax,Math.min(vmax,vy));
+      p.vx=vx; p.vy=vy;
+      p.x=Math.max(-lim,Math.min(lim,p.x+vx));
+      p.y=Math.max(-lim,Math.min(lim,p.y+vy));
+      p.f=this.fn.f(p.x,p.y);
+      if(p.f<p.pf){p.pf=p.f;p.px=p.x;p.py=p.y;
+        if(p.f<this.gf){this.gf=p.f;this.g={x:p.x,y:p.y};}}
+    }
+    this.it++;
+    this.trilha.push({...this.g,f:this.gf});
+  }
+}
+
+/* ---- Métodos rivais, para a cena comparativa ----
+   Descida de gradiente: um único ponto, derivada numérica, passo adaptativo.
+   GA: população, mas sem troca de informação contínua — só seleção e mutação. */
+class Gradiente{
+  constructor(fn,seed){
+    this.fn=fn; const r=criarRng(seed); const L=fn.lim;
+    this.x=-L+2*L*r(); this.y=-L+2*L*r(); this.a=L*0.004; this.it=0;
+    this.f=fn.f(this.x,this.y); this.trilha=[{x:this.x,y:this.y,f:this.f}];
+    this.ax=this.x; this.ay=this.y; this.af=this.f;
+  }
+  passo(){
+    const{fn}=this, L=fn.lim, h=1e-5;
+    const gx=(fn.f(this.x+h,this.y)-fn.f(this.x-h,this.y))/(2*h);
+    const gy=(fn.f(this.x,this.y+h)-fn.f(this.x,this.y-h))/(2*h);
+    this.ax=this.x; this.ay=this.y; this.af=this.f;   // para interpolar
+    let nx=Math.max(-L,Math.min(L,this.x-this.a*gx));
+    let ny=Math.max(-L,Math.min(L,this.y-this.a*gy));
+    const nf=fn.f(nx,ny);
+    if(nf<this.f){this.x=nx;this.y=ny;this.f=nf;this.a*=1.05;} else this.a*=.5;
+    this.it++; this.trilha.push({x:this.x,y:this.y,f:this.f});
+  }
+}
+class AG{
+  constructor(fn,n,seed){
+    this.fn=fn; this.rng=criarRng(seed); const L=fn.lim;
+    this.P=[];
+    for(let i=0;i<n;i++){const x=-L+2*L*this.rng(),y=-L+2*L*this.rng();
+      this.P.push({x,y,f:fn.f(x,y)});}
+    this.P.sort((a,b)=>a.f-b.f);
+    this.gf=this.P[0].f; this.g={x:this.P[0].x,y:this.P[0].y}; this.it=0;
+    this.sigma=L*0.18;
+  }
+  passo(){
+    const{fn,rng}=this, L=fn.lim, n=this.P.length, nE=Math.max(1,Math.round(n*0.2));
+    const nova=this.P.slice(0,nE).map(p=>({...p}));
+    const torneio=()=>{let b=this.P[Math.floor(rng()*n)];
+      for(let k=0;k<2;k++){const c=this.P[Math.floor(rng()*n)];if(c.f<b.f)b=c;}return b;};
+    while(nova.length<n){
+      const pa=torneio(), pb=torneio(), w=rng();
+      let x=w*pa.x+(1-w)*pb.x, y=w*pa.y+(1-w)*pb.y;
+      // mutação gaussiana (Box-Muller)
+      const g1=Math.sqrt(-2*Math.log(rng()||1e-9))*Math.cos(2*Math.PI*rng());
+      const g2=Math.sqrt(-2*Math.log(rng()||1e-9))*Math.sin(2*Math.PI*rng());
+      x=Math.max(-L,Math.min(L,x+g1*this.sigma));
+      y=Math.max(-L,Math.min(L,y+g2*this.sigma));
+      nova.push({x,y,f:fn.f(x,y)});
+    }
+    nova.sort((a,b)=>a.f-b.f);
+    // a lista e reordenada: o "anterior" de cada slot e o que estava ali antes
+    nova.forEach((q,i)=>{ const v=this.P[i]; q.ax=v?v.x:q.x; q.ay=v?v.y:q.y; q.af=v?v.f:q.f; });
+    this.P=nova;
+    if(nova[0].f<this.gf){this.gf=nova[0].f;this.g={x:nova[0].x,y:nova[0].y};}
+    this.sigma*=0.985;              // recozimento: refina com o tempo
+    this.it++;
+  }
+}
+
+/* ============================================================================
+   3. CENA 3D
+   ========================================================================== */
+const NX=90;                       // resolução da malha
+let cena,cam,rend,ctrl,relogio;
+let gSuperficie,gParticulas,gVetores,gEixos,gTrilha,gPassaros,gRivais;
+let pso=null, fnAtual=FUNCS.rosenbrock, nPart=24;
+let zMin=0, zMax=1;
+
+const ALT=1.0;                     // altura máxima da superfície na cena
+const norm =(v,lo,hi)=>(v-lo)/(hi-lo);
+/* comprime a faixa: sem isso o vale de Rosenbrock some */
+const compr=(t)=>Math.log1p(Math.max(0,t)*9)/Math.log(10);
+const alturaDe=(f)=>compr(norm(f,zMin,zMax))*ALT;
+const px=(x)=>x/fnAtual.lim;       // domínio -> [-1,1]
+const pxInv=(u)=>u*fnAtual.lim;
+
+function iniciarCena(){
+  const host=document.getElementById('cena');
+  cena=new THREE.Scene();
+  cena.fog=new THREE.FogExp2(0x070b12,0.10);
+  cam=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.05,120);
+  cam.position.set(2.9,2.1,2.9);
+  rend=new THREE.WebGLRenderer({antialias:true});
+  rend.setPixelRatio(Math.min(devicePixelRatio,2));
+  rend.setSize(innerWidth,innerHeight);
+  rend.setClearColor(0x070b12,1);
+  host.appendChild(rend.domElement);
+  ctrl=new OrbitControls(cam,rend.domElement);
+  ctrl.enableDamping=true; ctrl.dampingFactor=.06;
+  ctrl.target.set(0,.28,0); ctrl.minDistance=1.4; ctrl.maxDistance=11;
+  relogio=new THREE.Clock();
+
+  cena.add(new THREE.AmbientLight(0xffffff,.52));
+  const l1=new THREE.DirectionalLight(0xbfd8ff,1.15); l1.position.set(3,5,2); cena.add(l1);
+  const l2=new THREE.DirectionalLight(0x4da3ff,.42);  l2.position.set(-4,2,-3); cena.add(l2);
+
+  gRivais=new THREE.Group();
+  gSuperficie=new THREE.Group(); gParticulas=new THREE.Group();
+  gVetores=new THREE.Group();    gEixos=new THREE.Group();
+  gTrilha=new THREE.Group();     gPassaros=new THREE.Group();
+  cena.add(gSuperficie,gParticulas,gVetores,gEixos,gTrilha,gPassaros,gRivais);
+
+  addEventListener('resize',()=>{
+    cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix();
+    rend.setSize(innerWidth,innerHeight);
+  });
+  animar();
+}
+
+/* ---- eixos e grade (cena 1) ---- */
+function construirEixos(){
+  limpar(gEixos);
+  const gh=new THREE.GridHelper(2,16,0x2a4a6a,0x162536);
+  gh.position.y=-0.002; gh.material.transparent=true; gh.material.opacity=.5;
+  gEixos.add(gh);
+  const eixo=(a,b,cor)=>{
+    const g=new THREE.BufferGeometry().setFromPoints([a,b]);
+    gEixos.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:cor,transparent:true,opacity:.85})));
+  };
+  eixo(new THREE.Vector3(-1.06,0,-1.06),new THREE.Vector3(1.06,0,-1.06),0xff5a6e);
+  eixo(new THREE.Vector3(-1.06,0,-1.06),new THREE.Vector3(-1.06,0,1.06),0x2ee6a8);
+  eixo(new THREE.Vector3(-1.06,0,-1.06),new THREE.Vector3(-1.06,ALT*1.05,-1.06),0x4da3ff);
+  gEixos.add(rotulo3d('x',1.16,0.04,-1.06,'#ff5a6e'));
+  gEixos.add(rotulo3d('y',-1.06,0.04,1.16,'#2ee6a8'));
+  gEixos.add(rotulo3d('f(x,y)',-1.20,ALT*1.05,-1.06,'#4da3ff'));
+}
+function rotulo3d(txt,x,y,z,cor){
+  const cv=document.createElement('canvas'); cv.width=200; cv.height=56;
+  const c=cv.getContext('2d');
+  c.fillStyle=cor; c.font='bold 34px system-ui'; c.fillText(txt,6,40);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(cv),transparent:true,depthTest:false}));
+  sp.position.set(x,y,z); sp.scale.set(.32,.09,1);
+  return sp;
+}
+function limpar(g){ while(g.children.length){const o=g.children.pop();
+  o.geometry?.dispose?.(); o.material?.map?.dispose?.(); o.material?.dispose?.();} }
+
+/* ---- superfície da função ---- */
+function construirSuperficie(){
+  limpar(gSuperficie);
+  const L=fnAtual.lim, f=fnAtual.f;
+  const vals=new Float32Array((NX+1)*(NX+1));
+  zMin=Infinity; zMax=-Infinity;
+  for(let i=0;i<=NX;i++)for(let j=0;j<=NX;j++){
+    const v=f(-L+2*L*i/NX, -L+2*L*j/NX);
+    vals[i*(NX+1)+j]=v;
+    if(v<zMin)zMin=v; if(v>zMax)zMax=v;
+  }
+  if(!isFinite(zMin)||zMin===zMax){zMin=0;zMax=1;}
+
+  const geo=new THREE.PlaneGeometry(2,2,NX,NX);
+  const pos=geo.attributes.position;
+  const cores=new Float32Array(pos.count*3);
+  const cor=new THREE.Color();
+  for(let k=0;k<pos.count;k++){
+    const i=k%(NX+1), j=Math.floor(k/(NX+1));
+    const v=vals[i*(NX+1)+(NX-j)];
+    const t=compr(norm(v,zMin,zMax));
+    pos.setZ(k,t*ALT);
+    // azul profundo (bom) -> ciano -> verde -> amarelo -> vermelho (ruim)
+    cor.setHSL(0.66-0.66*t, 0.75, 0.22+0.34*t);
+    cores[k*3]=cor.r; cores[k*3+1]=cor.g; cores[k*3+2]=cor.b;
+  }
+  geo.setAttribute('color',new THREE.BufferAttribute(cores,3));
+  geo.computeVertexNormals();
+  const malha=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+    vertexColors:true,side:THREE.DoubleSide,roughness:.82,metalness:.06,
+    transparent:true,opacity:0}));
+  malha.rotation.x=-Math.PI/2; malha.name='sup';
+  gSuperficie.add(malha);
+  const wire=new THREE.Mesh(geo.clone(),new THREE.MeshBasicMaterial({
+    color:0x3d6ea8,wireframe:true,transparent:true,opacity:0}));
+  wire.rotation.x=-Math.PI/2; wire.name='wire';
+  gSuperficie.add(wire);
+
+  // marcador do ótimo conhecido
+  const [ox,oy]=fnAtual.otimo;
+  const alvo=new THREE.Mesh(new THREE.RingGeometry(.03,.05,24),
+    new THREE.MeshBasicMaterial({color:0xffc857,side:THREE.DoubleSide,transparent:true,opacity:0}));
+  alvo.position.set(px(ox), alturaDe(f(ox,oy))+.012, -px(oy));
+  alvo.rotation.x=-Math.PI/2; alvo.name='alvo';
+  gSuperficie.add(alvo);
+}
+
+/* ---- partículas ---- */
+let geoEsfera=null;
+function construirParticulas(){
+  limpar(gParticulas);
+  if(!pso)return;
+  if(!geoEsfera)geoEsfera=new THREE.SphereGeometry(1,16,12);
+  const r=Math.max(.016,.040*Math.sqrt(24/Math.max(8,pso.P.length)));
+  pso.P.forEach((p,i)=>{
+    const m=new THREE.Mesh(geoEsfera,new THREE.MeshStandardMaterial({
+      color:0x4da3ff,emissive:0x1a5fa8,emissiveIntensity:.9,
+      roughness:.25,metalness:.5,transparent:true,opacity:0}));
+    m.userData={i,raio:r};
+    m.scale.setScalar(r);
+    gParticulas.add(m);
+    // halo, para as esferas "brilharem"
+    const h=new THREE.Sprite(new THREE.SpriteMaterial({
+      map:texHalo(),color:0x6fb6ff,transparent:true,opacity:0,depthWrite:false}));
+    h.scale.setScalar(r*7); h.userData={halo:true,i};
+    gParticulas.add(h);
+  });
+  posicionarParticulas();
+}
+let _halo=null;
+function texHalo(){
+  if(_halo)return _halo;
+  const cv=document.createElement('canvas'); cv.width=cv.height=64;
+  const c=cv.getContext('2d');
+  const g=c.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,.9)'); g.addColorStop(.35,'rgba(120,190,255,.35)');
+  g.addColorStop(1,'rgba(120,190,255,0)');
+  c.fillStyle=g; c.fillRect(0,0,64,64);
+  _halo=new THREE.CanvasTexture(cv); return _halo;
+}
+/* u = 0 na posição anterior, 1 na atual. Sem isso as partículas "saltam"
+   a cada iteração; com a interpolação o movimento fica contínuo.        */
+const suave=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;   // ease-in-out cúbico
+function posicionarParticulas(u){
+  if(!pso)return;
+  const k=(u===undefined)?1:suave(Math.max(0,Math.min(1,u)));
+  gParticulas.children.forEach(o=>{
+    const p=pso.P[o.userData.i]; if(!p)return;
+    const x=p.ax+(p.x-p.ax)*k, y2=p.ay+(p.y-p.ay)*k, f=p.af+(p.f-p.af)*k;
+    const y=alturaDe(f)+(o.userData.halo?0:o.userData.raio*1.15);
+    o.position.set(px(x),y,-px(y2));
+  });
+}
+
+/* ---- vetores da partícula em destaque ---- */
+const SETA_MIN=0.05;          // abaixo disso a seta some na tela
+function seta(de,para,cor,esp){
+  const dir=new THREE.Vector3().subVectors(para,de);
+  let len=dir.length();
+  if(len<1e-4)return null;     // vetor realmente nulo: não há o que mostrar
+  // vetores muito curtos ganham um mínimo, senão o aluno não vê a direção
+  if(len<SETA_MIN){dir.setLength(SETA_MIN);len=SETA_MIN;}
+  const a=new THREE.ArrowHelper(dir.clone().normalize(),de,len,cor,
+    Math.min(.09,len*.34), Math.min(.05,len*.20));
+  a.line.material.linewidth=esp||2;
+  a.line.material.transparent=true; a.line.material.opacity=0;
+  a.cone.material.transparent=true; a.cone.material.opacity=0;
+  a.line.material.depthTest=false;  a.cone.material.depthTest=false;
+  a.renderOrder=10;                 // as setas ficam sobre a superfície
+  return a;
+}
+function desenharVetores(idx,quais){
+  limpar(gVetores);
+  if(!pso||idx==null)return;
+  const p=pso.P[idx]; if(!p)return;
+  const base=new THREE.Vector3(px(p.x),alturaDe(p.f)+.03,-px(p.y));
+  const ESC=1/fnAtual.lim;                    // domínio -> cena
+  const add=(v,cor)=>{
+    const alvo=base.clone().add(new THREE.Vector3(v.x*ESC,0,-v.y*ESC));
+    const s=seta(base,alvo,cor); if(s)gVetores.add(s);
+  };
+  if(quais.iner) add(p.iner,0x4da3ff);
+  if(quais.cog)  add(p.cog, 0x2ee6a8);
+  if(quais.soc)  add(p.soc, 0xff5a6e);
+  if(quais.res)  add({x:p.vx,y:p.vy},0xffc857);
+  // marcadores de p_i e g
+  /* Marcadores em forma de ANEL: são lugares (memória, melhor do grupo),
+     não indivíduos — a esfera continua reservada às partículas.        */
+  const marcador=(x,y,f,cor,r)=>{
+    const g2=new THREE.Mesh(new THREE.RingGeometry(r*.62,r,20),
+      new THREE.MeshBasicMaterial({color:cor,side:THREE.DoubleSide,
+        transparent:true,opacity:.95,depthTest:false}));
+    g2.position.set(px(x),alturaDe(f)+.02,-px(y));
+    g2.rotation.x=-Math.PI/2; g2.renderOrder=11;
+    gVetores.add(g2);
+  };
+  if(quais.cog) marcador(p.px,p.py,p.pf,0x2ee6a8,.042);
+  if(quais.soc) marcador(pso.g.x,pso.g.y,pso.gf,0xff5a6e,.055);
+}
+
+/* ---- trilha do melhor global ---- */
+function desenharTrilha(){
+  limpar(gTrilha);
+  if(!pso||pso.trilha.length<2)return;
+  const pts=pso.trilha.map(t=>new THREE.Vector3(px(t.x),alturaDe(t.f)+.02,-px(t.y)));
+  const g=new THREE.BufferGeometry().setFromPoints(pts);
+  gTrilha.add(new THREE.Line(g,new THREE.LineBasicMaterial({
+    color:0xffc857,transparent:true,opacity:.85})));
+}
+
+/* ---- cena comparativa: PSO x gradiente x AG na MESMA função ---- */
+let grad=null, ag=null;
+/* passos de gradiente por "rodada", para igualar o custo em avaliações:
+   PSO gasta nPart avaliações; o gradiente gasta 5 por passo (4 da derivada
+   numérica + 1 do teste de aceitação).                                    */
+let PASSOS_GRAD=5;
+function construirRivais(){
+  limpar(gRivais);
+  if(!grad||!ag)return;
+  // ponto do gradiente (roxo) e trilha
+  const mg=new THREE.Mesh(new THREE.SphereGeometry(.042,16,12),
+    new THREE.MeshStandardMaterial({color:0xb07cff,emissive:0x6a3fb0,
+      emissiveIntensity:1.4,transparent:true,opacity:0}));
+  mg.name='ptGrad'; gRivais.add(mg);
+  // população do AG (laranja)
+  ag.P.forEach((_,i)=>{
+    const m=new THREE.Mesh(geoEsfera||new THREE.SphereGeometry(1,12,8),
+      new THREE.MeshStandardMaterial({color:0xff9f43,emissive:0xa85f10,
+        emissiveIntensity:.8,transparent:true,opacity:0}));
+    m.scale.setScalar(.022); m.userData={ag:i}; gRivais.add(m);
+  });
+  posicionarRivais();
+}
+function posicionarRivais(u){
+  if(!grad||!ag)return;
+  const k=(u===undefined)?1:suave(Math.max(0,Math.min(1,u)));
+  const g=gRivais.getObjectByName('ptGrad');
+  if(g){
+    const x=(grad.ax??grad.x)+(grad.x-(grad.ax??grad.x))*k;
+    const y=(grad.ay??grad.y)+(grad.y-(grad.ay??grad.y))*k;
+    const f=(grad.af??grad.f)+(grad.f-(grad.af??grad.f))*k;
+    g.position.set(px(x),alturaDe(f)+.03,-px(y));
+  }
+  gRivais.children.forEach(o=>{
+    if(o.userData.ag===undefined)return;
+    const p=ag.P[o.userData.ag]; if(!p)return;
+    const x=(p.ax??p.x)+(p.x-(p.ax??p.x))*k;
+    const y=(p.ay??p.y)+(p.y-(p.ay??p.y))*k;
+    const f=(p.af??p.f)+(p.f-(p.af??p.f))*k;
+    o.position.set(px(x),alturaDe(f)+.024,-px(y));
+  });
+}
+/* Explica em uma linha por que o gradiente está onde está — senão o aluno
+   confunde "limitação do método" com "erro do programa".                 */
+function diagnosticoGrad(){
+  if(!grad||!fnAtual)return 'mesma função · mesmo orçamento de avaliações';
+  const [ox,oy]=fnAtual.otimo;
+  const d=Math.hypot(grad.x-ox,grad.y-oy);
+  const L=fnAtual.lim;
+  if(d<0.05*L) return 'o gradiente achou o vale — a função é suave aqui';
+  if(fnAtual===FUNCS.rosenbrock)
+    return 'o gradiente está <b>dentro</b> do vale, mas ele é curvo e estreito: '+
+           'a direção de descida aponta para a parede, não para o fundo';
+  return 'o gradiente ficou preso num <b>mínimo local</b> — não tem como escapar sozinho';
+}
+/* ---- quadro comparativo: conceito + números ao vivo ---- */
+const COMP=[
+ ['o que é',        'enxame que troca informação',
+                    'população que recombina e muta',
+                    'um único ponto descendo a inclinação'],
+ ['usa derivada',   '<span class="nao">não</span>',
+                    '<span class="nao">não</span>',
+                    '<span class="ok">sim</span> (aqui, numérica)'],
+ ['nº de soluções', 'população (N)', 'população (N)', 'uma por vez'],
+ ['escapa de mínimo local','<span class="ok">sim</span> — o melhor global puxa todos',
+                    '<span class="ok">sim</span> — a mutação reintroduz variedade',
+                    '<span class="nao">não</span> — desce e fica'],
+ ['memória',        'cada partícula guarda seu <b>pᵢ</b>',
+                    'só a elite sobrevive',
+                    'nenhuma — só a posição atual'],
+ ['comunicação',    '<span class="ok">contínua</span> (todos veem <b>g</b>)',
+                    '<span class="meio">indireta</span> (via cruzamento)',
+                    '<span class="nao">nenhuma</span>'],
+ ['garantia',       'nenhuma', 'nenhuma',
+                    '<span class="ok">converge</span> a um mínimo local'],
+ ['ponto fraco',    'pode convergir cedo demais',
+                    'ajuste fino é lento',
+                    'preso ao vale onde começou; lento em vale curvo'],
+ ['brilha quando',  'muitos vales e sem derivada',
+                    'espaço discreto ou combinatório',
+                    'função suave e bem-comportada'],
+];
+function montarComparar(){
+  const t=$('tabComp'); if(!t)return;
+  const linhas=COMP.map(l=>'<tr><td>'+l[0]+'</td><td>'+l[1]+'</td><td>'+l[2]+'</td><td>'+l[3]+'</td></tr>').join('');
+  t.querySelector('tbody').innerHTML=linhas+
+    '<tr class="num" id="linhaF"><td>melhor f agora</td><td>—</td><td>—</td><td>—</td></tr>'+
+    '<tr class="num" id="linhaAv"><td>avaliações</td><td>—</td><td>—</td><td>—</td></tr>';
+  atualizarComparar();
+}
+function atualizarComparar(){
+  if(!$('comparar').classList.contains('on'))return;
+  const fn=$('compFn'); if(fn)fn.textContent=fnAtual?fnAtual.nome:'—';
+  const lf=$('linhaF'), la=$('linhaAv');
+  if(!lf||!pso)return;
+  const fmt=v=>v==null?'—':(v<1e-4?v.toExponential(1):v.toFixed(4));
+  const vals=[pso.gf, ag?ag.gf:null, grad?grad.f:null];
+  const vivos=vals.filter(v=>v!=null);
+  const melhor=vivos.length?Math.min(...vivos):null;
+  [...lf.children].forEach((td,i)=>{
+    if(i===0)return;
+    const v=vals[i-1];
+    td.textContent=fmt(v);
+    td.classList.toggle('vence', v!=null && melhor!=null && Math.abs(v-melhor)<1e-12);
+  });
+  // avaliações: PSO e AG gastam N por rodada; o gradiente, 5 por passo
+  const it=pso.it;
+  const av=[it*pso.P.length,
+            ag?ag.it*ag.P.length:null,
+            grad?grad.it*5:null];
+  [...la.children].forEach((td,i)=>{ if(i===0)return;
+    td.textContent=av[i-1]==null?'—':av[i-1].toLocaleString('pt-BR'); });
+  const nota=$('compNota');
+  if(nota)nota.innerHTML='Iteração <b>'+it+'</b> · '+diagnosticoGrad();
+}
+
+function atualizarPlacar(){
+  const el=$('placar'); if(!el||!pso)return;
+  const fmt=v=>v<1e-4?v.toExponential(2):v.toFixed(4);
+  el.innerHTML=
+    '<h4>Melhor valor · iteração '+pso.it+'</h4>'+
+    '<div class="l"><i style="background:#4da3ff"></i><b>PSO</b><span>'+fmt(pso.gf)+'</span></div>'+
+    '<div class="l"><i style="background:#ff9f43"></i><b>Genético</b><span>'+fmt(ag.gf)+'</span></div>'+
+    '<div class="l"><i style="background:#b07cff"></i><b>Gradiente</b><span>'+fmt(grad.f)+'</span></div>'+
+    '<div class="obs">'+diagnosticoGrad()+'</div>';
+}
+
+/* ============================================================================
+   4. ROTEIRO — 9 cenas
+   Cada uma declara o que aparece; o loop cuida das transições suaves.
+   ========================================================================== */
+const S={ // estado-alvo, interpolado a cada quadro
+  supOp:0, wireOp:0, partOp:0, haloOp:0, eixoOp:0, trilhaOp:0,
+  alvoOp:0, passaroOp:0, rivalOp:0, giroCam:0.06
+};
+let destaque=null, rodando=false, tAcum=0, velIter=1/1.1;
+/* fator de interpolação da iteração corrente (0 = posição anterior, 1 = atual).
+   Partículas e pássaros LEEM o mesmo valor — se cada um calculasse o seu, os
+   pássaros chegariam antes e pareceriam soltos do enxame.                  */
+let uInterp=1;
+/* Cor por papel na cena. Sem isso o aluno vê a seta verde saindo de uma
+   esfera azul e não liga uma coisa à outra — a partícula em foco precisa
+   vestir a cor do conceito que está sendo explicado.                    */
+const COR={base:0x4da3ff, dest:0xffc857, mem:0x2ee6a8, soc:0xff5a6e, melhor:0xff5a6e};
+let papelCor=null;      // null = todas na cor base
+let quaisVet={iner:false,cog:false,soc:false,res:false};
+
+const CENAS=[
+{ titulo:'O espaço de soluções',
+  sub:'Cada ponto deste plano é uma solução possível: um par $(x,y)$. Otimizar é procurar, entre infinitos pontos, aquele que dá o melhor resultado.',
+  ent(){ Object.assign(S,{eixoOp:1,supOp:0,wireOp:0,partOp:0,haloOp:0,trilhaOp:0,alvoOp:0,passaroOp:0,giroCam:.10});
+         destaque=null; papelCor=null; rodando=false; eq(false); hud(false); placar(false); leg(false); split(false); }},
+
+{ titulo:'A paisagem da função',
+  sub:'A função de avaliação dá uma altura a cada ponto. Vales são boas soluções; picos, ruins. <b>O algoritmo não enxerga esta superfície</b> — só consegue perguntar a altura de um ponto por vez.',
+  ent(){ Object.assign(S,{eixoOp:.55,supOp:.94,wireOp:.10,partOp:0,haloOp:0,alvoOp:.9,giroCam:.08});
+         destaque=null; papelCor=null; rodando=false; eq(false); hud(false); placar(false); leg(false); split(false); }},
+
+{ titulo:'Cada partícula é uma solução candidata',
+  sub:'Espalhamos partículas ao acaso. Nenhuma sabe onde está o ótimo — cada uma conhece apenas a altura do ponto onde está.',
+  ent(){ Object.assign(S,{eixoOp:.4,supOp:.82,wireOp:.08,partOp:1,haloOp:.85,alvoOp:.55,giroCam:.06});
+         destaque=null; papelCor=null; rodando=false; eq(false); hud(true); placar(false); leg(false); split(false);
+         quaisVet={iner:false,cog:false,soc:false,res:false}; limpar(gVetores); }},
+
+{ titulo:'Memória: o melhor que EU já vi',
+  sub:'A partícula em foco fica <b style="color:#2ee6a8">verde</b>: é a cor da <b>memória</b>. O anel da mesma cor marca o melhor lugar que <i>ela</i> já visitou, e o vetor <b style="color:#2ee6a8">cognitivo</b> a puxa de volta para lá.',
+  ent(){ Object.assign(S,{eixoOp:.3,supOp:.8,wireOp:.06,partOp:1,haloOp:.4,alvoOp:.4,giroCam:.03});
+         destaque=escolherDestaque(); papelCor='mem'; rodando=false; eq(true,{cog:true});
+         hud(true); placar(false); leg(true); split(false);
+         quaisVet={iner:false,cog:true,soc:false,res:false}; desenharVetores(destaque,quaisVet); }},
+
+{ titulo:'Cooperação: o melhor que o GRUPO já viu',
+  sub:'Agora a cor é <b style="color:#ff5a6e">vermelha</b>: a da <b>cooperação</b>. O anel marca a melhor posição já encontrada por <i>qualquer</i> partícula — e a dona dela também fica vermelha. O vetor <b style="color:#ff5a6e">social</b> atrai todas para lá.',
+  ent(){ Object.assign(S,{eixoOp:.3,supOp:.8,wireOp:.06,partOp:1,haloOp:.4,alvoOp:.4,giroCam:.03});
+         garantirVetores(); destaque??=escolherDestaque(); papelCor='soc';
+         rodando=false; eq(true,{cog:true,soc:true});
+         hud(true); placar(false); leg(true); split(false);
+         quaisVet={iner:false,cog:true,soc:true,res:false}; desenharVetores(destaque,quaisVet); }},
+
+{ titulo:'A soma dos três impulsos',
+  sub:'Inércia (seguir em frente) + cognitivo (minha memória) + social (o grupo). A partícula veste o <b style="color:#ffc857">dourado</b> da <b>resultante</b>: a soma dos três é a nova velocidade — e é só isso que o PSO faz, partícula por partícula.',
+  ent(){ Object.assign(S,{eixoOp:.3,supOp:.8,wireOp:.06,partOp:1,haloOp:.4,alvoOp:.4,giroCam:.02});
+         garantirVetores(); destaque??=escolherDestaque(); papelCor='dest';
+         rodando=false; eq(true,{iner:true,cog:true,soc:true,res:true});
+         hud(true); placar(false); leg(true); split(false);
+         quaisVet={iner:true,cog:true,soc:true,res:true}; desenharVetores(destaque,quaisVet); }},
+
+{ titulo:'Todas seguem a mesma regra',
+  sub:'Aplicando a regra a cada partícula, iteração após iteração, o enxame <b>converge</b>. A trilha <b style="color:#ffc857">dourada</b> mostra o melhor global melhorando ao longo do tempo.',
+  ent(){ Object.assign(S,{eixoOp:.25,supOp:.78,wireOp:.05,partOp:1,haloOp:.5,trilhaOp:1,alvoOp:.5,giroCam:.05});
+         destaque=null; papelCor=null; rodando=true; eq(true,{iner:true,cog:true,soc:true,res:true});
+         hud(true); placar(false); leg(true); split(false);
+         quaisVet={iner:false,cog:false,soc:false,res:false}; limpar(gVetores); }},
+
+{ titulo:'A metáfora — e o que ela esconde',
+  sub:'À esquerda, o bando. À direita, as mesmas partículas. <b>É o mesmo cálculo</b>: a metáfora ajuda a entender, mas o algoritmo é aritmética vetorial, não biologia.',
+  ent(){ Object.assign(S,{eixoOp:.2,supOp:.72,wireOp:.05,partOp:1,haloOp:.35,trilhaOp:.8,alvoOp:.5,passaroOp:1,giroCam:.04});
+         destaque=null; papelCor=null; rodando=true; eq(false); hud(true); placar(false); leg(false); split(true); }},
+,
+{ titulo:'Três estratégias, a mesma paisagem',
+  sub:'<b style="color:#4da3ff">PSO</b> troca informação e converge junto · <b style="color:#ff9f43">Genético</b> recombina e muta, sem comunicação contínua · <b style="color:#b07cff">Gradiente</b> segue a inclinação: imbatível em função suave, mas cai no primeiro vale — e em vales curvos avança devagar.',
+  ent(){ Object.assign(S,{eixoOp:.25,supOp:.80,wireOp:.05,partOp:1,haloOp:.3,
+           trilhaOp:0,alvoOp:.7,passaroOp:0,rivalOp:1,giroCam:.05});
+         destaque=null; papelCor=null; rodando=true; eq(false); hud(true); leg(false); split(false);
+         limpar(gVetores);
+         /* Comparação justa: os três partem do MESMO ponto de partida.
+            O PSO já rodou nas cenas anteriores, então reiniciamos os três
+            aqui — senão o gradiente e o AG competiriam com desvantagem. */
+         pso=new PSO(fnAtual,nPart,12345);
+         reiniciarRivais();
+         construirParticulas(); construirPassaros();
+         limpar(gTrilha); posicionarParticulas(1); posicionarRivais(1);
+         atualizarHud(); placar(true); atualizarPlacar(); }}
+];
+
+function reiniciarRivais(){
+  grad=new Gradiente(fnAtual,777);
+  ag=new AG(fnAtual,Math.max(8,Math.round(nPart*0.8)),777);
+  PASSOS_GRAD=Math.max(1,Math.round(nPart/5));
+  construirRivais();
+}
+
+/* Os três termos só existem depois de algumas iterações:
+     · inércia  = w·v  — v começa em zero
+     · cognitivo = c1·r1·(p_i − x) — p_i = x no início
+   Sem adiantar o algoritmo, as cenas 4-6 desenhariam setas de comprimento
+   zero (e seta() devolve null). Por isso garantimos um mínimo de iterações. */
+const IT_MIN_VETORES=3;
+function garantirVetores(){
+  if(!pso)return;
+  while(pso.it<IT_MIN_VETORES){
+    pso.passo();
+    desenharTrilha(); atualizarHud();
+  }
+  posicionarParticulas(1);
+}
+/* qual partícula é dona do melhor global (o ponto g) */
+function idxMelhorGlobal(){
+  if(!pso)return -1;
+  let melhor=-1,d=Infinity;
+  pso.P.forEach((p,i)=>{
+    const dd=Math.hypot(p.px-pso.g.x,p.py-pso.g.y);
+    if(dd<d){d=dd;melhor=i;}
+  });
+  return d<1e-9?melhor:-1;
+}
+
+function escolherDestaque(){
+  if(!pso)return null;
+  garantirVetores();
+  const ESC=1/fnAtual.lim;
+  // a melhor partícula para ilustrar é aquela cujo MENOR vetor ainda é visível
+  let melhor=0, score=-1;
+  pso.P.forEach((p,i)=>{
+    const a=Math.hypot(p.iner.x,p.iner.y)*ESC;
+    const c=Math.hypot(p.cog.x, p.cog.y )*ESC;
+    const d=Math.hypot(p.soc.x, p.soc.y )*ESC;
+    const s=Math.min(a,c,d);
+    if(s>score){score=s;melhor=i;}
+  });
+  return melhor;
+}
+
+/* ---- painéis auxiliares ---- */
+const $=id=>document.getElementById(id);
+function eq(on,ativos){
+  $('eq').classList.toggle('on',!!on);
+  ['iner','cog','soc','res'].forEach(k=>{
+    document.querySelectorAll('.termo.'+k).forEach(e=>
+      e.classList.toggle('on',!!(ativos&&ativos[k])));
+  });
+}
+/* O placar é da cena comparativa; o HUD acompanha o PSO em qualquer cena.
+   Antes desligar o HUD apagava o placar junto — agora são independentes. */
+const hud=on=>$('hud').classList.toggle('on',!!on);
+const placar=on=>$('placar')?.classList.toggle('on',!!on);
+const leg=on=>$('legenda').classList.toggle('on',!!on);
+function split(on){
+  $('divisor').classList.toggle('on',!!on);
+  $('ladoE').classList.toggle('on',!!on);
+  $('ladoD').classList.toggle('on',!!on);
+}
+
+/* ---- pássaros: a mesma partícula, com outra aparência ----
+   Modelo Stork.glb (o mesmo do passaro.html), com a animação de bater de
+   asas do próprio arquivo. Não há trajetória própria: o pássaro ocupa a
+   posição da partícula — a metáfora é literalmente uma troca de malha.  */
+const AVE={modelo:null,clip:null};
+let mixers=[];
+/* O Stork.glb mede ~197 unidades na maior dimensão e a cena vai de -1 a 1.
+   0.0011 deixa a ave com ~0,22 unidades — cerca de 11% da largura da cena:
+   reconhecível como pássaro sem encobrir a superfície.                    */
+const AVE_ESC=0.0011;
+const AVE_YAW=0;                     // ajuste fino se o bico ficar invertido
+
+function carregarAve(){
+  new GLTFLoader().load(
+    'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Stork.glb',
+    (gltf)=>{
+      AVE.modelo=gltf.scene;
+      AVE.clip=gltf.animations&&gltf.animations[0];
+      // o carregamento é assíncrono: se a cena já existe, cria agora
+      if(pso)construirPassaros();
+    },
+    undefined,
+    ()=>{ console.warn('Stork.glb indisponível — usando forma simples.');
+          AVE.modelo=null; if(pso)construirPassaros(); }
+  );
+}
+function construirPassaros(){
+  limpar(gPassaros); mixers=[];
+  if(!pso)return;
+  pso.P.forEach((p,i)=>{
+    let o;
+    if(AVE.modelo){
+      o=clonarComEsqueleto(AVE.modelo);
+      o.scale.setScalar(AVE_ESC);
+      // opacidade é controlada pelo loop: prepara todos os materiais
+      o.traverse(n=>{ if(n.isMesh&&n.material){
+        n.material=n.material.clone();
+        n.material.transparent=true; n.material.opacity=0; }});
+      if(AVE.clip){
+        const mx=new THREE.AnimationMixer(o);
+        mx.clipAction(AVE.clip).play();
+        // dessincroniza as asas, senão o bando bate em uníssono
+        mx.setTime(Math.random()*2);
+        mixers.push(mx);
+      } else mixers.push(null);
+    } else {
+      o=new THREE.Mesh(geoPassaroSimples(),new THREE.MeshStandardMaterial({
+        color:0xe8eef7,emissive:0x2a4a6a,emissiveIntensity:.35,
+        roughness:.6,metalness:.1,side:THREE.DoubleSide,transparent:true,opacity:0}));
+      mixers.push(null);
+    }
+    o.userData={i};
+    gPassaros.add(o);
+  });
+}
+let _geoAve=null;
+function geoPassaroSimples(){   // reserva, caso o .glb não carregue
+  if(_geoAve)return _geoAve;
+  const g=new THREE.BufferGeometry();
+  const v=new Float32Array([
+     0,0,0.10,  -0.13,0.05,-0.07,  0,0,-0.02,
+     0,0,0.10,   0,0,-0.02,        0.13,0.05,-0.07 ]);
+  g.setAttribute('position',new THREE.BufferAttribute(v,3));
+  g.computeVertexNormals();
+  _geoAve=g; return g;
+}
+function moverPassaros(t,dt){
+  if(!pso)return;
+  const k=suave(Math.max(0,Math.min(1,uInterp)));   // MESMO fator das partículas
+  gPassaros.children.forEach(o=>{
+    const p=pso.P[o.userData.i]; if(!p)return;
+    const x=p.ax+(p.x-p.ax)*k, y=p.ay+(p.y-p.ay)*k, f=p.af+(p.f-p.af)*k;
+    o.position.set(px(x),alturaDe(f)+.10,-px(y));
+    /* Aponta na direção do deslocamento REAL do quadro, não do vetor v:
+       com o clamp de v e do domínio, os dois podem divergir — e aí a ave
+       voaria "de lado". Suaviza o giro para não trepidar.               */
+    const dx=p.x-p.ax, dy=p.y-p.ay;
+    if(Math.abs(dx)+Math.abs(dy)>1e-7){
+      const alvo=Math.atan2(dx,-dy)+AVE_YAW;
+      let d=alvo-o.rotation.y;
+      while(d>Math.PI)d-=2*Math.PI;      // caminho angular mais curto
+      while(d<-Math.PI)d+=2*Math.PI;
+      o.rotation.y+=d*Math.min(1,dt*7);
+    }
+    if(!AVE.modelo){        // forma simples: bate asa por escala
+      o.scale.set(1,1+Math.sin(t*9+o.userData.i)*0.22,1);
+    }
+  });
+  mixers.forEach(m=>m&&m.update(dt));
+}
+/* percorre a árvore do clone ajustando a opacidade (o modelo tem vários meshes) */
+function opacidadeAve(o,v){
+  if(o.isMesh&&o.material){o.material.opacity=v;return;}
+  o.traverse(n=>{ if(n.isMesh&&n.material)n.material.opacity=v; });
+}
+
+/* ============================================================================
+   4b. TABELA PASSO A PASSO + CÓDIGO MATLAB
+   As duas seguem a MESMA fase: a cada iteração o ciclo percorre
+   avaliar -> memória -> velocidade -> mover, e ambos os painéis destacam
+   a etapa corrente. Os números vêm do motor, não de um roteiro.
+   ========================================================================== */
+const FASES=[
+  {id:'aval', rot:'1 · avaliar f(x)',        col:'f',   linhas:[10]},
+  {id:'mem',  rot:'2 · atualizar pᵢ e g',    col:'pf',  linhas:[12,13,14,15]},
+  {id:'vel',  rot:'3 · calcular velocidade', col:'v',   linhas:[18,19,20]},
+  {id:'mov',  rot:'4 · mover partículas',    col:'x',   linhas:[22,23]},
+];
+let faseIdx=0;
+
+const COD_MATLAB=[
+ "function [g, gf] = pso(f, lim, n, iters)",
+ "  w = 0.72;  c1 = 1.49;  c2 = 1.49;      % coeficientes",
+ "  vmax = 0.2 * 2*lim;                    % limite de velocidade",
+ "",
+ "  X = -lim + 2*lim*rand(n,2);            % posições iniciais",
+ "  V = zeros(n,2);",
+ "  P = X;  Pf = arrayfun(@(k) f(X(k,:)), 1:n)';",
+ "  [gf, k] = min(Pf);  g = P(k,:);",
+ "",
+ "  for it = 1:iters",
+ "    F = arrayfun(@(k) f(X(k,:)), 1:n)';  % avaliar",
+ "",
+ "    melhor = F < Pf;                     % quem melhorou?",
+ "    P(melhor,:) = X(melhor,:);",
+ "    Pf(melhor)  = F(melhor);",
+ "    [gf, k] = min(Pf);  g = P(k,:);      % melhor global",
+ "",
+ "    r1 = rand(n,2);  r2 = rand(n,2);",
+ "    V = w*V ...                          % inércia",
+ "      + c1*r1.*(P - X) ...               % cognitivo",
+ "      + c2*r2.*(g - X);                  % social",
+ "    V = max(-vmax, min(vmax, V));",
+ "    X = X + V;                           % mover",
+ "    X = max(-lim, min(lim, X));",
+ "  end",
+ "end",
+];
+function montarMatlab(){
+  const el=$('matCod'); if(!el)return;
+  el.innerHTML=COD_MATLAB.map((l,i)=>{
+    let h=l.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    h=h.replace(/(%.*)$/,'<span class="c">$1</span>');
+    h=h.replace(/\b(function|for|end|min|max|rand|zeros|arrayfun)\b/g,'<span class="k">$1</span>');
+    h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="n">$1</span>');
+    return '<span class="l" data-l="'+i+'">'+(h||' ')+'</span>';
+  }).join('');
+}
+function destacarMatlab(){
+  const f=FASES[faseIdx];
+  document.querySelectorAll('#matCod .l').forEach(el=>{
+    el.classList.toggle('on', f.linhas.includes(+el.dataset.l));
+  });
+  const mf=$('matFase'); if(mf)mf.textContent=f.rot;
+}
+function montarTabela(){
+  const t=$('tabDados'); if(!t||!pso)return;
+  t.querySelector('thead').innerHTML=
+    '<tr><th>i</th><th data-c="x">xᵢ</th><th data-c="f">f(xᵢ)</th>'+
+    '<th data-c="pf">f(pᵢ)</th><th data-c="iner">w·v</th>'+
+    '<th data-c="cog">cognitivo</th><th data-c="soc">social</th>'+
+    '<th data-c="v">vᵢ</th></tr>';
+  passoTabela();
+}
+const n3=v=>Math.abs(v)<1e-3&&v!==0?v.toExponential(1):v.toFixed(3);
+function passoTabela(){
+  const t=$('tabDados'); if(!t||!pso||!$('tabela').classList.contains('on'))return;
+  const MAX=14;
+  let iBest=0; pso.P.forEach((p,i)=>{if(p.f<pso.P[iBest].f)iBest=i;});
+  t.querySelector('tbody').innerHTML=pso.P.slice(0,MAX).map((p,i)=>{
+    const cls=(i===iBest?' class="melhor"':(i===destaque?' class="dest"':''));
+    const c=k=>FASES[faseIdx].col===k?' class="ativa"':'';
+    return '<tr'+cls+'><td>'+i+'</td>'+
+      '<td'+c('x')+'>('+n3(p.x)+', '+n3(p.y)+')</td>'+
+      '<td'+c('f')+'>'+n3(p.f)+'</td>'+
+      '<td'+c('pf')+'>'+n3(p.pf)+'</td>'+
+      '<td'+c('v')+'>('+n3(p.iner.x)+', '+n3(p.iner.y)+')</td>'+
+      '<td'+c('v')+'>('+n3(p.cog.x)+', '+n3(p.cog.y)+')</td>'+
+      '<td'+c('v')+'>('+n3(p.soc.x)+', '+n3(p.soc.y)+')</td>'+
+      '<td'+c('v')+'>('+n3(p.vx)+', '+n3(p.vy)+')</td></tr>';
+  }).join('')+(pso.P.length>MAX?
+    '<tr><td colspan="8" style="text-align:center;color:var(--fraco)">… e mais '+
+    (pso.P.length-MAX)+' partículas</td></tr>':'');
+  document.querySelectorAll('#tabDados th').forEach(th=>
+    th.classList.toggle('ativa',th.dataset.c===FASES[faseIdx].col));
+  $('tabIt').textContent=pso.it;
+  $('tabFase').textContent=FASES[faseIdx].rot;
+}
+/* o ciclo de fases roda junto com a animação, mesmo com os painéis fechados */
+function girarFase(){
+  faseIdx=(faseIdx+1)%FASES.length;
+  destacarMatlab(); passoTabela();
+}
+
+/* ============================================================================
+   5. LOOP
+   ========================================================================== */
+let cenaAtual=0;
+const lerp=(a,b,k)=>a+(b-a)*k;
+function animar(){
+  requestAnimationFrame(animar);
+  if(!cena)return;
+  const dt=Math.min(relogio.getDelta(),.05), t=relogio.getElapsedTime();
+  const k=1-Math.pow(.0018,dt);          // suavização independente de fps
+
+  // giro lento da câmera
+  if(S.giroCam>0){
+    const r=Math.hypot(cam.position.x,cam.position.z);
+    const a=Math.atan2(cam.position.z,cam.position.x)+S.giroCam*dt;
+    cam.position.x=Math.cos(a)*r; cam.position.z=Math.sin(a)*r;
+    cam.lookAt(ctrl.target);
+  }
+
+  // opacidades interpoladas
+  const sup=gSuperficie.getObjectByName('sup');
+  const wire=gSuperficie.getObjectByName('wire');
+  const alvo=gSuperficie.getObjectByName('alvo');
+  if(sup) sup.material.opacity =lerp(sup.material.opacity ,S.supOp ,k);
+  if(wire)wire.material.opacity=lerp(wire.material.opacity,S.wireOp,k);
+  if(alvo)alvo.material.opacity=lerp(alvo.material.opacity,S.alvoOp,k);
+  gEixos.children.forEach(o=>{ if(o.material)
+    o.material.opacity=lerp(o.material.opacity??1,S.eixoOp,k); });
+  gParticulas.children.forEach(o=>{
+    const alvoOp=o.userData.halo?S.haloOp:S.partOp;
+    o.material.opacity=lerp(o.material.opacity,alvoOp,k);
+    // destaque pulsa e veste a cor do conceito em foco
+    if(!o.userData.halo){
+      const i=o.userData.i;
+      const ehD=(i===destaque);
+      const ehMelhorG=(papelCor==='soc'&&pso&&i===idxMelhorGlobal());
+      const esc=o.userData.raio*(ehD?1.7+Math.sin(t*4)*.12:1);
+      o.scale.setScalar(lerp(o.scale.x,esc,k));
+      o.material.emissiveIntensity=lerp(o.material.emissiveIntensity,
+        (ehD||ehMelhorG)?2.2:.9,k);
+      // cor-alvo: destaque veste o papel; a dona do melhor global fica vermelha
+      let alvoCor=COR.base;
+      if(ehD&&papelCor)      alvoCor=COR[papelCor]??COR.dest;
+      else if(ehD)           alvoCor=COR.dest;
+      else if(ehMelhorG)     alvoCor=COR.melhor;
+      o.material.color.lerp(new THREE.Color(alvoCor),k);
+      o.material.emissive.lerp(new THREE.Color(alvoCor).multiplyScalar(.45),k);
+    }
+  });
+  gTrilha.children.forEach(o=>{o.material.opacity=lerp(o.material.opacity,S.trilhaOp*.85,k);});
+  gVetores.children.forEach(o=>{
+    if(o.line){o.line.material.opacity=lerp(o.line.material.opacity??0,1,k);
+               o.cone.material.opacity=lerp(o.cone.material.opacity??0,1,k);}});
+  // o clone do Stork tem varios meshes: percorre a arvore
+  gPassaros.children.forEach(o=>{
+    const at=o.userData.op??0;
+    const nv=lerp(at,S.passaroOp,k);
+    o.userData.op=nv;
+    o.visible=nv>0.01;
+    opacidadeAve(o,nv);
+  });
+  gRivais.children.forEach(o=>{o.material.opacity=lerp(o.material.opacity,S.rivalOp,k);});
+
+  // iterações do PSO
+  if(rodando&&pso){
+    tAcum+=dt;
+    while(tAcum>velIter){
+      tAcum-=velIter;
+      pso.passo();
+      desenharTrilha(); atualizarHud();
+      // na cena comparativa os três avançam no mesmo ritmo
+      if(S.rivalOp>.5&&grad&&ag){
+        /* Orçamento equivalente: o PSO e o AG gastam N avaliações por iteração
+           (uma por indivíduo); o gradiente gasta ~5 (derivada numérica). Dar a
+           ele apenas 1 passo seria compará-lo com 1/N do orçamento.        */
+        for(let q=0;q<PASSOS_GRAD;q++)grad.passo();
+        ag.passo(); atualizarPlacar(); atualizarComparar();
+      }
+    }
+    // interpola entre a iteração anterior e a atual: movimento contínuo
+    uInterp=tAcum/velIter;
+    const u=uInterp;
+    posicionarParticulas(u);
+    if(S.rivalOp>.5)posicionarRivais(u);
+    // as 4 fases se distribuem ao longo do intervalo da iteração
+    const nf=Math.min(FASES.length-1,Math.floor(u*FASES.length));
+    if(nf!==faseIdx){faseIdx=nf;destacarMatlab();passoTabela();}
+  }
+  /* Pausado e sem deslize em curso: congela onde está, mas mantém partículas
+     e pássaros coerentes — ambos leem o mesmo uInterp a cada quadro.      */
+  if(!rodando&&!animManual&&pso){
+    posicionarParticulas(uInterp);
+    if(S.rivalOp>.5)posicionarRivais(uInterp);
+  }
+  /* modo manual: uma animação própria conduz uInterp entre as fases */
+  if(!rodando&&animManual){
+    const a2=animManual;
+    const u=Math.min(1,(t-a2.t0)/a2.dur);
+    uInterp=a2.de+(a2.para-a2.de)*u;
+    posicionarParticulas(uInterp);
+    if(S.rivalOp>.5)posicionarRivais(uInterp);
+    if(u>=1){ animManual=null; if(a2.aoFim)a2.aoFim(); sincronizarPlay(); }
+  }
+  if(S.passaroOp>.02)moverPassaros(t,dt);
+
+  ctrl.update();
+  rend.render(cena,cam);
+}
+function atualizarHud(){
+  if(!pso)return;
+  $('hIt').textContent=pso.it;
+  $('hF').textContent=pso.gf<1e-4?pso.gf.toExponential(2):pso.gf.toFixed(5);
+  $('hN').textContent=pso.P.length;
+  // cada iteração custa uma avaliação por partícula
+  const av=$('hAv'); if(av)av.textContent=(pso.it*pso.P.length).toLocaleString('pt-BR');
+  const fa=$('hFase');
+  if(fa)fa.textContent=(rodando||animManual)?FASES[faseIdx].rot.replace(/^\d+ · /,''):'—';
+}
+
+/* ============================================================================
+   6. NAVEGAÇÃO
+   ========================================================================== */
+/* Estado neutro aplicado ANTES de cada cena.
+   S é um objeto único e Object.assign só sobrescreve o que a cena declara —
+   sem este reset, o que uma cena liga permanece ligado nas seguintes (era o
+   caso dos rivais do AG, que apareciam desde o início depois de visitar a
+   cena 9, e da trilha/pássaros ao navegar para trás).                     */
+const S_PADRAO={supOp:0,wireOp:0,partOp:0,haloOp:0,eixoOp:0,trilhaOp:0,
+                alvoOp:0,passaroOp:0,rivalOp:0,giroCam:.06};
+function irPara(i){
+  cenaAtual=Math.max(0,Math.min(CENAS.length-1,i));
+  const c=CENAS[cenaAtual];
+  Object.assign(S,S_PADRAO);          // zera tudo; a cena liga o que precisa
+  const n=$('narra'); n.classList.remove('on');
+  setTimeout(()=>{
+    $('titulo').innerHTML=c.titulo; $('sub').innerHTML=c.sub;
+    if(typeof renderMathInElement==='function'){
+      try{ renderMathInElement($('narra'),{delimiters:[{left:'$',right:'$',display:false}],
+        throwOnError:false}); }catch(e){}
+    }
+    n.classList.add('on');
+  },240);
+  c.ent();
+  animManual=null;
+  if(!rodando){ uInterp=1; if(pso)posicionarParticulas(1); }
+  sincronizarPlay();
+  document.querySelectorAll('.pt').forEach((p,k)=>{
+    p.classList.toggle('on',k===cenaAtual);
+    p.classList.toggle('feito',k<cenaAtual);
+  });
+  $('bAnt').disabled=cenaAtual===0;
+  $('bProx').disabled=cenaAtual===CENAS.length-1;
+  $('bProx').textContent=cenaAtual===CENAS.length-1?'Fim':'Próxima cena ›';
+}
+function montarTrilha(){
+  const t=$('trilha'); t.innerHTML='';
+  CENAS.forEach((c,i)=>{
+    const p=document.createElement('div');
+    p.className='pt'; p.title=(i+1)+' · '+c.titulo;
+    p.onclick=()=>irPara(i);
+    t.appendChild(p);
+  });
+}
+
+/* ---- setup ---- */
+function montarSetup(){
+  const box=$('fns'); box.innerHTML='';
+  Object.entries(FUNCS).forEach(([k,f],i)=>{
+    const d=document.createElement('div');
+    d.className='fn'+(k==='rosenbrock'?' on':'');
+    d.dataset.fn=k;
+    d.innerHTML='<b>'+f.nome+'</b><small>'+f.desc+'</small>';
+    d.onclick=()=>{ document.querySelectorAll('.fn').forEach(e=>e.classList.remove('on'));
+                    d.classList.add('on'); };
+    box.appendChild(d);
+  });
+  const r=$('nPart'), o=$('nPartV');
+  r.oninput=()=>{o.textContent=r.value;};
+}
+function comecar(){
+  const k=document.querySelector('.fn.on')?.dataset.fn||'rosenbrock';
+  fnAtual=FUNCS[k];
+  nPart=+$('nPart').value;
+  pso=new PSO(fnAtual,nPart,12345);
+  grad=new Gradiente(fnAtual,777);
+  ag=new AG(fnAtual,Math.max(8,Math.round(nPart*0.8)),777);
+  construirEixos(); construirSuperficie(); construirParticulas(); construirPassaros();
+  construirRivais();
+  limpar(gTrilha); limpar(gVetores);
+  atualizarHud();
+  $('setup').classList.add('off');
+  montarTabela(); destacarMatlab();
+  irPara(0);
+}
+
+/* ---- eventos ---- */
+$('bProx').onclick=()=>irPara(cenaAtual+1);
+$('bAnt').onclick =()=>irPara(cenaAtual-1);
+$('bRep').onclick =()=>{
+  if(pso){const sd=Math.floor(Math.random()*99999);
+    pso=new PSO(fnAtual,nPart,sd);
+    grad=new Gradiente(fnAtual,sd); ag=new AG(fnAtual,Math.max(8,Math.round(nPart*0.8)),sd);
+    construirParticulas();construirPassaros();construirRivais();
+    limpar(gTrilha);atualizarHud();}
+  irPara(cenaAtual);
+};
+$('bSetup').onclick=()=>{$('setup').classList.remove('off');pausar();};
+
+/* ============================================================================
+   EXECUÇÃO PASSO A PASSO
+   · play/pause  — liga e desliga o avanço contínuo
+   · ⏭ fase      — avança UMA das 4 fases do ciclo (avaliar → memória →
+                   velocidade → mover), com a interpolação acompanhando
+   · ⏭⏭ iteração — completa a iteração corrente de uma vez
+   Em modo manual, uInterp é conduzido por uma animação própria, para o
+   movimento continuar suave mesmo sem o relógio do play.
+   ========================================================================== */
+let animManual=null;          // {de, para, t0, dur, aoFim}
+
+function sincronizarPlay(){
+  const b=$('bPlay');
+  if(!b)return;
+  b.textContent=rodando?'❚❚':'▶';
+  b.classList.toggle('on',rodando);
+  b.title=rodando?'Pausar (Espaço)':'Executar (Espaço)';
+  // passo a passo só faz sentido com o algoritmo em cena
+  const podeAndar=!!pso&&S.partOp>.05;
+  ['bFase','bIter'].forEach(id=>{const e=$(id);if(e)e.disabled=rodando||!podeAndar;});
+  b.disabled=!podeAndar;
+}
+function tocar(){ if(!pso)return; rodando=true; animManual=null; sincronizarPlay(); }
+function pausar(){ rodando=false; sincronizarPlay(); }
+function alternarPlay(){ rodando?pausar():tocar(); }
+
+/* desliza uInterp de 'de' até 'para' em dur segundos */
+function deslizar(de,para,dur,aoFim){
+  animManual={de,para,t0:relogio.getElapsedTime(),dur,aoFim};
+}
+/* avança uma fase: 1/4 do intervalo da iteração */
+function avancarFase(){
+  if(!pso||rodando||animManual)return;
+  pausar();
+  const alvo=(faseIdx+1)/FASES.length;
+  if(faseIdx+1>=FASES.length){
+    // última fase: completa o movimento e materializa a próxima iteração
+    deslizar(uInterp,1,.45,()=>{ novaIteracao(); });
+  } else {
+    deslizar(uInterp,alvo,.40,()=>{
+      faseIdx++; destacarMatlab(); passoTabela();
+    });
+  }
+}
+/* completa a iteração corrente e prepara a seguinte */
+function avancarIteracao(){
+  if(!pso||rodando||animManual)return;
+  pausar();
+  deslizar(uInterp,1,.55,()=>{ novaIteracao(); });
+}
+/* materializa a próxima iteração e volta o relógio de interpolação ao zero */
+function novaIteracao(){
+  pso.passo();
+  if(S.rivalOp>.5&&grad&&ag){ grad.passo(); ag.passo(); atualizarPlacar(); }
+  desenharTrilha(); atualizarHud();
+  uInterp=0; tAcum=0; faseIdx=0;
+  destacarMatlab(); passoTabela();
+  posicionarParticulas(0);
+  if(S.rivalOp>.5)posicionarRivais(0);
+}
+
+$('bPlay').onclick=alternarPlay;
+$('bFase').onclick=avancarFase;
+$('bIter').onclick=avancarIteracao;
+
+/* ---- velocidade: 6 níveis, de bem lento a rápido ---- */
+const VELS=[{r:'0,25×',s:1/0.25},{r:'0,5×',s:1/0.5},{r:'1×',s:1/1.1},
+            {r:'2×',s:1/2.2},{r:'4×',s:1/4.4},{r:'8×',s:1/8.8}];
+function aplicarVel(){
+  const i=+$('vel').value;
+  velIter=VELS[i].s;
+  $('velV').textContent=VELS[i].r;
+}
+$('vel').oninput=aplicarVel;
+aplicarVel();
+
+/* ---- painéis ---- */
+const BOTAO_PAINEL={tabela:'bTab',matlab:'bMat',comparar:'bComp'};
+function alternar(id){
+  const el=$(id), on=!el.classList.contains('on');
+  el.classList.toggle('on',on);
+  $(BOTAO_PAINEL[id]).classList.toggle('p',on);
+  if(on){
+    if(id==='tabela')        montarTabela();
+    else if(id==='matlab')   destacarMatlab();
+    else                     montarComparar();
+  }
+}
+$('bTab').onclick=()=>alternar('tabela');
+$('bMat').onclick=()=>alternar('matlab');
+$('bComp').onclick=()=>alternar('comparar');
+document.querySelectorAll('[data-fecha]').forEach(b=>
+  b.onclick=()=>alternar(b.dataset.fecha));
+$('comecar').onclick=comecar;
+addEventListener('keydown',e=>{
+  if(!$('setup').classList.contains('off'))return;
+  if(e.target&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowRight'){irPara(cenaAtual+1);e.preventDefault();return;}
+  if(e.key==='ArrowLeft') {irPara(cenaAtual-1);e.preventDefault();return;}
+  if(e.key===' '){alternarPlay();e.preventDefault();return;}   // play/pause
+  if(k==='f'){avancarFase();e.preventDefault();return;}
+  if(k==='n'){avancarIteracao();e.preventDefault();return;}
+});
+
+montarSetup(); montarTrilha(); iniciarCena(); carregarAve(); montarMatlab();
+if(typeof renderMathInElement==='function'){
+  try{ renderMathInElement($('eq'),{delimiters:[{left:'$',right:'$',display:false}],
+    throwOnError:false}); }catch(e){}
+}
+</script>
+</body>
+</html>

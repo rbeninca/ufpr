@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trabalho 7 — Algoritmos Bioinspirados: do básico ao avançado</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/css/print/pdf.css" media="print">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+  <style>
+    :root{--azul:#004a8e;--escuro:#00305c;--claro:#eaf3fb;--verde:#1e8449;--ouro:#f39c12;--vermelho:#c0392b;--cinza:#526274}
+    .reveal{font-family:Arial,Helvetica,sans-serif;color:#263548}
+    .reveal .slides>section{padding:0 18px 8px;top:0!important;text-align:left;box-sizing:border-box}
+    .reveal h1,.reveal h2{color:var(--azul);font-weight:800;text-transform:uppercase}
+    .reveal h1{font-size:1.9em}.reveal h2{font-size:1.25em;border-bottom:3px solid var(--azul);display:inline-block;padding-bottom:4px;margin:0 0 10px}
+    .reveal h3{color:var(--escuro);font-size:.83em;margin:8px 0 4px}.reveal p{margin:7px 0}.reveal li{margin:5px 0}
+    .compact{font-size:.78em}.tiny{font-size:.66em}.center{text-align:center!important}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .card{background:#fff;border:1px solid #dce5ee;border-radius:10px;padding:11px 14px;box-shadow:0 3px 10px #20385014}
+    .card h3{margin-top:0}.box{background:var(--claro);border-left:6px solid var(--azul);padding:10px 14px;border-radius:5px;margin:8px 0}
+    .tip{background:#fff8e8;border-left-color:var(--ouro)}.ok{background:#eef8f1;border-left-color:var(--verde)}.warn{background:#fdf1ef;border-left-color:var(--vermelho)}
+    .formula{background:#f5f8fc;border:1px solid #dce5ee;border-radius:8px;padding:9px 13px;margin:8px 0;text-align:center}
+    .steps{counter-reset:passo;list-style:none;padding:0!important}.steps li{counter-increment:passo;background:#f8fafc;border-left:4px solid #9fbedd;padding:6px 10px;margin:6px 0}
+    .steps li:before{content:counter(passo) ". ";font-weight:bold;color:var(--azul)}
+    table{width:100%;border-collapse:collapse;font-size:.7em;margin-top:8px}th{background:var(--azul);color:#fff}th,td{border:1px solid #d8e0e8;padding:6px 8px;vertical-align:top}tr:nth-child(even) td{background:#f5f8fb}
+    .tag{display:inline-block;background:#e5f0fa;color:var(--escuro);border-radius:12px;padding:3px 10px;font-size:.7em;font-weight:bold;margin:2px}
+    .divider{background:var(--azul)!important;color:#fff;text-align:center!important;padding-top:220px!important}.divider h1{color:#fff!important}.divider p{font-size:1.05em}
+    .equation-key td:first-child{font-weight:bold;color:var(--azul);white-space:nowrap}.muted{color:#68788a}.accent{color:var(--azul);font-weight:bold}
+    .flow{display:flex;align-items:stretch;justify-content:center;gap:8px;margin:18px 0}.flow .node{flex:1;background:#f3f7fb;border:2px solid #b9cee2;border-radius:8px;padding:10px;text-align:center}.flow .arrow{align-self:center;color:var(--azul);font-weight:bold}
+    .speaker{font-size:.58em;color:#6b7888;border-top:1px dashed #ccd6df;margin-top:10px;padding-top:5px}
+    .reveal .slide-number{background:var(--azul);color:#fff;padding:4px 9px;border-radius:4px}
+    .topbar{position:fixed;right:15px;top:12px;z-index:10}.topbar button{background:var(--azul);color:white;border:0;border-radius:6px;padding:8px 13px;font-weight:bold;cursor:pointer}
+    .lab{display:grid;grid-template-columns:1.45fr .9fr;gap:12px}.three-host,.chart-host{height:405px;border:1px solid #cfdae5;border-radius:10px;overflow:hidden;background:#eef5fb;box-shadow:0 3px 12px #20385018}.chart-host{height:240px}
+    .controls{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.controls button,.controls select{border:1px solid #aec4d8;background:#fff;color:var(--escuro);border-radius:6px;padding:6px 10px;font-weight:bold;cursor:pointer}.controls button:hover{background:#e9f3fb}.controls label{font-size:.65em;color:#556779;display:flex;align-items:center;gap:5px}.controls input{accent-color:var(--azul)}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:.58em;margin:3px 0}.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:3px}.readout{font-size:.67em;background:#f5f8fb;border-radius:7px;padding:7px 9px;min-height:52px}
+    @media print{.topbar{display:none}.speaker{display:block}}
+  </style>
+</head>
+<body>
+<div class="topbar"><button id="pdf">📄 Gerar PDF</button></div>
+<div class="reveal"><div class="slides">
+
+<section class="center">
+  <h1>Algoritmos Bioinspirados</h1>
+  <p style="font-size:1.15em">Da observação da natureza à solução de problemas de otimização</p>
+  <p style="margin-top:38px"><span class="tag">UFPR</span><span class="tag">Trabalho 7</span><span class="tag">Otimização</span></p>
+  <div style="margin-top:30px;font-size:.8em"><b>Alunos:</b> Leonardo Ronald Perin Rauta<br>Maurício da Silva Justino<br>Romulo de Aguiar Beninca</div>
+  <p class="muted" style="font-size:.7em"><b>Professor:</b> Prof. Dr. Carlos Alberto Bavastri</p>
+</section>
+
+<section class="compact">
+  <h2>Como estudar esta apresentação</h2>
+  <div class="cols3">
+    <div class="card"><h3>1. Intuição</h3><p>Primeiro entenda a história natural e o significado de cada símbolo.</p></div>
+    <div class="card"><h3>2. Números</h3><p>Depois substitua as letras por valores, uma operação de cada vez.</p></div>
+    <div class="card"><h3>3. Decisão</h3><p>Por fim, veja quando usar, como ajustar e quais são os limites.</p></div>
+  </div>
+  <div class="box tip"><b>Regra para fórmulas:</b> letra é apenas uma “caixinha” que guarda um número. Exemplo: se $x=3$, então $2x+1=2\cdot3+1=7$.</div>
+  <p><b>Roteiro:</b> problema → conceito → famílias → PSO/ABC/GWO/ACO passo a passo → prática → tópicos avançados → limitações.</p>
+</section>
+
+<section class="divider"><h1>Parte 1 — Fundamentos</h1><p>O que estamos tentando resolver?</p></section>
+
+<section class="compact">
+  <h2>O que é otimização?</h2>
+  <p>Otimizar é escolher os valores que tornam um resultado o melhor possível.</p>
+  <div class="cols">
+    <div class="card"><h3>Exemplo cotidiano</h3><p>Escolher uma rota que tenha o <b>menor tempo</b>, respeitando ruas permitidas e combustível disponível.</p></div>
+    <div class="card"><h3>Exemplo de engenharia</h3><p>Escolher dimensões de uma peça com <b>menor massa</b>, sem ultrapassar tensão e deformação admissíveis.</p></div>
+  </div>
+  <div class="formula">$$\min_{x\in\Omega} f(x)$$</div>
+  <table class="equation-key"><tr><td>$x$</td><td>decisão: o valor que podemos mudar</td></tr><tr><td>$f(x)$</td><td>função objetivo: mede a qualidade da decisão</td></tr><tr><td>$\Omega$</td><td>região viável: decisões permitidas pelas restrições</td></tr></table>
+</section>
+
+<section class="compact">
+  <h2>Nosso problema-exemplo</h2>
+  <p>Imagine uma paisagem. A altura é o custo e queremos encontrar o ponto mais baixo.</p>
+  <div class="formula">$$f(x)=(x-3)^2+1 \qquad -5\le x\le 8$$</div>
+  <ol class="steps">
+    <li>Teste $x=1$: $f(1)=(1-3)^2+1=(-2)^2+1=4+1=5$.</li>
+    <li>Teste $x=2$: $f(2)=(2-3)^2+1=(-1)^2+1=1+1=2$.</li>
+    <li>Teste $x=3$: $f(3)=(3-3)^2+1=0^2+1=1$.</li>
+  </ol>
+  <div class="box ok"><b>Resultado:</b> o mínimo é $f(3)=1$. Logo, a melhor decisão é $x^*=3$. O asterisco significa “melhor valor encontrado”.</div>
+</section>
+
+<section class="compact">
+  <h2>Por que não testar todos os valores?</h2>
+  <ul>
+    <li>Entre 0 e 1 existem infinitos números reais.</li>
+    <li>Com muitas variáveis, as combinações crescem rapidamente: 10 opções para 20 variáveis dão $10^{20}$ combinações.</li>
+    <li>A função pode ter vários vales, ruído, descontinuidades ou vir de uma simulação cara.</li>
+  </ul>
+  <div class="cols">
+    <div class="card"><h3>Método exato/local</h3><p>Explora propriedades matemáticas. Pode ser muito rápido, mas depende de hipóteses como suavidade e bom ponto inicial.</p></div>
+    <div class="card"><h3>Metaheurística</h3><p>Usa regras gerais para buscar soluções boas. É flexível, mas normalmente não prova que achou o ótimo global.</p></div>
+  </div>
+</section>
+
+<section class="compact">
+  <h2>O que significa “bioinspirado”?</h2>
+  <p>É um algoritmo cuja estratégia abstrata imita um mecanismo observado na natureza. Ele <b>não simula toda a biologia</b>; seleciona uma ideia útil.</p>
+  <div class="flow"><div class="node"><b>Natureza</b><br>cooperação, seleção, adaptação</div><div class="arrow">→</div><div class="node"><b>Abstração</b><br>regras simples e números</div><div class="arrow">→</div><div class="node"><b>Algoritmo</b><br>gera e compara soluções</div><div class="arrow">→</div><div class="node"><b>Aplicação</b><br>projeto, rota, ajuste</div></div>
+  <div class="box"><b>Ideia central:</b> uma população de soluções explora várias regiões; as melhores informações orientam as próximas tentativas.</div>
+</section>
+
+<section class="compact">
+  <h2>Quatro palavras essenciais</h2>
+  <table><tr><th>Termo</th><th>Em linguagem simples</th><th>Exemplo</th></tr>
+    <tr><td>População</td><td>Conjunto de candidatos ao mesmo tempo</td><td>20 partículas = 20 valores de $x$</td></tr>
+    <tr><td>Avaliação</td><td>Calcular a qualidade de um candidato</td><td>Substituir $x$ em $f(x)$</td></tr>
+    <tr><td>Exploração</td><td>Procurar em regiões novas e distantes</td><td>Uma abelha escoteira sorteia nova fonte</td></tr>
+    <tr><td>Explotação/refino</td><td>Investigar perto de uma solução promissora</td><td>Partículas se aproximam do melhor ponto</td></tr>
+  </table>
+  <div class="box tip"><b>Equilíbrio:</b> só explorar desperdiça avaliações; só refinar pode prender o algoritmo em um mínimo local.</div>
+</section>
+
+<section class="divider"><h1>Parte 2 — Famílias e exemplos</h1><p>Diferentes metáforas, mecanismos diferentes</p></section>
+
+<section class="compact">
+  <h2>Panorama dos principais algoritmos</h2>
+  <table><tr><th>Algoritmo</th><th>Inspiração</th><th>Mecanismo</th><th>Bom ponto de partida</th></tr>
+    <tr><td>AG</td><td>Evolução</td><td>seleção, cruzamento e mutação</td><td>variáveis discretas ou mistas</td></tr>
+    <tr><td>DE</td><td>Evolução</td><td>diferenças entre vetores geram candidatos</td><td>otimização contínua</td></tr>
+    <tr><td>PSO</td><td>Bandos/cardumes</td><td>memória pessoal + melhor coletivo</td><td>contínuo, simples e rápido</td></tr>
+    <tr><td>ACO</td><td>Formigas</td><td>feromônio reforça boas sequências</td><td>rotas e problemas combinatórios</td></tr>
+    <tr><td>ABC</td><td>Abelhas</td><td>fontes, recrutamento e abandono</td><td>contínuo, poucos parâmetros</td></tr>
+    <tr><td>GWO</td><td>Lobos</td><td>três líderes guiam a matilha</td><td>contínuo, implementação curta</td></tr>
+    <tr><td>FA</td><td>Vaga-lumes</td><td>atração depende do brilho e distância</td><td>funções com muitos mínimos</td></tr>
+  </table>
+</section>
+
+<section class="compact">
+  <h2>Algoritmo Genético (AG)</h2>
+  <div class="cols">
+    <div><p>Cada solução é um indivíduo. Soluções melhores têm maior chance de produzir descendentes.</p><ol class="steps"><li>Crie uma população.</li><li>Avalie a aptidão.</li><li>Selecione pais.</li><li>Faça cruzamento.</li><li>Faça pequenas mutações.</li><li>Repita.</li></ol></div>
+    <div><div class="card"><h3>Exemplo binário</h3><p>Pai A: <code>101|10</code><br>Pai B: <code>011|01</code></p><p>Corte após o 3º bit:</p><p>Filho: <code>101|01</code></p><p>Mutação no último bit:</p><p><code>10101 → 10100</code></p></div><div class="box warn"><b>Limite:</b> pode perder diversidade e convergir cedo; representação e operadores precisam combinar com o problema.</div></div>
+  </div>
+</section>
+
+<section class="compact">
+  <h2>ACO — Colônia de Formigas</h2>
+  <p>Formigas constroem rotas. Boas arestas recebem feromônio; parte dele evapora para que escolhas antigas possam ser esquecidas.</p>
+  <div class="formula">$$P_{ij}=\frac{\tau_{ij}^{\alpha}\eta_{ij}^{\beta}}{\sum_{k\in N_i}\tau_{ik}^{\alpha}\eta_{ik}^{\beta}}$$</div>
+  <table class="equation-key"><tr><td>$\tau_{ij}$</td><td>feromônio na ligação $i\to j$</td></tr><tr><td>$\eta_{ij}$</td><td>visibilidade, geralmente $1/\text{distância}$</td></tr><tr><td>$\alpha,\beta$</td><td>pesos da memória coletiva e da informação local</td></tr></table>
+  <p><b>Uso:</b> caixeiro-viajante, roteamento, escalonamento. <b>Limite:</b> pode estagnar em uma rota e ficar caro em grafos grandes.</p>
+</section>
+
+<section class="compact">
+  <h2>ACO com números — sem pular etapas</h2>
+  <p>De A, a formiga pode ir para B ou C. Use $\alpha=1$ e $\beta=1$.</p>
+  <table><tr><th>Ligação</th><th>Feromônio $\tau$</th><th>Distância $d$</th><th>Visibilidade $\eta=1/d$</th><th>Peso $\tau\eta$</th></tr><tr><td>A→B</td><td>2</td><td>4</td><td>$1/4=0{,}25$</td><td>$2\cdot0{,}25=0{,}50$</td></tr><tr><td>A→C</td><td>1</td><td>2</td><td>$1/2=0{,}50$</td><td>$1\cdot0{,}50=0{,}50$</td></tr></table>
+  <ol class="steps"><li>Some os pesos: $0{,}50+0{,}50=1{,}00$.</li><li>$P_{AB}=0{,}50/1{,}00=0{,}50=50\%$.</li><li>$P_{AC}=0{,}50/1{,}00=0{,}50=50\%$.</li></ol>
+  <div class="box ok">B tem mais feromônio, C é mais perto; neste exemplo os dois efeitos se equilibram.</div>
+</section>
+
+<section class="divider"><h1>Parte 3 — PSO passo a passo</h1><p>Memória individual e aprendizado social</p></section>
+
+<section class="compact">
+  <h2>PSO — significado das equações</h2>
+  <div class="formula">$$v_i^{t+1}=wv_i^t+c_1r_1(p_i-x_i^t)+c_2r_2(g-x_i^t)$$ $$x_i^{t+1}=x_i^t+v_i^{t+1}$$</div>
+  <table class="equation-key"><tr><td>$x_i$</td><td>posição atual da partícula $i$</td></tr><tr><td>$v_i$</td><td>velocidade: tamanho e direção do movimento</td></tr><tr><td>$p_i$</td><td>melhor posição já vista pela própria partícula</td></tr><tr><td>$g$</td><td>melhor posição já vista pelo enxame</td></tr><tr><td>$w$</td><td>inércia; preserva parte do movimento</td></tr><tr><td>$c_1,c_2$</td><td>forças cognitiva e social</td></tr><tr><td>$r_1,r_2$</td><td>números aleatórios entre 0 e 1</td></tr></table>
+</section>
+
+<section class="compact">
+  <h2>PSO — substituição numérica</h2>
+  <p>Dados: $x=4$, $v=-1$, $p=3$, $g=2$, $w=0{,}5$, $c_1=c_2=1$, $r_1=0{,}4$, $r_2=0{,}8$.</p>
+  <ol class="steps">
+    <li>Inércia: $wv=0{,}5\cdot(-1)=-0{,}5$.</li>
+    <li>Memória: $c_1r_1(p-x)=1\cdot0{,}4\cdot(3-4)=0{,}4\cdot(-1)=-0{,}4$.</li>
+    <li>Social: $c_2r_2(g-x)=1\cdot0{,}8\cdot(2-4)=0{,}8\cdot(-2)=-1{,}6$.</li>
+    <li>Nova velocidade: $v_{novo}=-0{,}5-0{,}4-1{,}6=-2{,}5$.</li>
+    <li>Nova posição: $x_{novo}=4+(-2{,}5)=1{,}5$.</li>
+  </ol>
+  <div class="box"><b>Interpretação:</b> velocidade negativa significa movimento para a esquerda, em direção às melhores posições 3 e 2.</div>
+</section>
+
+<section class="compact">
+  <h2>PSO — ciclo, uso e limites</h2>
+  <div class="flow"><div class="node">Sortear posições e velocidades</div><div class="arrow">→</div><div class="node">Avaliar $f(x)$</div><div class="arrow">→</div><div class="node">Atualizar $p_i$ e $g$</div><div class="arrow">→</div><div class="node">Mover partículas</div></div>
+  <div class="cols"><div class="box ok"><b>Use quando:</b><ul><li>variáveis são contínuas;</li><li>derivadas não existem ou são difíceis;</li><li>é preciso um algoritmo simples.</li></ul></div><div class="box warn"><b>Limitações:</b><ul><li>pode convergir cedo;</li><li>parâmetros alteram estabilidade;</li><li>restrições exigem tratamento;</li><li>não garante ótimo global.</li></ul></div></div>
+</section>
+
+<section class="divider"><h1>Parte 4 — ABC e GWO</h1><p>Outras formas de equilibrar busca e refino</p></section>
+
+<section class="compact">
+  <h2>ABC — Colônia Artificial de Abelhas</h2>
+  <div class="cols">
+    <div><h3>Três papéis</h3><ul><li><b>Operária:</b> procura perto da fonte atual.</li><li><b>Seguidora:</b> prefere fontes de melhor qualidade.</li><li><b>Escoteira:</b> abandona fonte estagnada e recomeça.</li></ul></div>
+    <div><div class="formula">$$v_{ij}=x_{ij}+\phi_{ij}(x_{ij}-x_{kj})$$</div><p>$i$: fonte atual; $k$: outra fonte; $j$: variável; $\phi\in[-1,1]$: direção e intensidade aleatórias.</p></div>
+  </div>
+  <div class="box tip"><b>Leitura da fórmula:</b> “nova fonte = fonte atual + perturbação proporcional à diferença entre duas fontes”.</div>
+</section>
+
+<section class="compact">
+  <h2>ABC — substituição numérica</h2>
+  <p>Para uma variável: fonte atual $x_i=4$, outra fonte $x_k=1$ e $\phi=-0{,}5$.</p>
+  <ol class="steps"><li>Diferença: $x_i-x_k=4-1=3$.</li><li>Perturbação: $\phi(x_i-x_k)=(-0{,}5)\cdot3=-1{,}5$.</li><li>Nova fonte: $v_i=4+(-1{,}5)=2{,}5$.</li><li>Compare na função $f(x)=(x-3)^2+1$:<br>$f(4)=(4-3)^2+1=2$;<br>$f(2{,}5)=(2{,}5-3)^2+1=0{,}25+1=1{,}25$.</li></ol>
+  <div class="box ok"><b>Aceitar:</b> como estamos minimizando e $1{,}25&lt;2$, a nova fonte é melhor.</div>
+</section>
+
+<section class="compact">
+  <h2>GWO — Otimizador do Lobo-Cinzento</h2>
+  <p>As três melhores soluções são $\alpha$, $\beta$ e $\delta$. As demais ($\omega$) atualizam sua posição usando os três líderes.</p>
+  <div class="formula">$$D=|CX_{líder}-X|,\quad X'=X_{líder}-AD$$ $$X_{novo}=\frac{X'_\alpha+X'_\beta+X'_\delta}{3}$$</div>
+  <p>$A=2ar_1-a$, $C=2r_2$ e $a$ cai de 2 para 0 durante as iterações.</p>
+  <div class="cols"><div class="box"><b>$|A|&gt;1$:</b> movimentos amplos, exploração.</div><div class="box ok"><b>$|A|&lt;1$:</b> aproximação dos líderes, refino.</div></div>
+</section>
+
+<section class="compact">
+  <h2>GWO — uma conta simplificada</h2>
+  <p>Considere um lobo em $X=6$ e um líder em $X_L=3$. Nesta conta, use $A=0{,}5$ e $C=1$.</p>
+  <ol class="steps"><li>Distância modificada: $D=|C X_L-X|=|1\cdot3-6|=|-3|=3$.</li><li>Posição sugerida: $X'=X_L-AD=3-0{,}5\cdot3=3-1{,}5=1{,}5$.</li><li>O algoritmo repete a conta para $\alpha$, $\beta$ e $\delta$.</li><li>A nova posição é a média das três sugestões.</li></ol>
+  <div class="box tip">O valor 1,5 não é o resultado final do lobo: é apenas a sugestão de um dos três líderes.</div>
+</section>
+
+<section class="compact">
+  <h2>Outros exemplos importantes</h2>
+  <div class="cols3"><div class="card"><h3>DE — Evolução Diferencial</h3><p>Cria um vetor somando a uma solução a diferença escalada entre outras duas. Excelente referência para problemas contínuos.</p></div><div class="card"><h3>FA — Vaga-lumes</h3><p>Soluções menos brilhantes caminham para as mais brilhantes; atração diminui com a distância. Pode manter vários grupos.</p></div><div class="card"><h3>Sistemas Imunológicos</h3><p>Imitam seleção clonal, memória e diversidade para otimização, detecção de anomalias e classificação.</p></div></div>
+  <div class="box warn"><b>Cuidado com a metáfora:</b> um nome novo não significa desempenho novo. A comparação deve usar testes estatísticos, orçamento igual de avaliações e algoritmos de referência.</div>
+</section>
+
+<section class="divider"><h1>Parte 5 — Da teoria à prática</h1><p>Escolha, implementação e avaliação justa</p></section>
+
+<section class="compact">
+  <h2>Estrutura comum em pseudocódigo</h2>
+  <pre style="font-size:.62em;background:#272822;color:#f8f8f2;padding:14px;border-radius:8px"><code>criar população de soluções dentro dos limites
+avaliar cada solução com a função objetivo
+
+enquanto o critério de parada não for atingido:
+    gerar novos candidatos usando a regra do algoritmo
+    corrigir candidatos que saíram dos limites
+    avaliar os novos candidatos
+    atualizar memória, líderes ou população
+
+retornar a melhor solução e seu valor</code></pre>
+  <div class="box"><b>Critérios de parada:</b> número máximo de avaliações, tempo máximo, objetivo atingido ou ausência de melhora por várias iterações.</div>
+</section>
+
+<section class="compact">
+  <h2>Restrições: o que fazer com solução inválida?</h2>
+  <table><tr><th>Estratégia</th><th>Como funciona</th><th>Atenção</th></tr><tr><td>Reparo</td><td>projeta ou corta o valor para a região permitida</td><td>simples para limites; pode distorcer a busca</td></tr><tr><td>Penalidade</td><td>soma custo proporcional à violação</td><td>peso muito baixo aceita inválidos; alto demais cria barreira</td></tr><tr><td>Rejeição</td><td>descarta candidato inviável</td><td>desperdiça avaliações se a região viável for pequena</td></tr><tr><td>Regras de viabilidade</td><td>viável vence inviável; entre inviáveis, vence menor violação</td><td>boa alternativa sem escolher penalidade única</td></tr></table>
+  <div class="formula">$$F(x)=f(x)+\lambda\,[\max(0,\text{violação})]^2$$</div>
+</section>
+
+<section class="compact">
+  <h2>Como escolher o algoritmo?</h2>
+  <table><tr><th>Situação</th><th>Comece por</th><th>Por quê</th></tr><tr><td>Variáveis contínuas</td><td>DE ou PSO</td><td>bases fortes, conhecidas e simples de comparar</td></tr><tr><td>Rotas, ordem ou sequência</td><td>ACO ou AG com operador próprio</td><td>representam naturalmente combinações</td></tr><tr><td>Inteiras e contínuas juntas</td><td>AG misto ou método especializado</td><td>arredondar sem cuidado pode prejudicar</td></tr><tr><td>Simulação muito cara</td><td>otimização Bayesiana/surrogado</td><td>reduz número de avaliações</td></tr><tr><td>Função suave e derivadas disponíveis</td><td>método de gradiente/fmincon</td><td>costuma refinar com muito menos avaliações</td></tr></table>
+  <div class="box ok"><b>Estratégia híbrida:</b> bioinspirado localiza uma boa região; método local termina o refino.</div>
+</section>
+
+<section class="compact">
+  <h2>Ajuste de parâmetros sem adivinhação</h2>
+  <ol class="steps"><li>Defina o orçamento, por exemplo 10.000 avaliações de $f$.</li><li>Escolha 3 a 5 configurações justificáveis pela literatura.</li><li>Execute cada configuração com várias sementes aleatórias.</li><li>Compare mediana, dispersão, sucesso e custo — não apenas a melhor execução.</li><li>Use uma configuração de compromisso e confirme em problemas não usados no ajuste.</li></ol>
+  <div class="box warn"><b>Comparação injusta:</b> dar 100.000 avaliações a um algoritmo e 10.000 a outro, ou mostrar só a execução mais favorável.</div>
+</section>
+
+<section class="compact">
+  <h2>Exemplo de avaliação experimental</h2>
+  <p>Execute PSO, ABC e GWO 30 vezes, com o mesmo limite de avaliações. Quanto menor $f$, melhor.</p>
+  <table><tr><th>Métrica</th><th>O que responde?</th><th>Exemplo de leitura</th></tr><tr><td>Mediana do melhor $f$</td><td>resultado típico</td><td>PSO = 0,03; ABC = 0,07</td></tr><tr><td>Intervalo interquartil</td><td>estabilidade</td><td>menor intervalo = menos variação</td></tr><tr><td>Taxa de sucesso</td><td>quantas execuções atingem a meta</td><td>27/30 = 90%</td></tr><tr><td>Avaliações até a meta</td><td>eficiência</td><td>menor é melhor</td></tr></table>
+  <div class="box tip"><b>Semente aleatória:</b> registre-a. Assim outra pessoa pode reproduzir exatamente a execução.</div>
+</section>
+
+<section class="divider"><h1>Laboratório 3D interativo</h1><p>Veja cada algoritmo procurar o mesmo vale</p></section>
+
+<section class="compact">
+  <h2>Como ler o laboratório</h2>
+  <div class="cols">
+    <div><p>A superfície representa a função:</p><div class="formula">$$f(x,y)=0{,}08(x^2+y^2)+1-\cos(2x)\cos(2y)$$</div><p>Ela possui vários vales locais. O ponto ótimo global está próximo de $(0,0)$.</p></div>
+    <div><ul><li><b>Altura:</b> valor de $f$; mais baixo é melhor.</li><li><b>Esferas:</b> soluções candidatas.</li><li><b>Esfera dourada:</b> melhor solução atual.</li><li><b>Gráfico:</b> menor valor encontrado a cada iteração.</li></ul></div>
+  </div>
+  <div class="box tip"><b>Experimente:</b> altere o algoritmo e a velocidade, avance uma iteração por vez e gire a paisagem arrastando o mouse. A roda do mouse aproxima e afasta.</div>
+</section>
+
+<section class="compact" id="laboratorio-3d">
+  <h2>Comparador animado — 8 algoritmos</h2>
+  <div class="controls">
+    <select id="labAlgo" aria-label="Algoritmo"><option value="ga">AG — Algoritmo Genético</option><option value="de">DE — Evolução Diferencial</option><option value="pso" selected>PSO — Enxame de Partículas</option><option value="aco">ACO — Colônia de Formigas</option><option value="abc">ABC — Colônia de Abelhas</option><option value="gwo">GWO — Lobos-Cinzentos</option><option value="fa">FA — Vaga-lumes</option><option value="ais">AIS — Sistema Imunológico</option></select>
+    <button id="labPlay">▶ Iniciar</button><button id="labStep">⏭ 1 iteração</button><button id="labReset">↻ Reiniciar</button>
+    <label>Velocidade <input id="labSpeed" type="range" min="1" max="10" value="5"></label>
+  </div>
+  <div class="lab"><div><div id="threeLab" class="three-host"></div><div class="legend"><span><i class="dot" style="background:#21a6ff"></i>população</span><span><i class="dot" style="background:#ffd23f"></i>melhor</span><span><i class="dot" style="background:#e74c3c"></i>novo/reiniciado</span></div></div><div><div id="labChart" class="chart-host"></div><div id="labReadout" class="readout">Carregando laboratório…</div></div></div>
+</section>
+
+<section class="compact">
+  <h2>O que observar em cada animação</h2>
+  <table><tr><th>Algoritmo</th><th>Movimento mostrado</th><th>Pergunta para observar</th></tr><tr><td>AG</td><td>filhos surgem entre pais e sofrem mutação</td><td>a população perde diversidade cedo?</td></tr><tr><td>DE</td><td>diferenças entre três vetores criam uma tentativa</td><td>passos diminuem quando o grupo se aproxima?</td></tr><tr><td>PSO</td><td>velocidade combina inércia, memória e melhor global</td><td>as partículas ultrapassam o vale e retornam?</td></tr><tr><td>ACO</td><td>feromônio virtual favorece regiões visitadas com sucesso</td><td>a evaporação ainda permite explorar?</td></tr><tr><td>ABC</td><td>fontes são perturbadas; estagnadas reiniciam em vermelho</td><td>as escoteiras recuperam diversidade?</td></tr><tr><td>GWO</td><td>três líderes guiam as outras soluções</td><td>a busca ampla vira refino ao longo do tempo?</td></tr><tr><td>FA</td><td>soluções são atraídas pelas mais brilhantes</td><td>formam-se subgrupos em vales diferentes?</td></tr><tr><td>AIS</td><td>melhores anticorpos são clonados e hipermutados</td><td>os melhores recebem mais tentativas locais?</td></tr></table>
+</section>
+
+<section class="divider"><h1>Parte 6 — Nível avançado</h1><p>O que muda em problemas reais?</p></section>
+
+<section class="compact">
+  <h2>Multiobjetivo: quando há mais de uma meta</h2>
+  <p>Exemplo: minimizar simultaneamente <b>massa</b> e <b>custo</b>. Uma solução leve pode ser cara; outra barata pode ser pesada.</p>
+  <div class="formula">$$\min\;[f_1(x),f_2(x)]$$</div>
+  <p>Uma solução domina outra se não é pior em nenhum objetivo e é melhor em pelo menos um. As soluções não dominadas formam a <b>fronteira de Pareto</b>.</p>
+  <div class="box"><b>Algoritmos:</b> NSGA-II (evolutivo), MOPSO e variantes multiobjetivo de DE/ABC/GWO. O resultado é um conjunto de compromissos, não um único “vencedor”.</div>
+</section>
+
+<section class="compact">
+  <h2>Problemas caros, ruidosos e dinâmicos</h2>
+  <div class="cols3"><div class="card"><h3>Função cara</h3><p>Treine um modelo substituto (surrogate) com avaliações já feitas e use-o para propor candidatos.</p></div><div class="card"><h3>Ruído</h3><p>Repita avaliações, compare médias/intervalos e evite declarar melhora por diferença insignificante.</p></div><div class="card"><h3>Ótimo muda</h3><p>Mantenha diversidade, memória e mecanismos de reinicialização para acompanhar o ambiente.</p></div></div>
+  <div class="box ok"><b>Paralelismo:</b> populações permitem avaliar vários candidatos simultaneamente — vantagem importante quando cada simulação é independente.</div>
+</section>
+
+<section class="compact">
+  <h2>Aplicações reais</h2>
+  <div class="cols"><div><ul><li>dimensionamento estrutural;</li><li>controle e identificação de parâmetros;</li><li>planejamento de rotas e logística;</li><li>alocação e escalonamento de recursos;</li><li>seleção de características em aprendizado de máquina;</li></ul></div><div><ul><li>ajuste de hiperparâmetros;</li><li>posicionamento de sensores;</li><li>planejamento energético;</li><li>projeto de antenas;</li><li>otimização de processos industriais.</li></ul></div></div>
+  <div class="box tip"><b>Antes de usar:</b> verifique se existe método especializado. A inspiração biológica não substitui conhecimento do domínio.</div>
+</section>
+
+<section class="compact">
+  <h2>Limitações — visão honesta</h2>
+  <ul>
+    <li><b>Sem garantia geral:</b> encontrar uma solução boa não prova que é o ótimo global.</li>
+    <li><b>Custo:</b> populações exigem muitas avaliações da função.</li>
+    <li><b>Aleatoriedade:</b> execuções diferem; uma única rodada não sustenta conclusão.</li>
+    <li><b>Parâmetros:</b> população, taxas e critérios mudam o desempenho.</li>
+    <li><b>Escalabilidade:</b> muitas variáveis e restrições difíceis degradam a busca.</li>
+    <li><b>“No Free Lunch”:</b> nenhum algoritmo é o melhor para todos os problemas.</li>
+  </ul>
+  <div class="box warn"><b>Sinal de alerta:</b> resultado sem baseline, sem orçamento igual, sem várias execuções e sem código/dados reproduzíveis.</div>
+</section>
+
+<section class="compact">
+  <h2>Checklist para resolver um problema</h2>
+  <ol class="steps"><li>Defina claramente $x$, $f(x)$, limites e restrições.</li><li>Escolha uma representação que sempre possa virar uma solução real.</li><li>Crie uma função de avaliação testada com exemplos manuais.</li><li>Escolha um algoritmo-base adequado ao tipo de variável.</li><li>Defina orçamento e critério de parada antes de executar.</li><li>Faça várias execuções e registre sementes.</li><li>Compare com baseline simples e, se possível, método especializado.</li><li>Valide a melhor solução fora do otimizador.</li></ol>
+</section>
+
+<section class="compact">
+  <h2>Fixação — explique com suas palavras</h2>
+  <ol><li>Qual é a diferença entre uma solução $x$ e seu valor $f(x)$?</li><li>Por que exploração e refino precisam estar equilibrados?</li><li>No PSO, o que representam $p_i$ e $g$?</li><li>No ABC, por que uma fonte estagnada é abandonada?</li><li>Por que devemos executar um algoritmo aleatório várias vezes?</li><li>Em qual situação um método com gradiente pode ser preferível?</li></ol>
+  <div class="box ok"><b>Respostas-chave:</b> decisão × qualidade; cobertura × precisão; memória pessoal × coletiva; recuperar diversidade; medir variação; eficiência em funções suaves.</div>
+</section>
+
+<section class="compact">
+  <h2>Conclusão</h2>
+  <ul><li>Algoritmos bioinspirados transformam mecanismos naturais em regras de busca.</li><li>A população permite explorar várias regiões, enquanto a troca de informação promove refino.</li><li>AG, PSO, ACO, ABC e GWO têm representações e mecanismos diferentes; a escolha depende do problema.</li><li>As fórmulas ficam manejáveis quando cada símbolo é definido e substituído em etapas.</li><li>Resultados confiáveis exigem orçamento justo, várias sementes, métricas e comparação com baselines.</li></ul>
+  <div class="formula"><b>Resumo em uma linha:</b> gerar → avaliar → aprender → mover/selecionar → repetir.</div>
+</section>
+
+<section class="compact">
+  <h2>Referências</h2>
+  <ul style="font-size:.8em"><li>KENNEDY, J.; EBERHART, R. Particle Swarm Optimization. <i>Proc. IEEE ICNN</i>, 1995.</li><li>DORIGO, M.; STÜTZLE, T. <i>Ant Colony Optimization</i>. MIT Press, 2004.</li><li>KARABOGA, D. <i>An Idea Based on Honey Bee Swarm for Numerical Optimization</i>. TR06, 2005.</li><li>MIRJALILI, S.; MIRJALILI, S. M.; LEWIS, A. Grey Wolf Optimizer. <i>Advances in Engineering Software</i>, 2014.</li><li>STORN, R.; PRICE, K. Differential Evolution. <i>Journal of Global Optimization</i>, 1997.</li><li>DEB, K. et al. A Fast and Elitist Multiobjective Genetic Algorithm: NSGA-II. <i>IEEE TEC</i>, 2002.</li><li>BAVASTRI, C. A. Notas de aula de Otimização — UFPR.</li></ul>
+</section>
+
+<section class="center"><h1>Obrigado!</h1><p>Dúvidas?</p><p style="margin-top:40px"><span class="tag">UFPR</span><span class="tag">Trabalho 7</span><span class="tag">Algoritmos Bioinspirados</span></p></section>
+
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({hash:true,center:false,transition:'fade',slideNumber:'c/t',width:1100,height:800,margin:.025});
+  renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});
+  document.getElementById('pdf').onclick=()=>{if(!location.search.includes('print-pdf'))location.href=location.pathname+'?print-pdf';else window.print()};
+  if(location.search.includes('print-pdf'))window.addEventListener('load',()=>setTimeout(()=>window.print(),1000));
+
+  // Laboratório didático: implementações compactas dos mecanismos centrais.
+  (()=>{
+    const host=document.getElementById('threeLab'); if(!host||!window.THREE||!window.Plotly)return;
+    const N=22,L=5; let pop=[],vel=[],pbest=[],fit=[],best={x:0,y:0,f:Infinity},iter=0,running=false,timer=null,traces=[];
+    const scene=new THREE.Scene();scene.background=new THREE.Color(0xf1f7fc);
+    const camera=new THREE.PerspectiveCamera(42,1,.1,100);camera.position.set(8,7,9);camera.lookAt(0,0,0);
+    const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));host.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff,0x56708a,2.2));const dl=new THREE.DirectionalLight(0xffffff,2);dl.position.set(5,10,6);scene.add(dl);
+    const f=(x,y)=>.08*(x*x+y*y)+1-Math.cos(2*x)*Math.cos(2*y);
+    const geo=new THREE.PlaneGeometry(10,10,65,65);geo.rotateX(-Math.PI/2);const pos=geo.attributes.position;
+    for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,f(x,z)*.72-1.25)}geo.computeVertexNormals();
+    scene.add(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:0x8fc9df,side:THREE.DoubleSide,shininess:35,transparent:true,opacity:.84,wireframe:false})));
+    const wire=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:0x407a9b,wireframe:true,transparent:true,opacity:.18}));scene.add(wire);
+    const grid=new THREE.GridHelper(10,10,0x537a96,0xa9bfd0);grid.position.y=-1.24;scene.add(grid);
+    const spheres=[],sphereGeo=new THREE.SphereGeometry(.12,18,12);for(let i=0;i<N;i++){const m=new THREE.Mesh(sphereGeo,new THREE.MeshStandardMaterial({color:0x21a6ff,emissive:0x06243a}));scene.add(m);spheres.push(m)}
+    let drag=false,px=0,py=0,az=.72,el=.58,dist=13;const canvas=renderer.domElement;
+    const cameraUp=()=>{camera.position.set(dist*Math.cos(el)*Math.sin(az),dist*Math.sin(el),dist*Math.cos(el)*Math.cos(az));camera.lookAt(0,.2,0)};cameraUp();
+    canvas.onpointerdown=e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId)};canvas.onpointerup=()=>drag=false;canvas.onpointermove=e=>{if(!drag)return;az-=(e.clientX-px)*.008;el=Math.max(.12,Math.min(1.35,el+(e.clientY-py)*.008));px=e.clientX;py=e.clientY;cameraUp()};canvas.onwheel=e=>{e.preventDefault();dist=Math.max(7,Math.min(22,dist+e.deltaY*.01));cameraUp()};
+    const rnd=()=>Math.random()*2*L-L, clamp=v=>Math.max(-L,Math.min(L,v)), score=p=>f(p.x,p.y), clone=p=>({x:p.x,y:p.y});
+    function findBest(){fit=pop.map(score);let k=fit.indexOf(Math.min(...fit));if(fit[k]<best.f)best={...clone(pop[k]),f:fit[k]};}
+    function reset(){pop=Array.from({length:N},()=>({x:rnd(),y:rnd(),stall:0,trail:1}));vel=pop.map(()=>({x:(Math.random()-.5),y:(Math.random()-.5)}));fit=pop.map(score);pbest=pop.map(clone);best={x:0,y:0,f:Infinity};iter=0;traces=[];findBest();draw();updateChart(true)}
+    const mutation=(s=.5)=>({x:(Math.random()-.5)*s,y:(Math.random()-.5)*s});
+    function stepGA(){let order=[...pop.keys()].sort((a,b)=>fit[a]-fit[b]),elite=order.slice(0,7).map(i=>clone(pop[i])),next=elite.slice(0,2);while(next.length<N){let a=elite[Math.floor(Math.random()*elite.length)],b=elite[Math.floor(Math.random()*elite.length)],m=mutation(1.15);next.push({x:clamp((a.x+b.x)/2+m.x),y:clamp((a.y+b.y)/2+m.y)})}pop=next}
+    function stepDE(){let next=pop.map(clone);for(let i=0;i<N;i++){let ids=[];while(ids.length<3){let k=Math.floor(Math.random()*N);if(k!==i&&!ids.includes(k))ids.push(k)}let [a,b,c]=ids.map(k=>pop[k]),q={x:clamp(a.x+.72*(b.x-c.x)),y:clamp(a.y+.72*(b.y-c.y))};if(score(q)<fit[i])next[i]=q}pop=next}
+    function stepPSO(){for(let i=0;i<N;i++){if(fit[i]<score(pbest[i]))pbest[i]=clone(pop[i]);for(const d of ['x','y']){vel[i][d]=.68*vel[i][d]+1.35*Math.random()*(pbest[i][d]-pop[i][d])+1.55*Math.random()*(best[d]-pop[i][d]);pop[i][d]=clamp(pop[i][d]+vel[i][d])}}}
+    function stepACO(){let weights=pop.map((p,i)=>p.trail/(.08+fit[i])),sum=weights.reduce((a,b)=>a+b,0);for(let p of pop)p.trail*=.82;let next=[];for(let i=0;i<N;i++){let r=Math.random()*sum,k=0;while((r-=weights[k])>0&&k<N-1)k++;let m=mutation(.35+1.2*Math.random());next.push({x:clamp(pop[k].x+m.x),y:clamp(pop[k].y+m.y),trail:(pop[k].trail||1)+1/(.1+fit[k])})}pop=next}
+    function stepABC(){let next=pop.map(clone);for(let i=0;i<N;i++){let k;do{k=Math.floor(Math.random()*N)}while(k===i);let q={x:clamp(pop[i].x+(Math.random()*2-1)*(pop[i].x-pop[k].x)),y:clamp(pop[i].y+(Math.random()*2-1)*(pop[i].y-pop[k].y)),stall:(pop[i].stall||0)+1};if(score(q)<fit[i]){q.stall=0;next[i]=q}else next[i].stall=q.stall;if(next[i].stall>8)next[i]={x:rnd(),y:rnd(),stall:0,fresh:true}}pop=next}
+    function stepGWO(){let ids=[...pop.keys()].sort((a,b)=>fit[a]-fit[b]).slice(0,3),leaders=ids.map(i=>pop[i]),a=Math.max(0,2-2*iter/80);pop=pop.map((p,i)=>{if(ids.includes(i))return clone(p);let q={x:0,y:0};for(const d of ['x','y'])q[d]=leaders.reduce((s,l)=>{let A=2*a*Math.random()-a,C=2*Math.random(),D=Math.abs(C*l[d]-p[d]);return s+l[d]-A*D},0)/3;return{x:clamp(q.x),y:clamp(q.y)}})}
+    function stepFA(){let next=pop.map(clone);for(let i=0;i<N;i++){let q=clone(pop[i]);for(let j=0;j<N;j++)if(fit[j]<fit[i]){let dx=pop[j].x-q.x,dy=pop[j].y-q.y,r2=dx*dx+dy*dy,b=.55*Math.exp(-.16*r2);q.x+=b*dx/N*3;q.y+=b*dy/N*3}let m=mutation(.45*Math.exp(-iter/80));q.x=clamp(q.x+m.x);q.y=clamp(q.y+m.y);next[i]=q}pop=next}
+    function stepAIS(){let ids=[...pop.keys()].sort((a,b)=>fit[a]-fit[b]),next=ids.slice(0,4).map(i=>clone(pop[i]));while(next.length<N){let rank=Math.floor(Math.pow(Math.random(),2)*10),p=pop[ids[rank]],m=mutation(.18+.07*rank);next.push({x:clamp(p.x+m.x),y:clamp(p.y+m.y)})}pop=next}
+    const names={ga:'AG: seleção, cruzamento e mutação',de:'DE: diferença entre vetores',pso:'PSO: inércia + memória + influência social',aco:'ACO: reforço e evaporação de feromônio',abc:'ABC: vizinhança e abandono',gwo:'GWO: orientação por α, β e δ',fa:'FA: atração pelo brilho',ais:'AIS: clonagem e hipermutação'};
+    function one(){const a=document.getElementById('labAlgo').value;findBest();({ga:stepGA,de:stepDE,pso:stepPSO,aco:stepACO,abc:stepABC,gwo:stepGWO,fa:stepFA,ais:stepAIS}[a])();iter++;findBest();traces.push(best.f);draw();updateChart(false)}
+    function draw(){for(let i=0;i<N;i++){let p=pop[i],z=f(p.x,p.y)*.72-1.08;spheres[i].position.set(p.x,z,p.y);let isBest=Math.hypot(p.x-best.x,p.y-best.y)<.001;spheres[i].material.color.set(isBest?0xffd23f:(p.fresh?0xe74c3c:0x21a6ff));spheres[i].scale.setScalar(isBest?1.65:1);p.fresh=false}document.getElementById('labReadout').innerHTML='<b>'+names[document.getElementById('labAlgo').value]+'</b><br>Iteração: '+iter+' · melhor ponto: ('+best.x.toFixed(3)+', '+best.y.toFixed(3)+') · f = '+best.f.toFixed(5)}
+    function updateChart(fresh){Plotly.react('labChart',[{y:traces.length?traces:[best.f],mode:'lines+markers',line:{color:'#004a8e',width:3},marker:{size:4}}],{margin:{l:48,r:12,t:28,b:40},title:{text:'Convergência: melhor f',font:{size:14}},xaxis:{title:'iteração'},yaxis:{title:'melhor f',rangemode:'tozero'},paper_bgcolor:'#fff',plot_bgcolor:'#f8fafc'},{displayModeBar:false,responsive:true})}
+    function resize(){let w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(host);
+    function animate(){requestAnimationFrame(animate);renderer.render(scene,camera)}animate();
+    document.getElementById('labStep').onclick=one;document.getElementById('labReset').onclick=reset;document.getElementById('labAlgo').onchange=reset;
+    document.getElementById('labPlay').onclick=e=>{running=!running;e.currentTarget.textContent=running?'⏸ Pausar':'▶ Iniciar';clearInterval(timer);if(running)timer=setInterval(one,1100-100*+document.getElementById('labSpeed').value)};
+    document.getElementById('labSpeed').oninput=()=>{if(running){clearInterval(timer);timer=setInterval(one,1100-100*+document.getElementById('labSpeed').value)}};
+    Reveal.on('slidechanged',e=>{if(e.currentSlide.id!=='laboratorio-3d'&&running)document.getElementById('labPlay').click();setTimeout(resize,50)});resize();reset();
+  })();
+</script>
+</body>
+</html>
