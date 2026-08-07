@@ -96,6 +96,9 @@ function plotar_resultado_animado(funcao, nome_funcao, x_otimo, hist, nome_metod
     subplot(1, 2, 2);
     plot3(x_otimo(1), x_otimo(2), f_opt, 'kp', 'MarkerSize', 15, 'MarkerFaceColor', 'y', 'LineWidth', 2);
     title(sprintf('Passos: %d', num_passos));
+
+    % Mantem a janela aberta ate o usuario fecha-la manualmente
+    uiwait(gcf);
 end
 
 function [funcao, nome, x0] = obter_funcao(opcao)
@@ -186,6 +189,8 @@ function teste_descida()
         fprintf('�timo encontrado: [%s]\n', num2str(x_otimo));
         fprintf('Valor f(x*): %.8f\n', funcao(x_otimo));
         plotar_resultado_2d(funcao, nome_funcao, x_otimo, historico_x);
+    
         
     end
+    
 end
