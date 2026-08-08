@@ -1,0 +1,2524 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Solver fmincon no MATLAB</title>
+
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <!-- Folha de estilo de impressao do Reveal.js (gera o PDF paginado) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/css/print/pdf.css" media="print">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <!-- KaTeX para formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --ufpr-blue: #004a8e;
+            --math-red: #e74c3c;
+            --math-green: #27ae60;
+            --math-gold: #f39c12;
+            --grid-color: #f0f0f0;
+        }
+        .reveal h1, .reveal h2 { color: var(--ufpr-blue); font-weight: 800; text-transform: uppercase; }
+        /* Cabecalho compacto: o tema traz margem/line-height generosos que
+           desperdicavam a faixa entre o titulo e o primeiro paragrafo. */
+        .reveal h2 {
+            border-bottom: 3px solid var(--ufpr-blue);
+            display: inline-block;
+            padding-bottom: 3px;
+            margin: 0 0 10px;
+            line-height: 1.1;
+            font-size: 1.35em;
+        }
+        .reveal section { text-align: left; padding: 8px 20px; }
+        /* Primeiro elemento depois do titulo nao precisa de margem propria */
+        .reveal section > h2 + * { margin-top: 0; }
+
+        .reveal section p { margin: 8px 0; }
+        .reveal section ul, .reveal section ol { margin: 8px 0; }
+
+        /* Slides com muito texto: reduz a fonte para caber tudo */
+        .reveal section.compact { font-size: 0.82em; }
+        .reveal section.compact li { margin: 5px 0; }
+
+        .formula-box {
+            background: #f8faff;
+            padding: 12px 16px;
+            border-left: 6px solid var(--ufpr-blue);
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .canvas-container {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            padding: 6px;
+            margin-top: 8px;
+        }
+        /* Canvas escala para caber na largura do slide, mantendo proporcao */
+        .canvas-container canvas { max-width: 100%; height: auto; }
+
+        .highlight { color: var(--ufpr-blue); font-weight: bold; }
+        .small-text { font-size: 0.7em; color: #666; }
+
+        table.numeric-example {
+            width: 100%;
+            font-size: 0.6em;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table.numeric-example th { background: var(--ufpr-blue); color: white; padding: 8px; }
+        table.numeric-example td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        table.numeric-example td.left { text-align: left; }
+        /* Coluna de agrupamento (rowspan): rotulo na vertical, economiza largura */
+        table.numeric-example td.grupo {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-size: 0.92em;
+            padding: 4px 2px;
+        }
+        table.numeric-example td.grupo-sol   { background: #eaf1f9; color: var(--ufpr-blue); }
+        table.numeric-example td.grupo-sobre { background: #f3f0e6; color: #8a6d3b; }
+
+        /* Tabelas sincronizadas com a animacao: linha em execucao destacada.
+           Vale para o mu (barreira), o SQP e a regiao de confianca. */
+        table.tab-mu tr.linha-final td,
+        table.tab-sqp tr.linha-final td,
+        table.tab-trust tr.linha-final td { background: #eaf7ee; }
+        table.tab-trust tr.linha-ruim td { background: #fdeceb; }
+
+        table.tab-mu tr[data-mu] td,
+        table.tab-sqp tr[data-it] td,
+        table.tab-trust tr[data-it] td { transition: background 0.25s, color 0.25s; }
+
+        table.tab-mu tr.ativa td,
+        table.tab-sqp tr.ativa td,
+        table.tab-trust tr.ativa td {
+            background: var(--math-gold) !important;
+            color: #fff; font-weight: 700;
+            box-shadow: inset 0 0 0 1px #d68910;
+        }
+        table.tab-mu tr.ativa td:first-child::before,
+        table.tab-sqp tr.ativa td:first-child::before,
+        table.tab-trust tr.ativa td:first-child::before {
+            content: "▶ "; font-size: 0.9em;
+        }
+        /* Linhas ainda nao alcancadas ficam esmaecidas */
+        table.tab-mu tr[data-mu].futura td,
+        table.tab-sqp tr[data-it].futura td,
+        table.tab-trust tr[data-it].futura td { opacity: 0.35; }
+        table.numeric-example code { color: #b03060; font-size: 0.95em; }
+
+        /* Layout de duas colunas (texto + desenho) */
+        .two-col { display: flex; align-items: center; gap: 40px; }
+        .two-col .col-text { flex: 1.2; }
+        .two-col .col-img { flex: 1; text-align: center; }
+        .two-col .col-img img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+        }
+        .two-col .col-img figcaption { font-size: 0.6em; color: #888; margin-top: 8px; }
+        .icon-list { list-style: none; margin-left: 0; }
+        .icon-list li { margin: 14px 0; padding-left: 4px; }
+        .icon-list .ic { color: var(--ufpr-blue); margin-right: 8px; }
+
+        /* Timeline / fluxograma horizontal */
+        .timeline { position: relative; display: flex; justify-content: space-between; margin: 30px 0 14px; }
+        .timeline::before {
+            content: ""; position: absolute; top: 12px; left: 4%; right: 4%;
+            height: 3px; background: #d6dde7; z-index: 0;
+        }
+        .timeline .stage { position: relative; z-index: 1; flex: 1; text-align: center; padding: 0 8px; }
+        .timeline .dot {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--ufpr-blue); border: 4px solid #fff;
+            box-shadow: 0 0 0 2px var(--ufpr-blue);
+            margin: 0 auto 14px;
+        }
+        .timeline .stage h4 { color: #1a2b45; font-size: 0.95em; font-weight: 700; margin: 0 0 6px; }
+        .timeline .stage p { font-size: 0.72em; color: #555; margin: 0; line-height: 1.35em; }
+
+        /* Blocos tipo "cartao" (3 colunas) */
+        .cards { display: flex; gap: 18px; margin-top: 14px; }
+        .cards .card {
+            flex: 1; background: #f8faff; border-top: 5px solid var(--ufpr-blue);
+            border-radius: 6px; padding: 12px 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+        .cards .card h4 { margin: 0 0 8px; color: var(--ufpr-blue); font-size: 0.95em; font-weight: 800; }
+        .cards .card p { font-size: 0.72em; color: #444; margin: 0; line-height: 1.4em; }
+        .cards .card.red    { border-top-color: var(--math-red); }
+        .cards .card.red h4 { color: var(--math-red); }
+        .cards .card.green    { border-top-color: var(--math-green); }
+        .cards .card.green h4 { color: var(--math-green); }
+        .cards .card.gold    { border-top-color: var(--math-gold); }
+        .cards .card.gold h4 { color: #b9770e; }
+
+        /* Bloco de codigo MATLAB */
+        pre.matlab {
+            background: #1e2b3a; color: #e8eef5; border-radius: 6px;
+            padding: 12px 16px; font-size: 0.52em; line-height: 1.5em;
+            overflow-x: auto; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+            font-family: "Consolas", "Monaco", monospace;
+        }
+        pre.matlab .kw { color: #62b0ff; font-weight: bold; }
+        pre.matlab .cm { color: #7f9bb5; font-style: italic; }
+        pre.matlab .st { color: #ffb86c; }
+        pre.matlab .hl { background: rgba(243,156,18,0.25); border-radius: 3px; }
+
+        /* Botao de reiniciar animacao */
+        .anim-ctrl {
+            display: block; margin: 6px auto 0;
+            background: var(--ufpr-blue); color: #fff; border: none;
+            border-radius: 5px; padding: 5px 12px; font-size: 12px;
+            font-weight: 700; cursor: pointer;
+        }
+        .anim-ctrl:hover { background: #003567; }
+        .anim-ctrl:disabled { background: #b7c1cd; cursor: default; }
+        @media print { .anim-ctrl { display: none !important; } }
+
+        /* Controle de iteracao passo a passo (◀ 3/5 ▶ + animar) */
+        .passo-ctrl {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin-top: 6px;
+        }
+        .passo-ctrl .anim-ctrl { margin: 0; padding: 4px 10px; }
+        .passo-ctrl .passo-lbl {
+            font-size: 13px; font-weight: 700; color: var(--ufpr-blue);
+            min-width: 46px; text-align: center;
+            background: #eaf1f9; border-radius: 4px; padding: 4px 6px;
+        }
+        @media print { .passo-ctrl { display: none !important; } }
+
+        /* Botao flutuante de gerar PDF */
+        #btnPdf {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1000;
+            background: var(--ufpr-blue);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            transition: background 0.2s, transform 0.1s;
+        }
+        #btnPdf:hover { background: #003567; }
+        #btnPdf:active { transform: scale(0.96); }
+        /* Esconde o botao na propria impressao/PDF */
+        @media print { #btnPdf { display: none !important; } }
+
+        /* Com center:false o conteudo sobe para o topo. Capa e encerramento
+           voltam a ser centralizados verticalmente via .slide-centro. */
+        .reveal .slides section.slide-centro {
+            height: 100%;
+            display: flex !important;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Controle global de velocidade das animacoes */
+        #velCtrl {
+            position: fixed;
+            top: 16px; right: 92px;
+            z-index: 1000;
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.94);
+            border: 1px solid #cfd8e3;
+            border-radius: 6px;
+            padding: 5px 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        #velCtrl .vel-ic { font-size: 13px; line-height: 1; }
+        #velCtrl input[type=range] { width: 108px; accent-color: var(--ufpr-blue); cursor: pointer; }
+        #velVal {
+            font-size: 12px; font-weight: 700; color: var(--ufpr-blue);
+            min-width: 34px; text-align: right;
+        }
+        @media print { #velCtrl { display: none !important; } }
+
+        /* Cabecalhos com descricao: sinaliza que ha ajuda ao pousar o mouse */
+        table.numeric-example th[data-tip] { cursor: help; }
+
+        /* Banner de ajuda mostrado apos ~0,6 s sobre o cabecalho */
+        #tipBanner {
+            position: fixed;
+            z-index: 2000;
+            max-width: 330px;
+            background: #1e2b3a;
+            color: #eef3f8;
+            font-size: 13px;
+            line-height: 1.45em;
+            font-weight: 400;
+            text-align: left;
+            text-transform: none;
+            letter-spacing: normal;
+            padding: 9px 12px;
+            border-radius: 6px;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.28);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        #tipBanner.visivel { opacity: 1; transform: translateY(0); }
+        #tipBanner::after {          /* setinha apontando para o cabecalho */
+            content: "";
+            position: absolute;
+            left: var(--seta-x, 24px);
+            bottom: -6px;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid #1e2b3a;
+        }
+        #tipBanner.abaixo::after {   /* quando o banner fica abaixo do cabecalho */
+            bottom: auto; top: -6px;
+            border-top: none; border-bottom: 6px solid #1e2b3a;
+        }
+        @media print { #tipBanner { display: none !important; } }
+
+        /* Numero do slide */
+        .reveal .slide-number {
+            background: var(--ufpr-blue);
+            color: #fff;
+            font-size: 16px;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Botao flutuante para gerar PDF -->
+<button id="btnPdf" title="Gerar PDF da apresentação" aria-label="Gerar PDF">
+    📄 PDF
+</button>
+
+<!-- Controle global de velocidade das animacoes -->
+<div id="velCtrl" title="Velocidade das animações">
+    <span class="vel-ic">🐢</span>
+    <input type="range" id="velRange" min="0.6" max="3" step="0.1" value="1.6">
+    <span class="vel-ic">🐇</span>
+    <span id="velVal">1,6×</span>
+</div>
+
+<div class="reveal">
+    <div class="slides">
+
+        <!-- SLIDE 1: CAPA -->
+        <section class="slide-centro" style="text-align: center;">
+            <h1 style="font-size: 2.1em;">O Solver <code style="color:#b03060">fmincon</code> no MATLAB</h1>
+            <h2 style="border:none; color: #555; font-size:1.1em;">Otimização Contínua Determinística </h2>
+            <div style="margin-top: 70px;">
+                <p><strong>Alunos:</strong> Leonardo Ronald Perin Rauta</p>
+                <p style="margin-left:5.2em;">Maurício da Silva Justino</p>
+                <p style="margin-left:5.2em;">Romulo de Aguiar Beninca</p>
+                <p style="margin-top:18px;"><strong>Professor:</strong> Prof. Dr. Carlos Alberto Bavastri</p>
+                <p class="small-text">UFPR - Engenharia Mecânica</p>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: O PROBLEMA QUE O FMINCON RESOLVE -->
+        <section class="compact">
+            <h2>O que é o <code>fmincon</code>?</h2>
+            <p><i><strong>F</strong>unction <strong>MIN</strong>imization with <strong>CON</strong></i>straints —função do pacote  <i>Optimization Tools</i> que tem como objetivo minimizar uma função não linear <em>sujeita a restrições</em>.</p>
+            <div class="two-col">
+                <div class="col-text">
+                    <div class="formula-box" style="font-size:0.7em;">
+                        $\min_{x} \; f(x)$ &nbsp; sujeito a: <br>  
+                        $A\,x \le b$ &nbsp;·&nbsp; $A_{eq}\,x = b_{eq}$     <br>
+                        $c(x) \le 0$ &nbsp;·&nbsp; $c_{eq}(x) = 0$   <br>
+                        $lb \le x \le ub$
+                    </div>
+                    <ul>
+                        <li><strong>Busca local:</strong> anda "morro abaixo" usando <span class="highlight">derivadas (gradiente)</span>.</li>
+                        <li><strong>Depende do ponto inicial $x_0$</strong> — quem escolhe é o usuário.</li>
+                        <li>Acha o <strong>mínimo local onde $x_0$ caiu</strong>, não garante o mínimo global.</li>
+                    </ul>
+                </div>
+                <div class="col-img" style="flex:1.15;">
+                    <div class="canvas-container">
+                        <canvas id="cvIntro" width="480" height="380"></canvas>
+                    </div>
+                    <p class="small-text" style="text-align:center;">A região branca é a <strong>zona viável</strong>; o cinza é proibido pelas restrições.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: MINIMO LOCAL x GLOBAL (ANIMADO) -->
+        <section class="compact">
+            <h2>Por que $x_0$ importa tanto?</h2>
+            <p>O <code>fmincon</code> é <span class="highlight">determinístico e local</span>: dado o mesmo $x_0$, ele sempre desce pelo mesmo caminho. Dois pontos de partida diferentes podem levar a <strong>dois mínimos diferentes</strong>.</p>
+            <div class="canvas-container">
+                <canvas id="cvLocal" width="900" height="360"></canvas>
+            </div>
+            <button class="anim-ctrl" data-anim="local">▶ Repetir animação</button>
+            <p class="small-text">Consequência prática: em problemas multimodais, roda-se o <code>fmincon</code> a partir de <strong>vários $x_0$</strong> (<em>multistart</em>) e fica-se com o melhor resultado.</p>
+        </section>
+
+        <!-- SLIDE 4: EVOLUCAO DOS METODOS CLASSICOS -->
+        <section class="compact">
+            <h2>Evolução dos Métodos Clássicos</h2>
+            <p>O que estudamos em sala continua lá dentro — mas o MATLAB <strong>filtra</strong> o que é eficiente:</p>
+            <table class="numeric-example" style="font-size:0.68em;">
+                <tr><th style="width:32%" data-tip="Método visto em aula de otimização clássica.">Método clássico</th><th style="width:20%" data-tip="O que o MATLAB fez com ele: descartou, reaproveitou em outro papel, ou adotou como motor principal.">Destino no fmincon</th><th data-tip="Justificativa técnica da escolha — normalmente eficiência ou robustez.">Por quê</th></tr>
+                <tr>
+                    <td class="left">Dicotomia / Seção Áurea / Bolzano</td>
+                    <td style="color:var(--math-red)"><strong>Descartado</strong></td>
+                    <td class="left">Na busca do passo $\lambda^*$ usa-se <strong>interpolação polinomial</strong> com derivadas: bem mais rápida.</td>
+                </tr>
+                <tr>
+                    <td class="left">Gradiente nulo $\nabla f(x)=0$</td>
+                    <td style="color:var(--math-gold)"><strong>Reaproveitado</strong></td>
+                    <td class="left">Não serve como busca geométrica, mas vira o <strong>critério de parada</strong> (condições de KKT).</td>
+                </tr>
+                <tr>
+                    <td class="left">Descida Mais Rápida <em>(Steepest Descent)</em></td>
+                    <td style="color:var(--math-red)"><strong>Descartado</strong></td>
+                    <td class="left">Ineficiente: faz <strong>ziguezague</strong> em vales estreitos (mal condicionados).</td>
+                </tr>
+                <tr>
+                    <td class="left">Aproximação Quadrática (Newton / Quase-Newton)</td>
+                    <td style="color:var(--math-green)"><strong>Motor principal</strong></td>
+                    <td class="left">Usa <strong>inclinação + curvatura</strong> → convergência superlinear.</td>
+                </tr>
+            </table>
+            <p class="small-text">KKT (Karush-Kuhn-Tucker): conjunto de equações e desigualdades que caracterizam a solução ótima de um problema com restrições.</p>
+        </section>
+
+        <!-- SLIDE 5: ZIGUEZAGUE x QUASE-NEWTON (ANIMADO) -->
+        <section class="compact">
+            <h2>Ziguezague vs. Curvatura</h2>
+            <p>Num vale estreito, o gradiente aponta para a <strong>parede</strong>, não para o fundo. A <span class="highlight">aproximação quadrática</span> corrige isso usando a curvatura (Hessiana):</p>
+            <div class="canvas-container">
+                <canvas id="cvZigzag" width="900" height="340"></canvas>
+            </div>
+            <button class="anim-ctrl" data-anim="zigzag">▶ Repetir animação</button>
+            <div class="formula-box small-text">
+                <strong>Steepest Descent:</strong> $d = -\nabla f(x)$ &nbsp;→&nbsp; centenas de passos curtos. <br>
+                <strong>Quase-Newton (BFGS):</strong> $d = -H^{-1}\nabla f(x)$ &nbsp;→&nbsp; poucos passos, direto ao fundo.
+                &nbsp; ($H$ = aproximação da Hessiana, construída iterativamente sem calcular derivadas segundas.)
+            </div>
+        </section>
+
+        <!-- SLIDE 6: OS TRES ALGORITMOS -->
+        <section class="compact">
+            <h2>Algoritmos Internos</h2>
+            <p>O <code>fmincon</code> não é <em>um</em> algoritmo — é uma <strong>caixa com vários motores</strong>. Você escolhe pelo <code>Algorithm</code>:</p>
+            <div class="cards">
+                <div class="card">
+                    <h4>interior-point <span style="font-weight:400;font-size:0.8em">(padrão)</span></h4>
+                    <p>Usa <strong>funções de barreira</strong>: penalidade que tende ao infinito nas fronteiras, forçando o caminho a passar <strong>por dentro</strong> da zona viável. Ideal para larga escala.</p>
+                </div>
+                <div class="card gold">
+                    <h4>sqp</h4>
+                    <p><strong>S</strong>equential <strong>Q</strong>uadratic <strong>P</strong>rogramming (Programação Quadrática Sequencial). Aproxima $f$ por <strong>parábolas</strong> e as restrições por retas, resolvendo um subproblema por iteração (BFGS). <strong>Rigoroso com as restrições</strong>.</p>
+                </div>
+                <div class="card green">
+                    <h4>trust-region-reflective</h4>
+                    <p>Cria um <strong>raio de confiança</strong> onde a série de Taylor ainda vale. Muito rápido, mas <strong>não aceita restrições não lineares</strong> e exige gradiente analítico.</p>
+                </div>
+            </div>
+            <p class="small-text">BFGS = Broyden, Fletcher, Goldfarb, Shanno — atualização iterativa da Hessiana aproximada.</p>
+        </section>
+
+        <!-- SLIDE 7: INTERIOR-POINT ANIMADO -->
+        <section class="compact">
+            <h2>interior-point: a Barreira</h2>
+            <!-- Faixa superior: ideia + formula ocupando a largura toda -->
+            <p style="margin:0 0 6px;"><strong>A ideia:</strong> em vez de <em>verificar</em> a restrição a cada passo, ela é <span class="highlight">incorporada à função objetivo</span> como penalização — a <strong>barreira</strong>. O problema restrito vira uma sequência de problemas <strong>sem restrição</strong>:</p>
+            <div class="formula-box" style="margin:6px 0; text-align:center;">
+                $\min_x \; \underbrace{f(x)}_{\text{objetivo}} \; \underbrace{-\; \mu \displaystyle\sum_i \ln\big(-c_i(x)\big)}_{\text{barreira (penalização)}}$
+            </div>
+
+            <!-- Faixa inferior: figura a esquerda, leitura + consequencia a direita -->
+            <div class="two-col" style="gap:22px; align-items:stretch; margin-top:4px;">
+                <div class="col-img" style="flex:0 0 40%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvBarrier" width="440" height="330"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="barrier">▶ Repetir animação</button>
+                </div>
+                <div class="col-text" style="flex:1; font-size:0.92em;">
+                    <p style="margin:0 0 8px;"><strong>Na figura:</strong> o ponto azul desce pelo <span class="highlight">caminho central</span>, sempre por dentro da zona viável. A cada etapa $\mu$ diminui, a barreira (laranja) afina e o ponto <strong>encosta na fronteira vermelha</strong> — até parar em $x^*$.</p>
+                    <div class="formula-box small-text" style="margin:0;">
+                        
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7b: BARREIRA EM 1D — CONSTRUCAO PASSO A PASSO -->
+        <section class="compact">
+            <h2>A Barreira em um Exemplo Simples</h2>
+            <div class="two-col" style="gap:18px; align-items:flex-start; margin-top:2px;">
+                <div class="col-text" style="flex:0 0 34%; font-size:0.95em;">
+                    <div class="formula-box" style="margin:0 0 6px; padding:8px 12px;">
+                        $\min\; f(x) = (x-3)^2$ <br>
+                        sujeito a $\; x \le 2$ &nbsp;<span class="small-text">isto é, $c(x)=x-2\le 0$</span>
+                    </div>
+                    <p style="margin:0 0 8px;">Sem a restrição a resposta seria $x=3$ — mas é <span style="color:var(--math-red)"><strong>proibido</strong></span>. Veja a barreira nascer:</p>
+                    <ol style="margin:0 0 8px; padding-left:20px; font-size:0.92em;">
+                        <li>só $f(x)$: o mínimo cai <strong>fora</strong>;</li>
+                        <li>soma-se $-\mu\ln(2-x)$;</li>
+                        <li>a soma $B$ tem mínimo <strong>dentro</strong>.</li>
+                    </ol>
+                    <div class="formula-box small-text" style="margin:0; padding:8px 12px;">
+                        Perto de $x=2$: &nbsp;$\ln(2-x) \to -\infty$, <br>logo $-\mu\ln(2-x) \to +\infty$. <br>
+                        <strong>O muro se levanta sozinho.</strong>
+                    </div>
+                </div>
+                <div class="col-img" style="flex:1;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvBarrier1D" width="600" height="330"></canvas>
+                    </div>
+                    <div style="text-align:center; margin-top:4px;">
+                        <button class="anim-ctrl" style="display:inline-block; margin:0 3px;" data-etapa="1">1 · só f(x)</button>
+                        <button class="anim-ctrl" style="display:inline-block; margin:0 3px;" data-etapa="2">2 · + barreira</button>
+                        <button class="anim-ctrl" style="display:inline-block; margin:0 3px;" data-etapa="3">3 · soma B</button>
+                    </div>
+                    <p class="small-text" style="text-align:center; margin:4px 0 0;">$B(x,\mu) = \underbrace{(x-3)^2}_{f(x)} \underbrace{-\;\mu\ln(2-x)}_{\text{barreira}}$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7c: SEQUENCIA DE MU -->
+        <section class="compact">
+            <h2>Reduzindo $\mu$: o Caminho até a Fronteira</h2>
+            <p style="margin:0 0 6px;">Resolver <strong>uma vez</strong> não basta: com $\mu$ grande o muro é grosso e empurra a solução para longe da borda. Então resolve-se <strong>várias vezes</strong>, diminuindo $\mu$:</p>
+            <div class="two-col" style="gap:20px; align-items:flex-start;">
+                <div class="col-img" style="flex:0 0 48%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvBarrierMu" width="520" height="330"></canvas>
+                    </div>
+                    <div class="passo-ctrl">
+                        <button class="anim-ctrl" data-passo-de="barrierMu" data-passo-acao="prev">◀</button>
+                        <span class="passo-lbl" data-passo-de="barrierMu" data-passo-acao="label">1 / 5</span>
+                        <button class="anim-ctrl" data-passo-de="barrierMu" data-passo-acao="next">▶</button>
+                        <button class="anim-ctrl" data-anim="barrierMu">↻ animar</button>
+                    </div>
+                </div>
+                <div class="col-text" style="flex:1;">
+                    <table class="numeric-example tab-mu" style="font-size:0.62em; margin-top:0;">
+                        <tr><th data-tip="Parâmetro de barreira. Controla a &quot;espessura&quot; do muro: grande = solução empurrada para longe da fronteira; pequeno = solução encosta na borda.">$\mu$</th><th data-tip="Solução do subproblema sem restrição para aquele valor de μ. É o mínimo da curva B(x,μ).">$x^*(\mu)$</th><th data-tip="Valor da função objetivo original f(x) = (x−3)² avaliada em x*(μ).">$f(x^*)$</th><th data-tip="Distância até a fronteira x = 2. Nunca chega a zero enquanto μ &gt; 0: o ponto fica sempre estritamente dentro da região viável.">folga $2-x$</th></tr>
+                        <tr data-mu="0"><td>4,00</td>  <td>1,000</td><td>4,000</td><td>1,000</td></tr>
+                        <tr data-mu="1"><td>1,00</td>  <td>1,634</td><td>1,866</td><td>0,366</td></tr>
+                        <tr data-mu="2"><td>0,25</td>  <td>1,888</td><td>1,237</td><td>0,112</td></tr>
+                        <tr data-mu="3"><td>0,05</td>  <td>1,976</td><td>1,049</td><td>0,024</td></tr>
+                        <tr data-mu="4"><td>0,01</td>  <td>1,995</td><td>1,010</td><td>0,005</td></tr>
+                        <tr data-mu="5" class="linha-final"><td><strong>→ 0</strong></td><td><strong>2,000</strong></td><td><strong>1,000</strong></td><td><strong>0</strong></td></tr>
+                    </table>
+                    <p class="small-text" style="margin:8px 0 0;">Cada linha é <strong>um problema sem restrição</strong> resolvido por Newton. A solução de um vira o ponto de partida do seguinte — por isso a sequência é rápida.</p>
+                    <div class="formula-box small-text" style="margin:8px 0 0;">
+                        A folga <strong>nunca chega a zero</strong> enquanto $\mu > 0$: o ponto fica sempre <strong>estritamente dentro</strong>. Só no limite $\mu \to 0$ ele encosta em $x^*=2$ — o verdadeiro ótimo restrito.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: SQP ANIMADO -->
+        <section class="compact">
+            <h2>SQP: Parábola a Cada Passo</h2>
+            <p style="margin:0 0 6px;"><strong>SQP</strong> = <span class="highlight">Sequential Quadratic Programming</span> — resolve uma <strong>sequência</strong> de subproblemas <strong>quadráticos</strong>. A cada iteração troca o problema difícil por um <strong>fácil e local</strong>: $f$ vira parábola, as restrições viram retas.</p>
+            <div class="canvas-container" style="margin-top:2px;">
+                <canvas id="cvSqp" width="900" height="300"></canvas>
+            </div>
+            <div class="passo-ctrl">
+                <button class="anim-ctrl" data-passo-de="sqp" data-passo-acao="prev">◀</button>
+                <span class="passo-lbl" data-passo-de="sqp" data-passo-acao="label">1 / 5</span>
+                <button class="anim-ctrl" data-passo-de="sqp" data-passo-acao="next">▶</button>
+                <button class="anim-ctrl" data-anim="sqp">↻ animar</button>
+            </div>
+            <p class="small-text" style="margin:4px 0 0;">A parábola (laranja) toca $f$ no ponto atual com a <strong>mesma inclinação e curvatura</strong>. O <strong>mínimo dela</strong> vira o próximo ponto.</p>
+        </section>
+
+        <!-- SLIDE 8c: SQP PASSO A PASSO COM NUMEROS -->
+        <section class="compact">
+            <h2>SQP: O Subproblema, Passo a Passo</h2>
+            <p style="margin:0 0 6px;">Exemplo em 1D com $f(x) = \tfrac{x^4}{4} - x^2 + x + 3$, partindo de $x_0 = 2{,}2$. A cada passo monta-se a parábola e resolve-se <strong>onde ela tem mínimo</strong>:</p>
+            <div class="two-col" style="gap:20px; align-items:flex-start;">
+                <div class="col-img" style="flex:0 0 46%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvSqpPasso" width="500" height="300"></canvas>
+                    </div>
+                    <div class="passo-ctrl">
+                        <button class="anim-ctrl" data-passo-de="sqpPasso" data-passo-acao="prev">◀</button>
+                        <span class="passo-lbl" data-passo-de="sqpPasso" data-passo-acao="label">1 / 5</span>
+                        <button class="anim-ctrl" data-passo-de="sqpPasso" data-passo-acao="next">▶</button>
+                        <button class="anim-ctrl" data-anim="sqpPasso">↻ animar</button>
+                    </div>
+                </div>
+                <div class="col-text" style="flex:1;">
+                    <div class="formula-box small-text" style="margin:0 0 3px; font-size: 0.6em;">
+                        Modelo: &nbsp;$q(d) = f(x_k) + f'(x_k)\,d + \tfrac{1}{2}f''(x_k)\,d^2$ <br>
+                        Mínimo: &nbsp;$d_k = -\,f'(x_k)\,/\,f''(x_k)$ &nbsp;→&nbsp; $x_{k+1} = x_k + d_k$
+                    </div>
+                    <table class="numeric-example tab-sqp" style="font-size:0.6em; margin-top:0;">
+                        <tr><th data-tip="Número da iteração. Cada linha é um subproblema quadrático resolvido.">$k$</th><th data-tip="Ponto atual da busca. O próximo é obtido somando o passo: x(k+1) = x(k) + d(k).">$x_k$</th><th data-tip="Gradiente (inclinação) de f no ponto atual. Veja como cai rapidamente: 7,2 → 2,0 → 0,5 → 0,12 — é a convergência quadrática.">$f'(x_k)$</th><th data-tip="Curvatura (segunda derivada). É o que diferencia o SQP da descida mais rápida: usar a curvatura permite acertar o tamanho do passo.">$f''(x_k)$</th><th data-tip="Passo de Newton: d = −f&#39;/f&#39;&#39;. É exatamente o ponto de mínimo da parábola-modelo.">passo $d_k$</th></tr>
+                        <tr data-it="0"><td>0</td><td>2,200</td><td>7,248</td><td>12,520</td><td>−0,579</td></tr>
+                        <tr data-it="1"><td>1</td><td>1,621</td><td>2,018</td><td>5,884</td><td>−0,343</td></tr>
+                        <tr data-it="2"><td>2</td><td>1,278</td><td>0,532</td><td>2,901</td><td>−0,183</td></tr>
+                        <tr data-it="3"><td>3</td><td>1,095</td><td>0,123</td><td>1,596</td><td>−0,077</td></tr>
+                        <tr data-it="4"><td>4</td><td>1,018</td><td>0,019</td><td>1,109</td><td>−0,017</td></tr>
+                        <tr data-it="5" class="linha-final"><td>5</td><td><strong>1,001</strong></td><td>0,001</td><td>1,005</td><td>−0,001</td></tr>
+                    </table>
+                    <div class="formula-box small-text" style="margin:8px 0 0;">
+                        Repare no $f'(x_k)$: <strong>7,2 → 2,0 → 0,5 → 0,12 → 0,02</strong>. O erro é <strong>elevado ao quadrado</strong> a cada passo — é a <span class="highlight">convergência quadrática</span> que torna o SQP tão rápido perto da solução.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: TRUST REGION ANIMADO -->
+        <section class="compact">
+            <h2>trust-region: Até Onde Confio?</h2>
+            <p style="margin:0 0 8px;">A cada iteração, o algoritmo substitui $f(x)$ por uma <strong>aproximação quadrática local</strong>. Ela só é confiável <span class="highlight">perto</span> de $x_k$ — por isso o passo $p$ fica limitado a uma região de raio $\Delta_k$:</p>
+            <div class="two-col" style="gap:22px; align-items:flex-start; margin-top:2px;">
+                <div class="col-img" style="flex:0 0 38%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvTrust" width="420" height="300"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="trust">▶ Repetir animação</button>
+                    <p class="small-text" style="text-align:center; margin-top:2px;">O círculo é $\Delta_k$ · <span style="color:var(--math-green)">verde</span> aceito · <span style="color:var(--math-red)">vermelho</span> rejeitado</p>
+                </div>
+                <div class="col-text" style="flex:1;">
+                    <div class="formula-box" style="margin:0 0 8px; text-align:center;">
+                        $\lVert p \rVert \le \Delta_k$
+                    </div>
+                    <p style="margin:0 0 6px;">Depois do passo, o algoritmo <strong>compara o que foi prometido com o que aconteceu</strong>:</p>
+                    <div class="formula-box" style="margin:0 0 8px; text-align:center;">
+                        $\rho_k = \dfrac{\text{melhora real em } f}{\text{melhora prevista pelo modelo}}$
+                    </div>
+                    <table class="numeric-example" style="font-size:0.62em; margin-top:0;">
+                        <tr>
+                            <th style="width:22%" data-tip="Razão entre a melhora real e a melhora prevista pelo modelo quadrático.">$\rho_k$</th>
+                            <th style="width:34%" data-tip="Como interpretar aquele valor de ρ: o modelo foi confiável ou não.">Leitura</th>
+                            <th data-tip="O que o algoritmo faz em seguida: aceitar/rejeitar o passo e ajustar o raio Δ.">Ação</th>
+                        </tr>
+                        <tr>
+                            <td><strong>$\approx 1$</strong></td>
+                            <td class="left">Modelo previu bem</td>
+                            <td class="left" style="color:var(--math-green)"><strong>Aceita</strong> o passo e pode <strong>aumentar $\Delta_k$</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>pequeno</strong></td>
+                            <td class="left">Modelo pouco preciso</td>
+                            <td class="left" style="color:#b9770e"><strong>Reduz $\Delta_k$</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>$< 0$</strong></td>
+                            <td class="left">A função <em>piorou</em></td>
+                            <td class="left" style="color:var(--math-red)"><strong>Rejeita</strong> o passo e <strong>encolhe</strong> a região</td>
+                        </tr>
+                    </table>
+                    <p class="small-text" style="margin:8px 0 0;">O raio $\Delta_k$ representa <strong>até onde o algoritmo confia no seu modelo quadrático</strong> — e é reajustado a cada iteração.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9b: TRUST REGION PASSO A PASSO COM NUMEROS -->
+        <section class="compact">
+            <h2>trust-region: $\rho$ em Números</h2>
+            <p style="margin:0 0 6px;">Mesma $f(x) = \tfrac{x^4}{4} - x^2 + x + 3$, agora de $x_0 = 0{,}2$ com $\Delta_0 = 1{,}2$. Acompanhe o que acontece quando o modelo <strong>erra feio</strong>:</p>
+            <div class="two-col" style="gap:20px; align-items:flex-start;">
+                <div class="col-img" style="flex:0 0 46%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvTrustPasso" width="500" height="300"></canvas>
+                    </div>
+                    <div class="passo-ctrl">
+                        <button class="anim-ctrl" data-passo-de="trustPasso" data-passo-acao="prev">◀</button>
+                        <span class="passo-lbl" data-passo-de="trustPasso" data-passo-acao="label">1 / 5</span>
+                        <button class="anim-ctrl" data-passo-de="trustPasso" data-passo-acao="next">▶</button>
+                        <button class="anim-ctrl" data-anim="trustPasso">↻ animar</button>
+                    </div>
+                </div>
+                <div class="col-text" style="flex:1;">
+                    <table class="numeric-example tab-trust" style="font-size:0.58em; margin-top:0;">
+                        <tr><th data-tip="Número da iteração.">$k$</th><th data-tip="Ponto atual. Repare que na iteração 1 ele NÃO muda: o passo foi rejeitado.">$x_k$</th><th data-tip="Raio da região de confiança: até onde o algoritmo confia no modelo quadrático. Cresce quando acerta, encolhe quando erra.">$\Delta_k$</th><th data-tip="Melhora que o modelo quadrático PROMETEU obter com o passo.">previu</th><th data-tip="Melhora que de fato aconteceu em f. Valor negativo significa que a função PIOROU.">real</th><th data-tip="Razão real/previsto. ρ ≈ 1: modelo confiável. ρ pequeno: impreciso. ρ &lt; 0: a função piorou, o passo é rejeitado.">$\rho_k$</th><th data-tip="Decisão tomada a partir de ρ: aceitar ou rejeitar o passo, e como ajustar Δ.">ação</th></tr>
+                        <tr data-it="0"><td>0</td><td>0,20</td><td>1,20</td><td>2,08</td><td>1,91</td><td>0,92</td><td class="left" style="color:var(--math-green)">aceita, <strong>dobra $\Delta$</strong></td></tr>
+                        <tr data-it="1" class="linha-ruim"><td>1</td><td>−1,00</td><td>2,40</td><td>2,00</td><td><strong>−10,0</strong></td><td><strong>−5,00</strong></td><td class="left" style="color:var(--math-red)"><strong>REJEITA</strong>, encolhe</td></tr>
+                        <tr data-it="2"><td>2</td><td>−1,00</td><td>0,80</td><td>1,28</td><td>0,67</td><td>0,52</td><td class="left" style="color:#b9770e">aceita, mantém</td></tr>
+                        <tr data-it="3"><td>3</td><td>−1,80</td><td>0,80</td><td>0,10</td><td>0,11</td><td>1,07</td><td class="left" style="color:var(--math-green)">aceita, dobra</td></tr>
+                        <tr data-it="4" class="linha-final"><td>4</td><td><strong>−1,64</strong></td><td>1,60</td><td>0,00</td><td>0,00</td><td>1,01</td><td class="left" style="color:var(--math-green)">convergiu</td></tr>
+                    </table>
+                    <div class="formula-box small-text" style="margin:8px 0 0;">
+                        <strong>A linha $k=1$ é a lição:</strong> o modelo <em>prometeu</em> melhorar 2,00, mas a função <strong>piorou 10,0</strong> → $\rho = -5$. O passo saiu da faixa onde a parábola valia. O algoritmo <strong>desfaz o passo</strong>, encolhe $\Delta$ de 2,40 para 0,80 e tenta de novo — agora com sucesso.
+                    </div>
+                    <p class="small-text" style="margin:6px 0 0;">Note que $\Delta$ <strong>cresceu demais</strong> nas iterações boas (1,2 → 2,4). É o algoritmo testando os limites da própria confiança — e sendo corrigido pelo $\rho$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 10: SINTAXE -->
+        <section class="compact">
+            <h2>Sintaxe e Utilização</h2>
+            <p>Da chamada mínima ao problema totalmente restrito — tudo na mesma função:</p>
+<pre class="matlab">
+<span class="cm">% 1) Mínimo absoluto: função + ponto inicial</span>
+x = fmincon(fun, x0);
+
+<span class="cm">% 2) Com restrições lineares de desigualdade  A*x &lt;= b</span>
+x = fmincon(fun, x0, A, b);
+
+<span class="cm">% 3) Chamada completa (ordem fixa dos argumentos)</span>
+[x, fval, exitflag, output, lambda] = ...
+    fmincon(fun, x0, A, b, Aeq, beq, lb, ub, nonlcon, options);
+
+<span class="cm">% 4) Ignorando restrições que o problema não tem: colchetes vazios</span>
+x = fmincon(fun, x0, <span class="hl">[], [], [], []</span>, lb, ub, @naolinear);
+
+<span class="cm">% 5) Forma moderna: uma única estrutura encapsulada</span>
+x = fmincon(problem);
+</pre>
+            <p class="small-text">⚠️ A <strong>ordem posicional importa</strong>: não se pode "pular" um argumento — passa-se <code>[]</code> no lugar dele.</p>
+        </section>
+
+        <!-- SLIDE 11: PARAMETROS DE ENTRADA -->
+        <section class="compact">
+            <h2>Parâmetros de Entrada</h2>
+            <table class="numeric-example" style="font-size:0.66em;">
+                <tr><th style="width:16%" data-tip="Nome do argumento na chamada da função fmincon. A ordem é posicional.">Variável</th><th style="width:52%" data-tip="O que esse argumento representa dentro do MATLAB e que tipo de dado espera.">Significado no MATLAB</th><th data-tip="Como essa entrada aparece na formulação matemática do problema de otimização.">Equivalência matemática</th></tr>
+                <tr><td><code>fun</code></td>    <td class="left">Função objetivo a minimizar (<em>function handle</em>)</td><td>$f(x)$</td></tr>
+                <tr><td><code>x0</code></td>     <td class="left">Ponto de partida inicial (vetor)</td>                     <td>$x_0$</td></tr>
+                <tr><td><code>A, b</code></td>   <td class="left">Matriz e vetor de desigualdade <strong>linear</strong></td><td>$A\,x \le b$</td></tr>
+                <tr><td><code>Aeq, beq</code></td><td class="left">Matriz e vetor de igualdade <strong>linear</strong></td> <td>$A_{eq}\,x = b_{eq}$</td></tr>
+                <tr><td><code>lb, ub</code></td> <td class="left">Limites inferior (<em>lower</em>) e superior (<em>upper</em>)</td><td>$lb \le x \le ub$</td></tr>
+                <tr><td><code>nonlcon</code></td><td class="left">Função com restrições <strong>não lineares</strong>; retorna <code>[c, ceq]</code></td><td>$c(x)\le 0,\; c_{eq}(x)=0$</td></tr>
+                <tr><td><code>options</code></td><td class="left">Opções criadas com <code>optimoptions</code></td>          <td>—</td></tr>
+            </table>
+            <div class="formula-box small-text" style="margin-top:14px;">
+                <strong>Atenção ao sinal:</strong> o MATLAB exige tudo na forma <strong>"$\le 0$"</strong>. Uma restrição $x_1^2 + x_2^2 \ge 4$ deve ser reescrita como $4 - x_1^2 - x_2^2 \le 0$ dentro do <code>nonlcon</code>.
+            </div>
+        </section>
+
+        <!-- SLIDE 12: PARAMETROS DE SAIDA -->
+        <section class="compact">
+            <h2>Parâmetros de Saída</h2>
+            <table class="numeric-example" style="font-size:0.66em; margin-top:4px;">
+                <tr>
+                    <th style="width:5%"></th>
+                    <th style="width:14%" data-tip="Nome da variável de retorno, na ordem em que sai de [x, fval, exitflag, output, lambda].">Variável</th>
+                    <th style="width:28%" data-tip="Definição do que aquele valor representa.">O que é</th>
+                    <th data-tip="Como usar essa informação em um projeto de engenharia — o que ela permite decidir ou verificar.">Para que serve na prática</th>
+                </tr>
+                <tr>
+                    <td rowspan="3" class="grupo grupo-sol">A solução</td>
+                    <td><code>x</code></td>
+                    <td class="left">O <strong>ponto ótimo</strong> encontrado (vetor de projeto).</td>
+                    <td class="left">É a resposta: os valores das variáveis que você vai usar.</td>
+                </tr>
+                <tr>
+                    <td><code>fval</code></td>
+                    <td class="left">O <strong>valor de $f$</strong> nesse ponto.</td>
+                    <td class="left">O desempenho atingido — massa, custo, energia.</td>
+                </tr>
+                <tr>
+                    <td><code>exitflag</code></td>
+                    <td class="left"><strong>Por que o algoritmo parou.</strong></td>
+                    <td class="left"><span style="color:var(--math-green)"><strong>1</strong> convergiu</span> · <span style="color:var(--math-gold)"><strong>0</strong> acabaram as iterações</span> · <span style="color:var(--math-red)"><strong>−2</strong> inviável</span>. <strong>Parar não é convergir.</strong></td>
+                </tr>
+                <tr>
+                    <td rowspan="3" class="grupo grupo-sobre">Sobre a solução</td>
+                    <td><code>output</code></td>
+                    <td class="left"><strong>Diagnóstico</strong>: iterações, avaliações de $f$, algoritmo.</td>
+                    <td class="left">Mostra o <em>custo</em> da busca. Muitas avaliações → forneça o gradiente.</td>
+                </tr>
+                <tr>
+                    <td><code>lambda</code></td>
+                    <td class="left">Estrutura com multiplicadores de lagrange, Um número <strong>por restrição</strong>: o quanto ela <strong>influenciou</strong> a solução.</td>
+                    <td class="left">Diz <strong>quais restrições prendem</strong> o projeto (veja abaixo).</td>
+                </tr>
+                <tr>
+                    <td><code>grad</code> / <code>hessian</code></td>
+                    <td class="left"><strong>Inclinação</strong> e <strong>curvatura</strong> de $f$ na solução.</td>
+                    <td class="left">$\nabla f \approx 0$ confirma o ótimo; a curvatura diz se ele é <strong>agudo</strong> ou <strong>plano</strong>.</td>
+                </tr>
+            </table>
+            <div class="formula-box small-text" style="margin-top:10px; display:none;">
+                <strong>Entendendo o <code>lambda</code>:</strong> minimizar o <strong>custo</strong> de uma peça com a restrição <em>“massa $\le$ 5 kg”</em>. Se a solução sai com <strong>exatamente 5 kg</strong>, a restrição <strong>está prendendo</strong> o projeto → $\lambda > 0$, e seu valor diz <strong>quanto o custo cairia</strong> se fosse permitido 6 kg. Se sai com 3 kg, o limite não atrapalhou → <span class="highlight">$\lambda = 0$</span>. Em resumo: $\lambda$ mostra <strong>onde vale a pena negociar o requisito</strong>.
+            </div>
+        </section>
+
+        <!-- SLIDE 13: RESTRICOES ATIVAS (ANIMADO) -->
+        <section class="compact  " style="display: none;">
+            <h2>Restrição Ativa e Multiplicadores</h2>
+            <p>Na prática, o ótimo restrito quase sempre fica <strong>encostado na fronteira</strong>. Ali o gradiente de $f$ e o da restrição ficam <span class="highlight">paralelos</span> — é exatamente o que dizem as condições de KKT:</p>
+            <div class="two-col">
+                <div class="col-img" style="flex:1.1;">
+                    <div class="canvas-container">
+                        <canvas id="cvKkt" width="480" height="360"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="kkt">▶ Repetir animação</button>
+                </div>
+                <div class="col-text">
+                    <div class="formula-box">
+                        $\nabla f(x^*) + \displaystyle\sum_i \lambda_i \nabla c_i(x^*) = 0$ <br>
+                        $\lambda_i \ge 0$, &nbsp; $\lambda_i\, c_i(x^*) = 0$
+                    </div>
+                    <ul>
+                        <li>O mínimo <strong>irrestrito</strong> (✕) está fora da região viável.</li>
+                        <li>O <code>fmincon</code> devolve o ponto viável mais baixo: <strong>tangente</strong> à curva de nível.</li>
+                        <li>Nesse ponto, empurrar em qualquer direção viável <strong>piora</strong> $f$ — não há para onde ir.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 14: OPTIMOPTIONS -->
+        <section class="compact">
+            <h2>Configuração: <code>optimoptions</code></h2>
+            <p>O antigo vetor <code>foptions</code> foi descontinuado. Hoje o controle é feito por um <strong>objeto de opções</strong>:</p>
+<pre class="matlab">
+options = optimoptions(<span class="st">'fmincon'</span>, ...
+    <span class="st">'Algorithm'</span>,                <span class="st">'sqp'</span>, ...      <span class="cm">% qual motor rodar</span>
+    <span class="st">'SpecifyObjectiveGradient'</span>, true, ...    <span class="cm">% eu forneço o gradiente analítico</span>
+    <span class="st">'Display'</span>,                  <span class="st">'iter'</span>, ...   <span class="cm">% imprime cada iteração</span>
+    <span class="st">'StepTolerance'</span>,            1e-10, ...   <span class="cm">% tolerâncias de parada</span>
+    <span class="st">'OptimalityTolerance'</span>,      1e-8);
+</pre>
+            <div class="cards" style="margin-top:16px;">
+                <div class="card"><h4>Algorithm</h4><p>Escolhe o motor: <code>'interior-point'</code>, <code>'sqp'</code>, <code>'active-set'</code>, <code>'trust-region-reflective'</code>.</p></div>
+                <div class="card gold"><h4>SpecifyObjectiveGradient</h4><p>Desliga a <strong>diferença finita</strong> quando fornecemos $\nabla f$ analítico. Economiza $n$ avaliações de $f$ por iteração.</p></div>
+                <div class="card green"><h4>Display / Tolerances</h4><p><code>Display</code> controla o que aparece no terminal; as tolerâncias definem <strong>quando parar</strong>.</p></div>
+            </div>
+        </section>
+
+        <!-- SLIDE 15: DIFERENCA FINITA x GRADIENTE ANALITICO -->
+        <section class="compact">
+            <h2>De Onde Vem o Gradiente?</h2>
+            <p style="margin:0 0 6px;">Todo método visto até aqui — SQP, interior-point, trust-region — precisa de $\nabla f$ para saber <strong>para onde descer</strong>. Existem duas formas de obtê-lo:</p>
+            <div class="cards" style="margin-top:6px;">
+                <div class="card red">
+                    <h4>1. O MATLAB estima (padrão)</h4>
+                    <p>Ele <strong>sonda</strong> uma variável por vez: anda um passinho $h$ em $x_1$, mede quanto $f$ mudou; repete para $x_2$, $x_3$… <br>Não exige nada de você — mas <strong>cada sondagem é uma avaliação de $f$</strong>.</p>
+                </div>
+                <div class="card green">
+                    <h4>2. Você fornece a fórmula</h4>
+                    <p>Sua função retorna <strong>$f$ e $\nabla f$ juntos</strong>, e você avisa o solver com <code>SpecifyObjectiveGradient</code>. <br>Exige deduzir as derivadas — mas <strong>elimina todas as sondagens</strong>.</p>
+                </div>
+            </div>
+            <div class="formula-box" style="margin:10px 0 6px; text-align:center;">
+                $\dfrac{\partial f}{\partial x_i} \approx \dfrac{f(x + h\,e_i) - f(x)}{h}$
+                &nbsp;&nbsp;<span class="small-text">a “sondagem”: uma avaliação extra de $f$ <strong>para cada variável</strong></span>
+            </div>
+            <p class="small-text" style="margin:4px 0 0;">Com $n$ variáveis, estimar o gradiente custa <strong>$n$ avaliações extras por iteração</strong>. O próximo slide mostra o que isso significa em horas de máquina.</p>
+        </section>
+
+        <!-- SLIDE 20: O CUSTO DAS DIFERENCAS FINITAS -->
+        <section class="compact">
+            <h2>O Custo de Não Fornecer o Gradiente</h2>
+            <p style="margin:0 0 4px;">Uma <strong>única</strong> iteração, com $n = 5$ variáveis:</p>
+            <div class="canvas-container" style="margin-top:4px;">
+                <canvas id="cvGrad" width="900" height="270"></canvas>
+            </div>
+            <button class="anim-ctrl" data-anim="grad">▶ Repetir animação</button>
+            <div class="two-col" style="gap:18px; align-items:flex-start; margin-top:8px;">
+                <div class="col-text" style="flex:1.25;">
+                    <table class="numeric-example" style="font-size:0.58em; margin-top:0;">
+                        <tr>
+                            <th style="width:14%" data-tip="Número de variáveis de projeto do problema.">$n$</th>
+                            <th style="width:24%" data-tip="Avaliações de f por iteração quando o gradiente é estimado: uma no ponto atual mais uma por variável.">sem gradiente</th>
+                            <th style="width:16%" data-tip="Com o gradiente analítico, basta avaliar f uma vez por iteração.">com</th>
+                            <th data-tip="Tempo total de 40 iterações supondo que cada avaliação de f seja uma simulação de 10 minutos.">40 iterações · $f$ = 10 min</th>
+                        </tr>
+                        <tr><td>2</td>  <td>3 / iteração</td>  <td>1</td><td class="left">20 h &nbsp;<span style="color:#888">vs.</span>&nbsp; <strong style="color:var(--math-green)">6,7 h</strong></td></tr>
+                        <tr><td>5</td>  <td>6 / iteração</td>  <td>1</td><td class="left">1,7 dias &nbsp;<span style="color:#888">vs.</span>&nbsp; <strong style="color:var(--math-green)">6,7 h</strong></td></tr>
+                        <tr><td>20</td> <td>21 / iteração</td> <td>1</td><td class="left"><strong style="color:var(--math-red)">5,8 dias</strong> &nbsp;<span style="color:#888">vs.</span>&nbsp; <strong style="color:var(--math-green)">6,7 h</strong></td></tr>
+                    </table>
+                </div>
+                <div class="col-text" style="flex:1;">
+<pre class="matlab" style="font-size:0.45em; margin:0;">
+<span class="cm">% a função devolve f E o gradiente</span>
+<span class="kw">function</span> [f, g] = objetivo(x)
+    f = (x(1)-2)^2 + 3*x(2)^2;
+    g = [2*(x(1)-2); 6*x(2)];   <span class="cm">% ∇f</span>
+<span class="kw">end</span>
+
+<span class="cm">% avisa o solver que g está disponível</span>
+opt = optimoptions(<span class="st">'fmincon'</span>, ...
+      <span class="st">'SpecifyObjectiveGradient'</span>, true);
+</pre>
+                    <p class="small-text" style="margin:6px 0 0;">Sem esse aviso o MATLAB <strong>ignora</strong> o gradiente que você calculou e sonda assim mesmo.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 16: CRITERIOS DE PARADA -->
+        <section class="compact">
+            <h2>Critérios de Parada e Tolerâncias</h2>
+            <p>Quando o algoritmo decide que chegou? Três perguntas independentes — <strong>basta uma responder "sim"</strong>:</p>
+            <div class="cards">
+                <div class="card">
+                    <h4>StepTolerance</h4>
+                    <p>O <strong>passo geométrico</strong> ficou irrisório: $\lVert x_{k+1} - x_k \rVert < \varepsilon$.<br><em>"Parei de andar."</em></p>
+                </div>
+                <div class="card gold">
+                    <h4>FunctionTolerance</h4>
+                    <p>A mudança de posição gera <strong>variação vertical</strong> desprezível: $|f_{k+1} - f_k| < \varepsilon$.<br><em>"A curva achatou."</em></p>
+                </div>
+                <div class="card green">
+                    <h4>OptimalityTolerance</h4>
+                    <p>A <strong>norma do gradiente</strong> (projetado) é ~zero: as condições de 1ª ordem de <strong>KKT</strong> foram satisfeitas.<br><em>"Matematicamente é o ótimo."</em></p>
+                </div>
+            </div>
+            <div class="canvas-container" style="margin-top:12px;">
+                <canvas id="cvStop" width="900" height="230"></canvas>
+            </div>
+            <p class="small-text">⚠️ Só a <strong>OptimalityTolerance</strong> garante otimalidade. As outras duas podem disparar por <strong>estagnação</strong> — passo pequeno não é o mesmo que ótimo encontrado. Sempre confira o <code>exitflag</code>.</p>
+        </section>
+
+        <!-- SLIDE 17: EXEMPLO COMPLETO -->
+        <section class="compact">
+            <h2>Exemplo Completo</h2>
+            <p>Minimizar a função de Rosenbrock <strong>dentro</strong> de um disco de raio 1:</p>
+            <div class="two-col" style="align-items:flex-start;">
+                <div class="col-text" style="flex:1.15;">
+                    <div class="formula-box small-text">
+                        $\min\; f(x) = 100\,(x_2 - x_1^2)^2 + (1-x_1)^2$ <br>
+                        sujeito a &nbsp; $x_1^2 + x_2^2 \le 1$
+                    </div>
+<pre class="matlab" style="font-size:0.48em;">
+<span class="cm">% função objetivo (Rosenbrock)</span>
+fun = @(x) 100*(x(2)-x(1)^2)^2 + (1-x(1))^2;
+
+<span class="cm">% restrição não linear: c(x) &lt;= 0  →  disco unitário</span>
+<span class="kw">function</span> [c, ceq] = disco(x)
+    c   = x(1)^2 + x(2)^2 - 1;   <span class="cm">% x1²+x2²-1 &lt;= 0</span>
+    ceq = [];                     <span class="cm">% sem igualdade</span>
+<span class="kw">end</span>
+
+x0  = [0, 0];
+opt = optimoptions(<span class="st">'fmincon'</span>,<span class="st">'Algorithm'</span>,<span class="st">'sqp'</span>,<span class="st">'Display'</span>,<span class="st">'iter'</span>);
+
+[x, fval, exitflag, ~, lambda] = ...
+    fmincon(fun, x0, [], [], [], [], [], [], @disco, opt);
+</pre>
+                    <div class="formula-box small-text">
+                        <strong>Resultado:</strong> $x^* \approx (0{,}7864;\ 0{,}6177)$ &nbsp;·&nbsp; $f_{val} \approx 0{,}0457$ <br>
+                        <code>exitflag = 1</code> (convergiu) &nbsp;·&nbsp; $\lambda_{ineq} > 0$ → <strong>restrição ativa</strong>.
+                    </div>
+                </div>
+                <div class="col-img" style="flex:1;">
+                    <div class="canvas-container">
+                        <canvas id="cvRosen" width="420" height="400"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="rosen">▶ Repetir animação</button>
+                    <p class="small-text" style="text-align:center;">O ótimo irrestrito é $(1,1)$ — <strong>fora</strong> do disco. A solução para <strong>na borda</strong>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 18: COMO ESCOLHER O ALGORITMO -->
+        <section class="compact">
+            <h2>Qual Motor Escolher?</h2>
+            <table class="numeric-example" style="font-size:0.66em;">
+                <tr><th style="width:26%" data-tip="Característica do seu problema: tamanho, tipo de restrição, exigências de viabilidade.">Situação</th><th style="width:24%" data-tip="Valor a passar em optimoptions(...,&#39;Algorithm&#39;,...).">Recomendado</th><th data-tip="Por que esse motor se encaixa nessa situação — e qual é a limitação dos outros.">Motivo</th></tr>
+                <tr><td class="left">Não sei por onde começar</td><td><code>interior-point</code></td><td class="left">Padrão, robusto, aceita todo tipo de restrição e escala bem.</td></tr>
+                <tr><td class="left">Muitas variáveis (larga escala), matrizes esparsas</td><td><code>interior-point</code></td><td class="left">Único que lida bem com problemas grandes e esparsos.</td></tr>
+                <tr><td class="left">Preciso que <strong>toda</strong> iteração seja viável</td><td><code>sqp</code></td><td class="left">Respeita os limites <code>lb/ub</code> em todas as iterações — essencial se $f$ nem existe fora deles (ex.: $\sqrt{x}$, log).</td></tr>
+                <tr><td class="left">Problema pequeno, quero precisão fina</td><td><code>sqp</code> / <code>active-set</code></td><td class="left">Convergem em poucas iterações perto da solução.</td></tr>
+                <tr><td class="left">Só limites (<code>lb/ub</code>) e tenho o gradiente analítico</td><td><code>trust-region-reflective</code></td><td class="left">O mais rápido — mas <strong>não aceita</strong> restrições não lineares nem de desigualdade linear.</td></tr>
+            </table>
+            <div class="formula-box small-text" style="margin-top:14px;">
+                🔧 <strong>Regra de bolso:</strong> comece no padrão. Se não convergir, troque para <code>'sqp'</code>, reescale as variáveis para ordens de grandeza parecidas e teste outros $x_0$.
+            </div>
+        </section>
+
+        <!-- SLIDE 19: CONCLUSAO -->
+        <section class="compact">
+            <h2>Conclusão</h2>
+            <p>O principal benefício do <code>fmincon</code> está na sua <span class="highlight">arquitetura modular</span>: um mesmo comando cobre desde uma minimização simples até sistemas altamente restritos.</p>
+            <div class="timeline">
+                <div class="stage">
+                    <div class="dot"></div>
+                    <h4>Algoritmos consolidados</h4>
+                    <p>Pontos interiores, SQP e estimativas Quase-Newton (BFGS) reunidos em uma só interface.</p>
+                </div>
+                <div class="stage">
+                    <div class="dot"></div>
+                    <h4>Controle paramétrico</h4>
+                    <p>O <code>optimoptions</code> dá controle total de tolerâncias, gradientes e diagnóstico.</p>
+                </div>
+                <div class="stage">
+                    <div class="dot"></div>
+                    <h4>Eficiência</h4>
+                    <p>Processamento eficiente de sistemas não lineares restritos de engenharia.</p>
+                </div>
+            </div>
+            <ul style="margin-top:18px;">
+                <li>É uma ferramenta de <strong>busca local determinística</strong> — a qualidade da resposta depende de $x_0$.</li>
+                <li>Os métodos clássicos de sala <strong>não desapareceram</strong>: foram substituídos por versões mais eficientes ou reaproveitados como critério de parada (KKT).</li>
+                <li>Fornecer o <strong>gradiente analítico</strong> e escalar bem as variáveis costuma valer mais que trocar de algoritmo.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 20: REFERENCIAS -->
+        <section class="compact">
+            <h2>Referências</h2>
+            <ul style="font-size:0.9em; line-height:1.5em;">
+                <li>THE MATHWORKS. <em>fmincon — Find minimum of constrained nonlinear multivariable function</em>. Optimization Toolbox Documentation. Disponível em: mathworks.com/help/optim/ug/fmincon.html.</li>
+                <li>THE MATHWORKS. <em>Choosing the Algorithm</em> e <em>Constrained Nonlinear Optimization Algorithms</em>. Optimization Toolbox User's Guide.</li>
+                <li>NOCEDAL, J.; WRIGHT, S. J. <em>Numerical Optimization</em>. 2. ed. New York: Springer, 2006. (cap. 15–19: SQP, Interior-Point, Trust Region)</li>
+                <li>BAVASTRI, C. A. <em>Notas de aula — Otimização Não Linear</em>. PPGEM, Universidade Federal do Paraná (UFPR).</li>
+                <li>BYRD, R. H.; HRIBAR, M. E.; NOCEDAL, J. <em>An Interior Point Algorithm for Large-Scale Nonlinear Programming</em>. SIAM Journal on Optimization, v. 9, n. 4, p. 877–900, 1999.</li>
+                <li>KARUSH, W. (1939); KUHN, H. W.; TUCKER, A. W. <em>Nonlinear Programming</em>. Berkeley Symposium on Mathematical Statistics and Probability, 1951.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 21: ENCERRAMENTO -->
+        <section class="slide-centro" style="text-align:center;">
+            <h1 style="font-size:2.4em; border:none;">Dúvidas?</h1>
+            <p style="font-size:1.1em; color:#555;">Agradecemos pela atenção!</p>
+            <div style="margin-top:60px;">
+                <p><strong>Leonardo Ronald Perin Rauta · Maurício da Silva Justino · Romulo de Aguiar Beninca</strong></p>
+                <p class="small-text">Prof. Dr. Carlos Alberto Bavastri · UFPR — Engenharia Mecânica</p>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+<script>
+    Reveal.initialize({
+        hash: true,
+        center: false,        // conteudo alinhado ao topo (nao centralizado)
+        transition: 'slide',
+        slideNumber: 'c/t',   // numero do slide atual / total (ex.: 3/9)
+        width: 1100,          // area de conteudo mais larga
+        height: 800,          // ...e mais alta, para caber texto + desenho
+        margin: 0.04,         // menos margem ao redor do slide
+        minScale: 0.2,
+        maxScale: 1.5
+    });
+
+    // --- Botao Gerar PDF ---
+    // O Reveal.js exporta PDF abrindo a apresentacao com ?print-pdf na URL
+    // e usando "Salvar como PDF" na caixa de impressao do navegador (Chrome/Edge).
+    document.getElementById('btnPdf').addEventListener('click', function () {
+        if (window.location.search.indexOf('print-pdf') === -1) {
+            const sep = window.location.search ? '&' : '?';
+            window.location.href = window.location.pathname + window.location.search + sep + 'print-pdf';
+        } else {
+            window.print();
+        }
+    });
+
+    // Se a pagina ja abriu em modo print-pdf, dispara a impressao automaticamente
+    if (window.location.search.indexOf('print-pdf') !== -1) {
+        window.addEventListener('load', () => setTimeout(() => window.print(), 1200));
+    }
+
+    // Renderiza as formulas $...$ e $$...$$ com KaTeX
+    renderMathInElement(document.body, {
+        delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$',  right: '$',  display: false }
+        ],
+        throwOnError: false
+    });
+
+    /* =======================================================================
+       ENGINE DE DESENHO / ANIMACAO
+       Cada figura e registrada em ANIM[nome] = {draw(t), dur}. O motor chama
+       draw(t) com t indo de 0 a 1 e depois congela no quadro final, para que
+       a impressao em PDF capture a figura completa.
+       ======================================================================= */
+    const cores = {
+        azul:   '#004a8e',
+        claro:  '#2e6fc4',
+        verde:  '#27ae60',
+        verm:   '#e74c3c',
+        ouro:   '#f39c12',
+        roxo:   '#8e44ad',
+        cinza:  '#7f8c9b',
+        grade:  '#eef1f6'
+    };
+
+    // ---- utilitarios de desenho -------------------------------------------
+    function grade(ctx, w, h, passo) {
+        ctx.strokeStyle = cores.grade; ctx.lineWidth = 1;
+        for (let i = 0; i <= w; i += (passo || 40)) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,h); ctx.stroke(); }
+        for (let i = 0; i <= h; i += (passo || 40)) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(w,i); ctx.stroke(); }
+    }
+    function ponto(ctx, x, y, cor, r) {
+        ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(x, y, r || 5, 0, Math.PI*2); ctx.fill();
+    }
+    function texto(ctx, s, x, y, cor, font) {
+        ctx.fillStyle = cor || '#333'; ctx.font = font || '12px Arial'; ctx.fillText(s, x, y);
+    }
+    function seta(ctx, x1, y1, x2, y2, cor, lw) {
+        const ang = Math.atan2(y2-y1, x2-x1), hl = 9;
+        ctx.strokeStyle = cor; ctx.lineWidth = lw || 2;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2,y2);
+        ctx.lineTo(x2 - hl*Math.cos(ang - Math.PI/6), y2 - hl*Math.sin(ang - Math.PI/6));
+        ctx.lineTo(x2 - hl*Math.cos(ang + Math.PI/6), y2 - hl*Math.sin(ang + Math.PI/6));
+        ctx.closePath(); ctx.fillStyle = cor; ctx.fill();
+    }
+    // caixa de rotulo com fundo branco (legivel sobre curvas de nivel)
+    function rotulo(ctx, s, x, y, cor, font) {
+        ctx.font = font || 'bold 12px Arial';
+        const larg = ctx.measureText(s).width;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillRect(x - 3, y - 12, larg + 6, 16);
+        ctx.fillStyle = cor || '#333';
+        ctx.fillText(s, x, y);
+    }
+    // suaviza a animacao (ease in-out)
+    const suave = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+
+    /* Desenha curvas de nivel de uma funcao f(x,y) por marching-squares simples.
+       dominio: {x0,x1,y0,y1} no espaco da funcao; mapeia para o canvas.        */
+    function curvasNivel(ctx, f, dom, niveis, w, h, cor) {
+        const N = 90;
+        const px = (x) => (x - dom.x0) / (dom.x1 - dom.x0) * w;
+        const py = (y) => h - (y - dom.y0) / (dom.y1 - dom.y0) * h;
+        const val = [];
+        for (let i = 0; i <= N; i++) {
+            val[i] = [];
+            for (let j = 0; j <= N; j++) {
+                const x = dom.x0 + (dom.x1 - dom.x0) * i / N;
+                const y = dom.y0 + (dom.y1 - dom.y0) * j / N;
+                val[i][j] = f(x, y);
+            }
+        }
+        ctx.strokeStyle = cor || '#dde4ec'; ctx.lineWidth = 1.1;
+        niveis.forEach(nv => {
+            ctx.beginPath();
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    const x0 = dom.x0 + (dom.x1-dom.x0)*i/N, x1 = dom.x0 + (dom.x1-dom.x0)*(i+1)/N;
+                    const y0 = dom.y0 + (dom.y1-dom.y0)*j/N, y1 = dom.y0 + (dom.y1-dom.y0)*(j+1)/N;
+                    const a = val[i][j], b = val[i+1][j], c = val[i+1][j+1], d = val[i][j+1];
+                    // interpola nas arestas da celula onde o nivel cruza
+                    const cruz = [];
+                    const ip = (va, vb, pa, pb) => pa + (nv - va)/(vb - va)*(pb - pa);
+                    if ((a-nv)*(b-nv) < 0) cruz.push([ip(a,b,x0,x1), y0]);
+                    if ((b-nv)*(c-nv) < 0) cruz.push([x1, ip(b,c,y0,y1)]);
+                    if ((c-nv)*(d-nv) < 0) cruz.push([ip(d,c,x0,x1), y1]);
+                    if ((d-nv)*(a-nv) < 0) cruz.push([x0, ip(a,d,y0,y1)]);
+                    if (cruz.length === 2) {
+                        ctx.moveTo(px(cruz[0][0]), py(cruz[0][1]));
+                        ctx.lineTo(px(cruz[1][0]), py(cruz[1][1]));
+                    }
+                }
+            }
+            ctx.stroke();
+        });
+        return { px, py };
+    }
+
+    // ---- registro e motor de animacao -------------------------------------
+    const ANIM = {};
+    const RODANDO = {};
+
+    function registrar(nome, idCanvas, dur, draw) {
+        const cv = document.getElementById(idCanvas);
+        if (!cv) return;
+        ANIM[nome] = { cv, ctx: cv.getContext('2d'), dur, draw };
+    }
+
+    /* ---- Modo passo a passo -------------------------------------------------
+       Figuras cuja animacao percorre N iteracoes podem ser controladas
+       manualmente. PASSOS[nome] = numero de iteracoes; PASSO_ATUAL[nome] = qual
+       esta em cena. Converte-se o indice em um "t" no meio da fatia daquela
+       iteracao, de modo que draw(t) desenhe exatamente aquele quadro.        */
+    const PASSOS = {};          // nome -> total de iteracoes
+    const PASSO_ATUAL = {};     // nome -> indice corrente (0..N-1, ou N = fim)
+
+    function tParaPasso(nome, i) {
+        const n = PASSOS[nome];
+        if (i >= n) return 1;                 // quadro final completo
+        // meio da fatia i: garante t < 1 mesmo na ultima iteracao, para que
+        // "ultimo passo" e "quadro final" nao virem o mesmo desenho.
+        return (i + 0.5) / n;
+    }
+
+    function desenharPasso(nome, i) {
+        const a = ANIM[nome];
+        if (!a) return;
+        if (RODANDO[nome]) { cancelAnimationFrame(RODANDO[nome]); RODANDO[nome] = null; }
+        const n = PASSOS[nome];
+        i = Math.max(0, Math.min(n, i));
+        PASSO_ATUAL[nome] = i;
+        a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+        a.draw(tParaPasso(nome, i));
+        atualizarCtrlPasso(nome);
+    }
+
+    function passoAnterior(nome) { desenharPasso(nome, (PASSO_ATUAL[nome] ?? 0) - 1); }
+    function passoSeguinte(nome) { desenharPasso(nome, (PASSO_ATUAL[nome] ?? 0) + 1); }
+
+    // atualiza o rotulo "iteracao k/N" e habilita/desabilita os botoes
+    function atualizarCtrlPasso(nome) {
+        const n = PASSOS[nome], i = PASSO_ATUAL[nome] ?? 0;
+        document.querySelectorAll('[data-passo-de="' + nome + '"]').forEach(el => {
+            const acao = el.dataset.passoAcao;
+            if (acao === 'label') {
+                el.textContent = (i >= n ? n : i + 1) + ' / ' + n;
+            } else if (acao === 'prev') {
+                el.disabled = (i <= 0);
+            } else if (acao === 'next') {
+                el.disabled = (i >= n);
+            }
+        });
+    }
+
+    /* Multiplicador global de duracao. 1 = velocidade base; valores maiores
+       deixam TODAS as animacoes mais lentas. Fica salvo entre sessoes.     */
+    let fatorVel = 1.6;
+    try {
+        const salvo = parseFloat(localStorage.getItem('fminconVel'));
+        if (isFinite(salvo) && salvo > 0) fatorVel = salvo;
+    } catch (e) { /* localStorage indisponivel: segue com o padrao */ }
+
+    function tocar(nome) {
+        const a = ANIM[nome];
+        if (!a) return;
+        if (RODANDO[nome]) cancelAnimationFrame(RODANDO[nome]);
+        const dur = a.dur * fatorVel;
+        const t0 = performance.now();
+        const passo = (agora) => {
+            const t = Math.min(1, (agora - t0) / dur);
+            a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+            a.draw(t);
+            if (t < 1) RODANDO[nome] = requestAnimationFrame(passo);
+            else RODANDO[nome] = null;   // congela no quadro final
+        };
+        RODANDO[nome] = requestAnimationFrame(passo);
+    }
+
+    // desenha o quadro final (t=1) sem animar — usado na carga e no PDF
+    function quadroFinal(nome) {
+        const a = ANIM[nome];
+        if (!a) return;
+        a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+        a.draw(1);
+    }
+
+    /* =======================================================================
+       FIGURA 1 — Slide 2: espaco viavel e a descida do fmincon
+       ======================================================================= */
+    registrar('intro', 'cvIntro', 2600, function (t) {
+        const a = ANIM.intro, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+
+        // fundo cinza = regiao proibida
+        ctx.fillStyle = '#e9ecf1'; ctx.fillRect(0, 0, w, h);
+
+        // regiao viavel (poligono branco) — intersecao de restricoes lineares
+        const viavel = [ {x:60,y:330}, {x:60,y:120}, {x:200,y:45}, {x:380,y:150}, {x:340,y:330} ];
+        ctx.beginPath();
+        viavel.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y));
+        ctx.closePath();
+        ctx.fillStyle = '#ffffff'; ctx.fill();
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5; ctx.stroke();
+
+        // curvas de nivel de f centradas no otimo irrestrito (fora da regiao)
+        const otIrr = { x: 400, y: 300 };
+        ctx.save();
+        ctx.beginPath();
+        viavel.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y));
+        ctx.closePath(); ctx.clip();                 // curvas so aparecem dentro
+        ctx.strokeStyle = '#cfd9e6'; ctx.lineWidth = 1.2;
+        for (let r = 1; r <= 12; r++) {
+            ctx.beginPath();
+            ctx.ellipse(otIrr.x, otIrr.y, r*34, r*26, -0.3, 0, Math.PI*2);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // trajetoria do fmincon: de x0 ate o ponto viavel mais proximo do otimo
+        const caminho = [ {x:110,y:130}, {x:170,y:175}, {x:235,y:225}, {x:290,y:270}, {x:325,y:300}, {x:337,y:315} ];
+        const nSeg = caminho.length - 1;
+        const prog = tt * nSeg;
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(caminho[0].x, caminho[0].y);
+        let atual = caminho[0];
+        for (let i = 0; i < nSeg; i++) {
+            const f = Math.max(0, Math.min(1, prog - i));
+            if (f <= 0) break;
+            atual = { x: caminho[i].x + f*(caminho[i+1].x - caminho[i].x),
+                      y: caminho[i].y + f*(caminho[i+1].y - caminho[i].y) };
+            ctx.lineTo(atual.x, atual.y);
+        }
+        ctx.stroke();
+        // marcadores das iteracoes ja percorridas
+        for (let i = 1; i <= nSeg; i++) if (prog >= i) ponto(ctx, caminho[i].x, caminho[i].y, cores.verm, 3.5);
+
+        ponto(ctx, caminho[0].x, caminho[0].y, cores.azul, 6);
+        rotulo(ctx, 'x₀ (usuário escolhe)', caminho[0].x + 10, caminho[0].y - 6, cores.azul);
+        ponto(ctx, atual.x, atual.y, cores.ouro, 6);
+
+        // otimo irrestrito marcado com X (esta fora da regiao viavel)
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(otIrr.x-7, otIrr.y-7); ctx.lineTo(otIrr.x+7, otIrr.y+7);
+        ctx.moveTo(otIrr.x+7, otIrr.y-7); ctx.lineTo(otIrr.x-7, otIrr.y+7);
+        ctx.stroke();
+        rotulo(ctx, 'mín. irrestrito', otIrr.x - 96, otIrr.y + 26, cores.cinza, '11px Arial');
+
+        if (t > 0.92) {
+            rotulo(ctx, 'x* (solução)', atual.x - 92, atual.y + 4, '#b9770e');
+        }
+        rotulo(ctx, 'região viável', 100, 90, cores.azul, 'bold 13px Arial');
+        rotulo(ctx, 'proibido pelas restrições', 12, h - 12, '#8a94a3', '11px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 2 — Slide 3: minimo local x global, dois x0 diferentes
+       ======================================================================= */
+    registrar('local', 'cvLocal', 3400, function (t) {
+        const a = ANIM.local, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        // funcao 1D multimodal desenhada no canvas
+        const fx = (x) => 0.45*Math.sin(x*0.9) + 0.30*Math.sin(x*2.3 + 1.0) + 0.020*(x-5)*(x-5);
+        const x0d = 0, x1d = 12;
+        const px = (x) => 60 + (x - x0d)/(x1d - x0d) * (w - 110);
+        const py = (v) => h - 70 - (v + 1.1) / 3.0 * (h - 110);
+
+        grade(ctx, w, h, 45);
+
+        // eixos
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(50, h-45); ctx.lineTo(w-25, h-45); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(50, 20); ctx.lineTo(50, h-45); ctx.stroke();
+        texto(ctx, 'x', w-22, h-38, '#666', 'italic 13px Arial');
+        texto(ctx, 'f(x)', 22, 26, '#666', 'italic 13px Arial');
+
+        // curva
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let x = x0d; x <= x1d; x += 0.02) {
+            const X = px(x), Y = py(fx(x));
+            x === x0d ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+        }
+        ctx.stroke();
+
+        // descida por gradiente a partir de um x inicial
+        const descer = (xi, passos, frac) => {
+            let x = xi;
+            const traj = [x];
+            for (let k = 0; k < passos; k++) {
+                const dfdx = (fx(x + 1e-4) - fx(x - 1e-4)) / 2e-4;
+                x = x - 0.55 * dfdx;
+                traj.push(x);
+            }
+            const n = Math.max(1, Math.floor(frac * (traj.length - 1)));
+            return { traj, idx: n, x: traj[n] };
+        };
+
+        const tt = suave(t);
+        // x0 escolhidos pelas bacias: 1.4 cai no vale raso da esquerda (f=+0,37);
+        // 3.4 cai no vale central, que e o minimo global real (f=-0,63).
+        const bolaA = descer(1.4, 26, tt);   // fica preso no minimo LOCAL
+        const bolaB = descer(3.4, 26, tt);   // alcanca o minimo GLOBAL
+
+        // rastro das duas bolas
+        const rastro = (b, cor) => {
+            ctx.strokeStyle = cor; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+            ctx.beginPath();
+            for (let i = 0; i <= b.idx; i++) {
+                const X = px(b.traj[i]), Y = py(fx(b.traj[i]));
+                i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+            }
+            ctx.stroke(); ctx.setLineDash([]);
+        };
+        rastro(bolaA, cores.verm);
+        rastro(bolaB, cores.verde);
+
+        // pontos de partida
+        ponto(ctx, px(1.4), py(fx(1.4)), '#c0392b', 5);
+        rotulo(ctx, 'x₀ = 1,4', px(1.4) - 26, py(fx(1.4)) - 14, '#c0392b', 'bold 12px Arial');
+        ponto(ctx, px(3.4), py(fx(3.4)), '#1e7e44', 5);
+        rotulo(ctx, 'x₀ = 3,4', px(3.4) - 22, py(fx(3.4)) - 14, '#1e7e44', 'bold 12px Arial');
+
+        // bolas em movimento
+        ponto(ctx, px(bolaA.x), py(fx(bolaA.x)), cores.verm, 8);
+        ponto(ctx, px(bolaB.x), py(fx(bolaB.x)), cores.verde, 8);
+
+        if (t > 0.85) {
+            rotulo(ctx, 'mínimo LOCAL  f = +0,37', px(bolaA.x) - 60, py(fx(bolaA.x)) + 30, cores.verm, 'bold 13px Arial');
+            rotulo(ctx, 'mínimo GLOBAL  f = −0,63', px(bolaB.x) - 64, py(fx(bolaB.x)) + 34, cores.verde, 'bold 13px Arial');
+            rotulo(ctx, 'Mesmo algoritmo, mesma função — respostas diferentes.',
+                   px(3.2), 40, '#444', 'italic 14px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 3 — Slide 5: ziguezague (steepest) x quase-Newton
+       ======================================================================= */
+    registrar('zigzag', 'cvZigzag', 3200, function (t) {
+        const a = ANIM.zigzag, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        const meio = w/2;
+
+        // vale estreito: f = x^2 + 18 y^2  (curvas de nivel bem alongadas)
+        const f = (x, y) => x*x + 18*y*y;
+        const dom = { x0: -3.2, x1: 3.2, y0: -1.0, y1: 1.0 };
+
+        const painel = (offx, larg, titulo, cor) => {
+            ctx.save();
+            ctx.beginPath(); ctx.rect(offx, 30, larg, h - 60); ctx.clip();
+            ctx.translate(offx, 30);
+            const m = curvasNivel(ctx, f, dom, [0.4, 1.5, 3.5, 6.5, 10.5, 16], larg, h - 60);
+            ctx.restore();
+            ctx.strokeStyle = '#dfe5ec'; ctx.lineWidth = 1;
+            ctx.strokeRect(offx, 30, larg, h - 60);
+            texto(ctx, titulo, offx + 12, 22, cor, 'bold 14px Arial');
+            // funcoes de mapeamento em coordenadas absolutas do canvas
+            return { X: (x) => offx + m.px(x), Y: (y) => 30 + m.py(y) };
+        };
+
+        // --- esquerda: steepest descent (ziguezague) ---
+        const p1 = painel(20, meio - 40, 'Descida Mais Rápida — ziguezague', cores.verm);
+        let x = -2.8, y = 0.85;
+        const trajA = [[x,y]];
+        for (let k = 0; k < 40; k++) {
+            const gx = 2*x, gy = 36*y;
+            // passo tipico de line search exato nessa quadratica: alterna direcao
+            const num = gx*gx + gy*gy;
+            const den = 2*gx*gx + 36*gy*gy;
+            const al = den > 1e-12 ? num/den : 0;
+            x -= al*gx; y -= al*gy;
+            trajA.push([x,y]);
+        }
+        const nA = Math.max(1, Math.floor(tt * (trajA.length - 1)));
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i <= nA; i++) {
+            const X = p1.X(trajA[i][0]), Y = p1.Y(trajA[i][1]);
+            i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+        }
+        ctx.stroke();
+        ponto(ctx, p1.X(trajA[0][0]), p1.Y(trajA[0][1]), cores.azul, 5);
+        ponto(ctx, p1.X(trajA[nA][0]), p1.Y(trajA[nA][1]), cores.verm, 6);
+        rotulo(ctx, nA + ' iterações', 32, h - 14, cores.verm, 'bold 13px Arial');
+
+        // --- direita: quase-Newton (BFGS) ---
+        const p2 = painel(meio + 20, meio - 40, 'Quase-Newton (BFGS) — usa curvatura', cores.verde);
+        // com a Hessiana exata dessa quadratica, 1 passo resolve; mostramos 2-3
+        const trajB = [[-2.8, 0.85], [-0.95, 0.28], [-0.12, 0.035], [0, 0]];
+        const nB = Math.max(1, Math.floor(tt * (trajB.length - 1)));
+        ctx.strokeStyle = cores.verde; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let i = 0; i <= nB; i++) {
+            const X = p2.X(trajB[i][0]), Y = p2.Y(trajB[i][1]);
+            i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+        }
+        ctx.stroke();
+        for (let i = 0; i <= nB; i++) ponto(ctx, p2.X(trajB[i][0]), p2.Y(trajB[i][1]), cores.verde, 4);
+        ponto(ctx, p2.X(trajB[0][0]), p2.Y(trajB[0][1]), cores.azul, 5);
+        rotulo(ctx, nB + ' iterações', meio + 32, h - 14, cores.verde, 'bold 13px Arial');
+
+        // marca do minimo nos dois paineis
+        [p1, p2].forEach(p => {
+            ctx.strokeStyle = '#222'; ctx.lineWidth = 1.6;
+            const X = p.X(0), Y = p.Y(0);
+            ctx.beginPath(); ctx.moveTo(X-5,Y-5); ctx.lineTo(X+5,Y+5);
+            ctx.moveTo(X+5,Y-5); ctx.lineTo(X-5,Y+5); ctx.stroke();
+        });
+    });
+
+    /* =======================================================================
+       FIGURA 4 — Slide 7: interior-point, barreira e caminho central
+       ======================================================================= */
+    registrar('barrier', 'cvBarrier', 3200, function (t) {
+        const a = ANIM.barrier, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+
+        grade(ctx, w, h, 40);
+
+        // fronteira da restricao: uma reta inclinada; viavel = abaixo dela.
+        // Coordenadas relativas ao canvas para o desenho acompanhar o tamanho.
+        const fr = { x1: w*0.09, y1: h*0.33, x2: w*0.95, y2: h*0.82 };
+        const yFront = (x) => fr.y1 + (x - fr.x1) * (fr.y2 - fr.y1) / (fr.x2 - fr.x1);
+
+        // regiao inviavel (acima da reta) hachurada
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(w, 0);
+        ctx.lineTo(w, yFront(w)); ctx.lineTo(0, yFront(0));
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(231,76,60,0.07)'; ctx.fill();
+        ctx.clip();
+        ctx.strokeStyle = 'rgba(231,76,60,0.25)'; ctx.lineWidth = 1;
+        for (let i = -h; i < w; i += 12) {
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + h, h); ctx.stroke();
+        }
+        ctx.restore();
+
+        // a fronteira
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(fr.x1, fr.y1); ctx.lineTo(fr.x2, fr.y2); ctx.stroke();
+        rotulo(ctx, 'c(x) = 0 (fronteira)', w*0.50, yFront(w*0.50) - 8, cores.verm, 'bold 12px Arial');
+        rotulo(ctx, 'c(x) > 0 : inviável', w*0.11, h*0.14, '#c0392b', '12px Arial');
+
+        // curvas de nivel de f, cujo otimo irrestrito esta ACIMA da fronteira
+        const ot = { x: w*0.55, y: h*0.34 };
+        ctx.strokeStyle = '#dbe3ec'; ctx.lineWidth = 1.1;
+        for (let r = 1; r <= 8; r++) {
+            ctx.beginPath(); ctx.ellipse(ot.x, ot.y, r*26, r*22, 0, 0, Math.PI*2); ctx.stroke();
+        }
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(ot.x-6, ot.y-6); ctx.lineTo(ot.x+6, ot.y+6);
+        ctx.moveTo(ot.x+6, ot.y-6); ctx.lineTo(ot.x-6, ot.y+6); ctx.stroke();
+        rotulo(ctx, 'mín. irrestrito (inviável)', ot.x - 60, ot.y - 16, cores.cinza, '11px Arial');
+
+        // solucao restrita: ponto sobre a fronteira, mais proximo do otimo
+        const solX = w*0.55;
+        const sol = { x: solX, y: yFront(solX) };
+
+        // caminho central: pontos para mu decrescente, aproximando da fronteira
+        const mus = [0.60, 0.40, 0.25, 0.14, 0.07, 0.03, 0.01, 0.0];
+        const caminho = mus.map(mu => ({
+            x: sol.x + w*0.034*mu,
+            y: sol.y + h*0.40*mu                     // quanto maior mu, mais longe da borda
+        }));
+
+        // rastro do caminho central
+        const n = Math.max(1, Math.floor(tt * (caminho.length - 1)));
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5; ctx.setLineDash([5,4]);
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) i ? ctx.lineTo(caminho[i].x, caminho[i].y) : ctx.moveTo(caminho[i].x, caminho[i].y);
+        ctx.stroke(); ctx.setLineDash([]);
+        for (let i = 0; i <= n; i++) ponto(ctx, caminho[i].x, caminho[i].y, cores.claro, 3.5);
+
+        // ponto atual + valor de mu
+        const at = caminho[n];
+        ponto(ctx, at.x, at.y, cores.azul, 7);
+        rotulo(ctx, 'μ = ' + mus[n].toFixed(2), at.x + 12, at.y + 4, cores.azul, 'bold 13px Arial');
+
+        // "parede" de barreira: intensidade cresce quando mu diminui
+        const alturaMur = h*0.18 * (1 - mus[n]/0.6);
+        ctx.save();
+        ctx.globalAlpha = 0.10 + 0.25*(1 - mus[n]/0.6);
+        ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2;
+        for (let x = w*0.13; x <= w*0.92; x += 20) {
+            const y = yFront(x);
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + alturaMur); ctx.stroke();
+        }
+        ctx.restore();
+
+        if (t > 0.9) {
+            ponto(ctx, sol.x, sol.y, cores.verde, 7);
+            rotulo(ctx, 'x*  (μ → 0)', sol.x + 14, sol.y - 8, '#1e7e44', 'bold 13px Arial');
+        }
+        rotulo(ctx, 'caminho central', w*0.04, h - 26, cores.azul, 'bold 12px Arial');
+        rotulo(ctx, 'nunca sai da zona viável', w*0.04, h - 10, '#666', '11px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 4b — Slide 7b: barreira em 1D, construida por etapas
+       f(x) = (x-3)^2  sujeito a  x <= 2
+       etapa 1: so f  ·  etapa 2: + barreira  ·  etapa 3: soma B
+       ======================================================================= */
+    let etapaBarreira = 3;          // etapa exibida (3 = figura completa)
+
+    registrar('barrier1d', 'cvBarrier1D', 1400, function (t) {
+        const a = ANIM.barrier1d, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const et = etapaBarreira;
+        const mu = 1.0;
+
+        const f  = (x) => (x-3)*(x-3);
+        const bar= (x) => -mu*Math.log(2-x);          // so vale para x < 2
+        const B  = (x) => f(x) + bar(x);
+
+        const dx0 = -0.3, dx1 = 3.6, vy0 = -0.5, vy1 = 7.5;
+        const px = (x) => 52 + (x-dx0)/(dx1-dx0)*(w-80);
+        const py = (v) => h - 40 - (v-vy0)/(vy1-vy0)*(h-70);
+
+        grade(ctx, w, h, 40);
+
+        // regiao proibida x > 2
+        ctx.fillStyle = 'rgba(231,76,60,0.07)';
+        ctx.fillRect(px(2), 8, px(dx1)-px(2), h-48);
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(px(2), 8); ctx.lineTo(px(2), h-40); ctx.stroke();
+        rotulo(ctx, 'x = 2  (fronteira)', px(2)+6, 22, cores.verm, 'bold 12px Arial');
+        rotulo(ctx, 'proibido', px(2)+6, 40, '#c0392b', '11px Arial');
+
+        // eixos
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(44, h-40); ctx.lineTo(w-18, h-40); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(44, 12); ctx.lineTo(44, h-40); ctx.stroke();
+        texto(ctx, 'x', w-16, h-26, '#666', 'italic 13px Arial');
+
+        const curva = (fn, cor, lw, dash, lim) => {
+            ctx.strokeStyle = cor; ctx.lineWidth = lw;
+            if (dash) ctx.setLineDash(dash);
+            ctx.beginPath();
+            let ini = true;
+            for (let x = dx0; x <= (lim !== undefined ? lim : dx1); x += 0.005) {
+                const v = fn(x);
+                if (!isFinite(v) || v < vy0 - 1 || v > vy1 + 3) { ini = true; continue; }
+                const X = px(x), Y = py(v);
+                ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+            }
+            ctx.stroke(); ctx.setLineDash([]);
+        };
+
+        // --- etapa 1: apenas f(x) ---
+        curva(f, cores.azul, 2.8);
+        rotulo(ctx, 'f(x) = (x−3)²', px(2.55), py(f(2.75))-10, cores.azul, 'bold 13px Arial');
+
+        // minimo irrestrito em x=3 (fora da regiao viavel)
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(px(3)-6, py(0)-6); ctx.lineTo(px(3)+6, py(0)+6);
+        ctx.moveTo(px(3)+6, py(0)-6); ctx.lineTo(px(3)-6, py(0)+6); ctx.stroke();
+        rotulo(ctx, 'mín. de f: x=3', px(3)-30, py(0)+24, cores.cinza, '11px Arial');
+        rotulo(ctx, 'INVIÁVEL', px(3)-16, py(0)+40, cores.verm, 'bold 11px Arial');
+
+        // --- etapa 2: a barreira sozinha ---
+        if (et >= 2) {
+            const tt = (et === 2) ? suave(t) : 1;      // anima so quando entra
+            curva((x) => bar(x)*tt, cores.ouro, 2.4, [7,4], 1.995);
+            rotulo(ctx, '−μ ln(2−x)', px(0.15), py(bar(1.1))+4, '#b9770e', 'bold 13px Arial');
+            rotulo(ctx, 'sobe ao infinito', px(1.30), py(5.4), '#b9770e', '11px Arial');
+            rotulo(ctx, 'junto à fronteira', px(1.30), py(5.0), '#b9770e', '11px Arial');
+        }
+
+        // --- etapa 3: a soma B = f + barreira ---
+        if (et >= 3) {
+            const tt = suave(t);
+            // desenha B progressivamente da esquerda para a direita
+            ctx.strokeStyle = cores.verde; ctx.lineWidth = 3;
+            ctx.beginPath();
+            let ini = true;
+            const xLim = dx0 + tt*(1.995 - dx0);
+            for (let x = dx0; x <= xLim; x += 0.005) {
+                const v = B(x);
+                if (!isFinite(v) || v > vy1 + 3) { ini = true; continue; }
+                const X = px(x), Y = py(v);
+                ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+            }
+            ctx.stroke();
+            rotulo(ctx, 'B(x,μ) = f + barreira', px(0.05), py(6.6), '#1e7e44', 'bold 13px Arial');
+
+            // minimo de B para mu=1: x = 1.634
+            if (tt > 0.92) {
+                const xm = 1.634;
+                ponto(ctx, px(xm), py(B(xm)), cores.verde, 7);
+                ctx.strokeStyle = '#1e7e44'; ctx.lineWidth = 1.4; ctx.setLineDash([4,3]);
+                ctx.beginPath(); ctx.moveTo(px(xm), py(B(xm))); ctx.lineTo(px(xm), h-40); ctx.stroke();
+                ctx.setLineDash([]);
+                rotulo(ctx, 'mín. de B: x ≈ 1,63', px(xm)-52, py(B(xm))-14, '#1e7e44', 'bold 12px Arial');
+                rotulo(ctx, 'dentro da zona viável ✓', px(xm)-56, h-22, '#1e7e44', 'bold 11px Arial');
+            }
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 4c — Slide 7c: familia de curvas B(x,mu) para mu decrescente
+       ======================================================================= */
+    // Marca na tabela do slide 9 a linha correspondente ao mu em execucao.
+    // idx = -1 limpa; idx = mus.length marca a linha final (mu -> 0).
+    function marcarLinhaMu(idx) {
+        document.querySelectorAll('table.tab-mu tr[data-mu]').forEach(tr => {
+            const i = parseInt(tr.dataset.mu, 10);
+            tr.classList.toggle('ativa', i === idx);
+            tr.classList.toggle('futura', idx >= 0 && i > idx);
+        });
+    }
+
+    registrar('barrierMu', 'cvBarrierMu', 7000, function (t) {
+        const a = ANIM.barrierMu, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        const f = (x) => (x-3)*(x-3);
+        const B = (x, mu) => f(x) - mu*Math.log(2-x);
+        // minimo analitico de B: raiz de 2x^2-10x+12-mu=0 menor que 2
+        const xEstrela = (mu) => (10 - Math.sqrt(100 - 8*(12-mu)))/4;
+
+        const mus = [4, 1, 0.25, 0.05, 0.01];
+        const dx0 = 0.2, dx1 = 2.45, vy0 = 0.2, vy1 = 6.5;
+        const px = (x) => 46 + (x-dx0)/(dx1-dx0)*(w-70);
+        const py = (v) => h - 38 - (v-vy0)/(vy1-vy0)*(h-64);
+
+        grade(ctx, w, h, 40);
+
+        // regiao proibida
+        ctx.fillStyle = 'rgba(231,76,60,0.07)';
+        ctx.fillRect(px(2), 8, px(dx1)-px(2), h-46);
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(px(2), 8); ctx.lineTo(px(2), h-38); ctx.stroke();
+        rotulo(ctx, 'x = 2', px(2)+6, 20, cores.verm, 'bold 12px Arial');
+
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(40, h-38); ctx.lineTo(w-16, h-38); ctx.stroke();
+
+        // f(x) de referencia, tracejada
+        ctx.strokeStyle = '#9fb0c4'; ctx.lineWidth = 1.6; ctx.setLineDash([5,4]);
+        ctx.beginPath();
+        for (let x = dx0; x <= dx1; x += 0.01) {
+            const X = px(x), Y = py(f(x));
+            x === dx0 ? ctx.moveTo(X,Y) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+        rotulo(ctx, 'f(x)', px(2.1), py(f(2.15)), '#7f8c9b', 'bold 12px Arial');
+
+        // quantas curvas ja apareceram. Progresso LINEAR para que cada mu
+        // fique o mesmo tempo em cena e a marcacao na tabela acompanhe.
+        const prog = t * mus.length;
+        const tons = ['#f39c12', '#e08e0b', '#c98a1e', '#7fb069', '#27ae60'];
+
+        // destaca na tabela a linha do mu atual (ultima linha quando termina)
+        marcarLinhaMu(t >= 1 ? mus.length : Math.min(mus.length - 1, Math.floor(prog)));
+
+        mus.forEach((mu, i) => {
+            if (prog < i) return;
+            const alpha = Math.min(1, prog - i);
+            ctx.save();
+            ctx.globalAlpha = 0.35 + 0.65*alpha;
+            ctx.strokeStyle = tons[i]; ctx.lineWidth = i === mus.length-1 ? 3 : 2;
+            ctx.beginPath();
+            let ini = true;
+            for (let x = dx0; x <= 1.999; x += 0.004) {
+                const v = B(x, mu);
+                if (!isFinite(v) || v > vy1 + 2) { ini = true; continue; }
+                const X = px(x), Y = py(v);
+                ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // marca o minimo daquela curva
+            const xm = xEstrela(mu);
+            if (alpha > 0.6 && xm > dx0 && xm < 2) {
+                ponto(ctx, px(xm), py(B(xm, mu)), tons[i], 5);
+                if (i === 0 || i === mus.length-1) {
+                    rotulo(ctx, 'μ='+mu, px(xm)-14, py(B(xm,mu))-12, tons[i], 'bold 12px Arial');
+                }
+            }
+        });
+
+        // trilha dos minimos: caminho central
+        if (prog > 1) {
+            ctx.strokeStyle = cores.azul; ctx.lineWidth = 2; ctx.setLineDash([4,3]);
+            ctx.beginPath();
+            let ini = true;
+            mus.forEach((mu, i) => {
+                if (prog < i + 0.6) return;
+                const xm = xEstrela(mu);
+                const X = px(xm), Y = py(B(xm, mu));
+                ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+            });
+            ctx.stroke(); ctx.setLineDash([]);
+        }
+
+        // ponto otimo final x*=2
+        if (t > 0.93) {
+            ponto(ctx, px(2), py(1), cores.verde, 7);
+            rotulo(ctx, 'x* = 2', px(2)-58, py(1)-10, '#1e7e44', 'bold 13px Arial');
+            rotulo(ctx, 'f = 1', px(2)-52, py(1)+8, '#1e7e44', 'bold 12px Arial');
+        }
+        rotulo(ctx, 'μ diminui → o mínimo desliza até a fronteira', 52, h-12, cores.azul, 'bold 12px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 5 — Slide 8: SQP, parabola local a cada iteracao
+       ======================================================================= */
+    registrar('sqp', 'cvSqp', 3600, function (t) {
+        const a = ANIM.sqp, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        // funcao 1D nao trivial
+        const f  = (x) => 0.06*Math.pow(x-4.2, 4) - 0.5*Math.pow(x-4.2, 2) + 0.25*x + 3;
+        const df = (x) => 0.24*Math.pow(x-4.2, 3) - 1.0*(x-4.2) + 0.25;
+        const d2f= (x) => 0.72*Math.pow(x-4.2, 2) - 1.0;
+
+        const dx0 = 0.6, dx1 = 8.2;
+        const px = (x) => 60 + (x - dx0)/(dx1 - dx0) * (w - 100);
+        const py = (v) => h - 45 - (v - 0.5) / 5.5 * (h - 90);
+
+        grade(ctx, w, h, 45);
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(50, h-35); ctx.lineTo(w-25, h-35); ctx.stroke();
+
+        // curva verdadeira f(x)
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let x = dx0; x <= dx1; x += 0.02) {
+            const X = px(x), Y = py(f(x));
+            x === dx0 ? ctx.moveTo(X,Y) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        rotulo(ctx, 'f(x) verdadeira', px(6.9), py(f(7.2)) - 26, cores.azul, 'bold 13px Arial');
+
+        // sequencia de iterados de Newton
+        const iter = [1.3];
+        for (let k = 0; k < 5; k++) {
+            const x = iter[k];
+            const cur = Math.max(0.25, d2f(x));       // salvaguarda: curvatura positiva
+            iter.push(x - df(x)/cur);
+        }
+
+        const nSteps = iter.length - 1;
+        const prog = suave(t) * nSteps;
+        const k = Math.min(nSteps - 1, Math.floor(prog));
+        const frac = prog - k;
+
+        // iterados ja visitados (cinza)
+        for (let i = 0; i <= k; i++) ponto(ctx, px(iter[i]), py(f(iter[i])), '#aab4c2', 4);
+
+        // parabola-modelo no iterado atual
+        const xk = iter[k];
+        const cur = Math.max(0.25, d2f(xk));
+        const q = (x) => f(xk) + df(xk)*(x - xk) + 0.5*cur*Math.pow(x - xk, 2);
+
+        ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2.5; ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        let inic = true;
+        for (let x = xk - 3.2; x <= xk + 3.2; x += 0.02) {
+            if (x < dx0 || x > dx1) continue;
+            const X = px(x), Y = py(q(x));
+            inic ? (ctx.moveTo(X,Y), inic = false) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+
+        // ponto atual e minimo da parabola
+        ponto(ctx, px(xk), py(f(xk)), cores.verm, 7);
+        rotulo(ctx, 'x' + k, px(xk) - 6, py(f(xk)) - 14, cores.verm, 'bold 13px Arial');
+
+        const xNovo = iter[k+1];
+        const xInterp = xk + frac*(xNovo - xk);
+        ponto(ctx, px(xNovo), py(q(xNovo)), cores.ouro, 6);
+        rotulo(ctx, 'mín. da parábola', px(xNovo) + 10, py(q(xNovo)) + 4, '#b9770e', 'bold 12px Arial');
+
+        // seta do passo
+        seta(ctx, px(xk), py(f(xk)) + 22, px(xInterp), py(f(xk)) + 22, cores.roxo, 2);
+        rotulo(ctx, 'passo d', (px(xk)+px(xInterp))/2 - 22, py(f(xk)) + 40, cores.roxo, 'bold 12px Arial');
+
+        rotulo(ctx, 'Iteração ' + (k+1) + ' de ' + nSteps, 62, 26, '#444', 'bold 14px Arial');
+        rotulo(ctx, 'laranja = modelo quadrático local (o subproblema que o SQP resolve)',
+               62, 46, '#777', '12px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 5b — SQP passo a passo, sincronizado com a tabela
+       f(x) = x^4/4 - x^2 + x + 3, partindo de x0 = 2,2
+       ======================================================================= */
+    function marcarLinha(seletor, idx, total) {
+        document.querySelectorAll(seletor).forEach(tr => {
+            const i = parseInt(tr.dataset.it, 10);
+            tr.classList.toggle('ativa', i === idx);
+            tr.classList.toggle('futura', idx >= 0 && idx < total && i > idx);
+        });
+    }
+
+    registrar('sqpPasso', 'cvSqpPasso', 7000, function (t) {
+        const a = ANIM.sqpPasso, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        const f   = (x) => x*x*x*x/4 - x*x + x + 3;
+        const df  = (x) => x*x*x - 2*x + 1;
+        const d2f = (x) => 3*x*x - 2;
+
+        // iterados de Newton (batem com a tabela do slide)
+        const xs = [2.2];
+        for (let k = 0; k < 5; k++) {
+            const x = xs[k];
+            xs.push(x - df(x)/d2f(x));
+        }
+
+        const dx0 = 0.55, dx1 = 2.55, vy0 = 3.05, vy1 = 6.9;
+        const px = (x) => 46 + (x-dx0)/(dx1-dx0)*(w-70);
+        const py = (v) => h - 34 - (v-vy0)/(vy1-vy0)*(h-58);
+
+        grade(ctx, w, h, 40);
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(40, h-34); ctx.lineTo(w-16, h-34); ctx.stroke();
+
+        // curva verdadeira
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.8;
+        ctx.beginPath();
+        for (let x = dx0; x <= dx1; x += 0.005) {
+            const X = px(x), Y = py(f(x));
+            x === dx0 ? ctx.moveTo(X,Y) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        rotulo(ctx, 'f(x)', px(2.35), py(f(2.42)), cores.azul, 'bold 13px Arial');
+
+        // qual iteracao esta em cena (progresso linear)
+        const nIt = 5;
+        const prog = t * nIt;
+        const k = Math.min(nIt - 1, Math.floor(prog));
+        const frac = prog - k;
+
+        marcarLinha('table.tab-sqp tr[data-it]', t >= 1 ? nIt : k, nIt);
+
+        // iterados ja percorridos
+        for (let i = 0; i <= k; i++) ponto(ctx, px(xs[i]), py(f(xs[i])), '#aab4c2', 4);
+
+        const xk = xs[k], g = df(xk), H = d2f(xk);
+        const q = (x) => f(xk) + g*(x-xk) + 0.5*H*(x-xk)*(x-xk);
+
+        // parabola-modelo
+        ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2.5; ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        let ini = true;
+        for (let x = dx0; x <= dx1; x += 0.005) {
+            const v = q(x);
+            if (v < vy0 - 0.6 || v > vy1 + 0.6) { ini = true; continue; }
+            const X = px(x), Y = py(v);
+            ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+        rotulo(ctx, 'parábola q(d)', px(dx0)+8, py(vy1-0.25), '#b9770e', 'bold 12px Arial');
+
+        // ponto atual e proximo
+        ponto(ctx, px(xk), py(f(xk)), cores.verm, 7);
+        rotulo(ctx, 'x'+k, px(xk)-6, py(f(xk))-14, cores.verm, 'bold 13px Arial');
+
+        const xn = xs[k+1];
+        ponto(ctx, px(xn), py(q(xn)), cores.ouro, 6);
+        rotulo(ctx, 'mín. da parábola', px(xn)-30, py(q(xn))+20, '#b9770e', 'bold 11px Arial');
+
+        // seta do passo, avancando com frac
+        const xInt = xk + frac*(xn - xk);
+        seta(ctx, px(xk), py(f(xk))+20, px(xInt), py(f(xk))+20, cores.roxo, 2);
+        rotulo(ctx, 'd'+k, (px(xk)+px(xInt))/2 - 6, py(f(xk))+38, cores.roxo, 'bold 12px Arial');
+
+        // marca do minimo verdadeiro x*=1
+        ctx.strokeStyle = '#1e7e44'; ctx.lineWidth = 1.5; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(px(1), py(f(1))); ctx.lineTo(px(1), h-34); ctx.stroke();
+        ctx.setLineDash([]);
+        rotulo(ctx, 'x* = 1', px(1)-16, h-16, '#1e7e44', 'bold 11px Arial');
+
+        rotulo(ctx, 'iteração ' + (k+1) + ' de ' + nIt, 52, 22, '#444', 'bold 13px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 6b — Trust region passo a passo, com rho e passo rejeitado
+       ======================================================================= */
+    registrar('trustPasso', 'cvTrustPasso', 7500, function (t) {
+        const a = ANIM.trustPasso, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        const f = (x) => x*x*x*x/4 - x*x + x + 3;
+
+        // sequencia verificada numericamente (bate com a tabela)
+        const it = [
+            { x: 0.2,  D: 1.2, p: -1.2, rho: 0.92, rej: false },
+            { x: -1.0, D: 2.4, p: -2.0, rho: -5.0, rej: true  },
+            { x: -1.0, D: 0.8, p: -0.8, rho: 0.52, rej: false },
+            { x: -1.8, D: 0.8, p:  0.16,rho: 1.07, rej: false },
+            { x: -1.64,D: 1.6, p:  0.02,rho: 1.01, rej: false }
+        ];
+
+        const dx0 = -3.15, dx1 = 1.15, vy0 = 0.15, vy1 = 12.2;
+        const px = (x) => 42 + (x-dx0)/(dx1-dx0)*(w-62);
+        const py = (v) => h - 32 - (v-vy0)/(vy1-vy0)*(h-56);
+
+        grade(ctx, w, h, 40);
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(36, h-32); ctx.lineTo(w-14, h-32); ctx.stroke();
+
+        // curva f
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        for (let x = dx0; x <= dx1; x += 0.005) {
+            const v = f(x);
+            if (v > vy1) continue;
+            const X = px(x), Y = py(v);
+            ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+
+        const nIt = it.length;
+        const prog = t * nIt;
+        const k = Math.min(nIt - 1, Math.floor(prog));
+        // a tabela do trust tem exatamente nIt linhas (0..nIt-1): no fim
+        // mantem a ultima marcada, em vez de apontar para uma linha inexistente
+        marcarLinha('table.tab-trust tr[data-it]', k, nIt);
+
+        const at = it[k];
+        const xk = at.x, xn = xk + at.p;
+
+        // faixa da regiao de confianca [xk-D, xk+D]
+        const x1 = Math.max(dx0, xk - at.D), x2 = Math.min(dx1, xk + at.D);
+        ctx.fillStyle = at.rej ? 'rgba(231,76,60,0.12)' : 'rgba(39,174,96,0.12)';
+        ctx.fillRect(px(x1), 26, px(x2)-px(x1), h - 58);
+        ctx.strokeStyle = at.rej ? cores.verm : cores.verde;
+        ctx.lineWidth = 2; ctx.setLineDash([5,4]);
+        ctx.strokeRect(px(x1), 26, px(x2)-px(x1), h - 58);
+        ctx.setLineDash([]);
+        rotulo(ctx, 'Δ = ' + at.D.toFixed(1), px(xk)-18, 20, at.rej ? cores.verm : '#1e7e44', 'bold 12px Arial');
+
+        // ponto atual e ponto tentado
+        ponto(ctx, px(xk), py(f(xk)), cores.azul, 7);
+        rotulo(ctx, 'x'+k, px(xk)-6, py(f(xk))-14, cores.azul, 'bold 13px Arial');
+
+        if (xn >= dx0 && xn <= dx1) {
+            const corAlvo = at.rej ? cores.verm : cores.verde;
+            ponto(ctx, px(xn), py(f(xn)), corAlvo, 6);
+            seta(ctx, px(xk), py(f(xk))-16, px(xn), py(f(xn))-16, corAlvo, 2);
+            if (at.rej) {
+                // X grande sobre o ponto rejeitado
+                ctx.strokeStyle = cores.verm; ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(px(xn)-9, py(f(xn))-9); ctx.lineTo(px(xn)+9, py(f(xn))+9);
+                ctx.moveTo(px(xn)+9, py(f(xn))-9); ctx.lineTo(px(xn)-9, py(f(xn))+9);
+                ctx.stroke();
+                rotulo(ctx, 'f PIOROU → rejeita', px(xn)-30, py(f(xn))+28, cores.verm, 'bold 12px Arial');
+            }
+        }
+
+        // rho em destaque
+        const corRho = at.rho < 0 ? cores.verm : (at.rho > 0.75 ? cores.verde : '#b9770e');
+        rotulo(ctx, 'ρ = ' + at.rho.toFixed(2), w-104, 20, corRho, 'bold 14px Arial');
+
+        // minimo verdadeiro
+        ctx.strokeStyle = '#1e7e44'; ctx.lineWidth = 1.4; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(px(-1.618), py(f(-1.618))); ctx.lineTo(px(-1.618), h-32); ctx.stroke();
+        ctx.setLineDash([]);
+        rotulo(ctx, 'x* ≈ −1,62', px(-1.618)-28, h-14, '#1e7e44', 'bold 11px Arial');
+
+        rotulo(ctx, 'iteração ' + (k+1) + '/' + nIt, 48, h-14, '#666', '12px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 6 — Slide 9: regiao de confianca crescendo e encolhendo
+       ======================================================================= */
+    registrar('trust', 'cvTrust', 4200, function (t) {
+        const a = ANIM.trust, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        const f = (x, y) => 0.5*x*x + 2.0*y*y + 0.9*Math.sin(1.6*x)*Math.cos(1.3*y);
+        const dom = { x0: -4.2, x1: 4.2, y0: -3.2, y1: 3.2 };
+
+        const m = curvasNivel(ctx, f, dom, [0.3, 1, 2.2, 4, 6.5, 10, 14], w, h);
+        const X = m.px, Y = m.py;
+
+        // sequencia de passos: raio, aceito/rejeitado
+        const passos = [
+            { p:[-2.9, 1.9],  d:0.95, ok:true  },
+            { p:[-2.1, 1.4],  d:1.35, ok:true  },
+            { p:[-0.9, 0.8],  d:1.95, ok:false },   // modelo errou: encolhe
+            { p:[-0.9, 0.8],  d:0.95, ok:true  },
+            { p:[-0.15, 0.25],d:1.25, ok:true  },
+            { p:[0.0, 0.0],   d:0.55, ok:true  }
+        ];
+
+        const nS = passos.length - 1;
+        const prog = suave(t) * nS;
+        const k = Math.min(nS, Math.floor(prog));
+        const frac = prog - Math.floor(prog);
+
+        // rastro dos pontos ja visitados
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i <= k; i++) {
+            const px_ = X(passos[i].p[0]), py_ = Y(passos[i].p[1]);
+            i ? ctx.lineTo(px_, py_) : ctx.moveTo(px_, py_);
+        }
+        ctx.stroke();
+        for (let i = 0; i < k; i++) ponto(ctx, X(passos[i].p[0]), Y(passos[i].p[1]), '#9fb0c4', 4);
+
+        const at = passos[k];
+        const cx = X(at.p[0]), cy = Y(at.p[1]);
+        // raio interpolado com o passo seguinte (efeito de crescer/encolher)
+        const prox = passos[Math.min(nS, k+1)];
+        const dInt = at.d + frac*(prox.d - at.d);
+        const rPix = dInt / (dom.x1 - dom.x0) * w;
+
+        // circulo da regiao de confianca
+        ctx.beginPath(); ctx.arc(cx, cy, rPix, 0, Math.PI*2);
+        ctx.fillStyle = at.ok ? 'rgba(39,174,96,0.12)' : 'rgba(231,76,60,0.14)';
+        ctx.fill();
+        ctx.strokeStyle = at.ok ? cores.verde : cores.verm;
+        ctx.lineWidth = 2.5; ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
+
+        // raio anotado
+        seta(ctx, cx, cy, cx + rPix, cy, at.ok ? '#1e7e44' : '#c0392b', 1.8);
+        rotulo(ctx, 'Δ', cx + rPix/2 - 4, cy - 6, at.ok ? '#1e7e44' : '#c0392b', 'bold 13px Arial');
+
+        ponto(ctx, cx, cy, cores.azul, 7);
+
+        // status
+        const msg = at.ok ? '✔ modelo acertou → aumenta Δ' : '✘ modelo errou → reduz Δ e rejeita o passo';
+        rotulo(ctx, msg, 14, 24, at.ok ? '#1e7e44' : '#c0392b', 'bold 13px Arial');
+        rotulo(ctx, 'iteração ' + (k+1) + '/' + (nS+1), 14, h - 12, '#666', '12px Arial');
+
+        // marca do minimo
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(X(0)-5, Y(0)-5); ctx.lineTo(X(0)+5, Y(0)+5);
+        ctx.moveTo(X(0)+5, Y(0)-5); ctx.lineTo(X(0)-5, Y(0)+5); ctx.stroke();
+    });
+
+    /* =======================================================================
+       FIGURA 7 — Slide 13: KKT / restricao ativa e gradientes paralelos
+       ======================================================================= */
+    registrar('kkt', 'cvKkt', 2800, function (t) {
+        const a = ANIM.kkt, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+
+        grade(ctx, w, h, 40);
+
+        const centro = { x: 200, y: 205 };   // centro do disco viavel
+        const R = 115;                        // raio do disco
+        const ot  = { x: 360, y: 105 };      // otimo irrestrito (fora do disco)
+
+        // disco viavel
+        ctx.beginPath(); ctx.arc(centro.x, centro.y, R, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(46,111,196,0.07)'; ctx.fill();
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5; ctx.stroke();
+        rotulo(ctx, 'c(x) ≤ 0', centro.x - 130, centro.y + 100, cores.azul, 'bold 12px Arial');
+
+        // curvas de nivel de f (circulos em torno do otimo irrestrito)
+        ctx.strokeStyle = '#dbe3ec'; ctx.lineWidth = 1.1;
+        for (let r = 1; r <= 9; r++) {
+            ctx.beginPath(); ctx.arc(ot.x, ot.y, r*26, 0, Math.PI*2); ctx.stroke();
+        }
+
+        // otimo irrestrito
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(ot.x-7, ot.y-7); ctx.lineTo(ot.x+7, ot.y+7);
+        ctx.moveTo(ot.x+7, ot.y-7); ctx.lineTo(ot.x-7, ot.y+7); ctx.stroke();
+        rotulo(ctx, 'mín. sem restrição', ot.x - 66, ot.y - 16, cores.cinza, '11px Arial');
+
+        // ponto otimo restrito: sobre a borda, na direcao centro -> otimo
+        const ang = Math.atan2(ot.y - centro.y, ot.x - centro.x);
+        const sol = { x: centro.x + R*Math.cos(ang), y: centro.y + R*Math.sin(ang) };
+
+        // trajetoria animada: do interior ate a borda
+        const ini = { x: centro.x - 60, y: centro.y + 55 };
+        const cur = { x: ini.x + tt*(sol.x - ini.x), y: ini.y + tt*(sol.y - ini.y) };
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2; ctx.setLineDash([5,4]);
+        ctx.beginPath(); ctx.moveTo(ini.x, ini.y); ctx.lineTo(cur.x, cur.y); ctx.stroke();
+        ctx.setLineDash([]);
+        ponto(ctx, ini.x, ini.y, cores.claro, 5);
+        rotulo(ctx, 'x₀', ini.x - 20, ini.y + 4, cores.claro, 'bold 12px Arial');
+
+        // curva de nivel tangente (aparece no fim)
+        if (t > 0.75) {
+            const rTang = Math.hypot(sol.x - ot.x, sol.y - ot.y);
+            ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2; ctx.setLineDash([5,4]);
+            ctx.beginPath(); ctx.arc(ot.x, ot.y, rTang, 0, Math.PI*2); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        ponto(ctx, cur.x, cur.y, cores.verm, 7);
+
+        // gradientes paralelos no ponto de solucao
+        if (t > 0.88) {
+            const L = 62;
+            // -grad f aponta para o otimo irrestrito
+            const uf = { x: (ot.x - sol.x)/Math.hypot(ot.x-sol.x, ot.y-sol.y),
+                         y: (ot.y - sol.y)/Math.hypot(ot.x-sol.x, ot.y-sol.y) };
+            seta(ctx, sol.x, sol.y, sol.x + L*uf.x, sol.y + L*uf.y, cores.verm, 2.5);
+            rotulo(ctx, '−∇f', sol.x + L*uf.x + 6, sol.y + L*uf.y + 4, cores.verm, 'bold 13px Arial');
+            // grad c aponta para fora do disco — mesma direcao
+            seta(ctx, sol.x, sol.y, sol.x + L*0.75*uf.x, sol.y + L*0.75*uf.y, cores.azul, 2.5);
+            rotulo(ctx, '∇c', sol.x + L*0.42*uf.x - 34, sol.y + L*0.42*uf.y - 10, cores.azul, 'bold 13px Arial');
+
+            rotulo(ctx, 'x*  (restrição ativa)', sol.x - 150, sol.y + 22, '#b03060', 'bold 13px Arial');
+            rotulo(ctx, 'gradientes paralelos → λ > 0', 14, h - 14, '#444', 'italic 12px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 8 — Slide 19: o CUSTO do gradiente por diferencas finitas.
+       Mostra, para uma iteracao, quantas avaliacoes de f sao necessarias:
+       n+1 (sondando cada variavel) contra 1 quando o gradiente e analitico.
+       ======================================================================= */
+    registrar('grad', 'cvGrad', 4200, function (t) {
+        const a = ANIM.grad, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const n = 5;                       // variaveis do exemplo
+        const meio = w/2;
+
+        grade(ctx, w, h, 40);
+
+        // ---- titulos das duas colunas ----
+        rotulo(ctx, 'SEM gradiente analítico', 24, 26, cores.verm, 'bold 14px Arial');
+        rotulo(ctx, '(diferenças finitas)', 24, 44, '#c0392b', '12px Arial');
+        rotulo(ctx, 'COM gradiente analítico', meio + 24, 26, cores.verde, 'bold 14px Arial');
+        rotulo(ctx, "(SpecifyObjectiveGradient)", meio + 24, 44, '#1e7e44', '12px Arial');
+
+        // linha divisoria
+        ctx.strokeStyle = '#dfe5ec'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(meio, 14); ctx.lineTo(meio, h-14); ctx.stroke();
+
+        // desenha uma "caixinha" representando uma avaliacao de f
+        const caixa = (x, y, cor, rotuloTxt, ativa) => {
+            ctx.fillStyle = ativa ? cor : '#eef2f7';
+            ctx.strokeStyle = ativa ? cor : '#d3dbe4';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            if (ctx.roundRect) { ctx.roundRect(x, y, 62, 22, 5); }
+            else { ctx.rect(x, y, 62, 22); }
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = ativa ? '#fff' : '#9aa7b8';
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText(rotuloTxt, x + 7, y + 15);
+        };
+
+        // quantas avaliacoes ja "aconteceram" (esquerda) — progresso linear
+        const passo = t * (n + 1);
+        const feitas = Math.min(n + 1, Math.floor(passo) + 1);
+
+        // ---- lado esquerdo: n+1 avaliacoes ----
+        const x0 = 30, y0 = 58, dy = 26;
+        caixa(x0, y0, cores.azul, 'f(x)', feitas >= 1);
+        rotulo(ctx, '← ponto atual', x0 + 72, y0 + 16, '#666', '11px Arial');
+
+        for (let i = 1; i <= n; i++) {
+            const ativa = feitas >= i + 1;
+            caixa(x0, y0 + i*dy, cores.verm, 'f(x+h e' + i + ')', ativa);
+            if (ativa) {
+                rotulo(ctx, '→ ∂f/∂x' + i, x0 + 72, y0 + i*dy + 16, '#c0392b', 'bold 11px Arial');
+            }
+        }
+
+        // contador do lado esquerdo
+        const yTot = y0 + (n+1)*dy + 6;
+        ctx.fillStyle = 'rgba(231,76,60,0.10)';
+        ctx.fillRect(x0 - 6, yTot - 2, 250, 30);
+        rotulo(ctx, feitas + ' de ' + (n+1) + ' avaliações de f', x0, yTot + 18, cores.verm, 'bold 13px Arial');
+
+        // ---- lado direito: 1 avaliacao ----
+        caixa(meio + 30, y0, cores.verde, 'f(x)', true);
+        rotulo(ctx, '+ ∇f pela fórmula', meio + 102, y0 + 16, '#1e7e44', 'bold 11px Arial');
+        rotulo(ctx, '(custo zero extra)', meio + 102, y0 + 32, '#666', '11px Arial');
+
+        ctx.fillStyle = 'rgba(39,174,96,0.10)';
+        ctx.fillRect(meio + 24, yTot - 2, 250, 30);
+        rotulo(ctx, '1 avaliação de f', meio + 30, yTot + 18, cores.verde, 'bold 13px Arial');
+
+        // ---- comparacao final ----
+        if (t > 0.9) {
+            const yc = h - 10;
+            rotulo(ctx, 'com n = ' + n + ' variáveis → ' + (n+1) + '× mais chamadas, a cada iteração',
+                   28, yc, '#1a2b45', 'bold 13px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 9 — Slide 16: os tres criterios de parada, lado a lado
+       ======================================================================= */
+    registrar('stop', 'cvStop', 1, function () {
+        const a = ANIM.stop, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const larg = w/3;
+
+        const painel = (i, titulo, cor, desenho) => {
+            const ox = i*larg;
+            ctx.strokeStyle = '#e3e8ef'; ctx.lineWidth = 1;
+            ctx.strokeRect(ox + 10, 12, larg - 20, h - 24);
+            rotulo(ctx, titulo, ox + 24, 34, cor, 'bold 13px Arial');
+            ctx.save(); ctx.translate(ox, 0); desenho(); ctx.restore();
+        };
+
+        // 1) Step: passos cada vez menores no eixo x
+        painel(0, 'Step: o passo sumiu', cores.azul, () => {
+            const y = 145;
+            ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(35, y); ctx.lineTo(larg - 25, y); ctx.stroke();
+            let x = 45;
+            let d = 62;
+            for (let k = 0; k < 6; k++) {
+                ponto(ctx, x, y, k < 5 ? cores.claro : cores.azul, 4);
+                if (k < 5) seta(ctx, x, y - 22, x + d, y - 22, cores.roxo, 1.6);
+                x += d; d *= 0.5;
+            }
+            rotulo(ctx, '‖x_{k+1} − x_k‖ < ε', 42, 190, '#444', '12px Arial');
+        });
+
+        // 2) Function: a curva achata
+        painel(1, 'Function: a curva achatou', cores.ouro, () => {
+            const f = (x) => 0.9*Math.exp(-0.55*x) + 0.6;
+            const px = (x) => 40 + x*24;
+            const py = (v) => 175 - v*70;
+            ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let x = 0; x <= 9; x += 0.05) {
+                const X = px(x), Y = py(f(x));
+                x === 0 ? ctx.moveTo(X,Y) : ctx.lineTo(X,Y);
+            }
+            ctx.stroke();
+            // zona plana destacada
+            ctx.fillStyle = 'rgba(243,156,18,0.18)';
+            ctx.fillRect(px(5.5), py(f(5.5)) - 12, px(9) - px(5.5), 24);
+            for (let k = 1; k <= 8; k++) ponto(ctx, px(k), py(f(k)), cores.ouro, 3.5);
+            rotulo(ctx, '|f_{k+1} − f_k| < ε', 42, 205, '#444', '12px Arial');
+        });
+
+        // 3) Optimality: gradiente -> 0 (tangente horizontal)
+        painel(2, 'Optimality: ∇f ≈ 0', cores.verde, () => {
+            const f = (x) => 0.10*Math.pow(x - 5.5, 2) + 0.7;
+            const px = (x) => 35 + x*26;
+            const py = (v) => 180 - v*42;
+            ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let x = 1; x <= 10; x += 0.05) {
+                const X = px(x), Y = py(f(x));
+                x === 1 ? ctx.moveTo(X,Y) : ctx.lineTo(X,Y);
+            }
+            ctx.stroke();
+            // tangente horizontal no fundo
+            const xm = 5.5;
+            ctx.strokeStyle = cores.verde; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(px(xm - 2.2), py(f(xm))); ctx.lineTo(px(xm + 2.2), py(f(xm))); ctx.stroke();
+            ponto(ctx, px(xm), py(f(xm)), cores.verde, 6);
+            rotulo(ctx, 'tangente horizontal', px(xm) - 52, py(f(xm)) - 14, '#1e7e44', '11px Arial');
+            rotulo(ctx, '‖∇f‖ < ε  →  KKT satisfeito', 30, 205, '#444', '12px Arial');
+        });
+    });
+
+    /* =======================================================================
+       FIGURA 10 — Slide 17: Rosenbrock restrito ao disco unitario
+       ======================================================================= */
+    registrar('rosen', 'cvRosen', 3400, function (t) {
+        const a = ANIM.rosen, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+
+        const f = (x, y) => 100*Math.pow(y - x*x, 2) + Math.pow(1 - x, 2);
+        const dom = { x0: -1.6, x1: 1.6, y0: -1.0, y1: 1.9 };
+        const m = curvasNivel(ctx, f, dom, [0.05, 0.3, 1, 3, 8, 20, 50, 110, 220], w, h, '#dde4ec');
+        const X = m.px, Y = m.py;
+
+        // disco unitario (regiao viavel)
+        ctx.beginPath();
+        // desenha o circulo em coordenadas do canvas amostrando o espaco da funcao
+        for (let ang = 0; ang <= Math.PI*2 + 0.01; ang += 0.05) {
+            const px_ = X(Math.cos(ang)), py_ = Y(Math.sin(ang));
+            ang === 0 ? ctx.moveTo(px_, py_) : ctx.lineTo(px_, py_);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(46,111,196,0.06)'; ctx.fill();
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5; ctx.stroke();
+        rotulo(ctx, 'x₁² + x₂² ≤ 1', X(-1.5), Y(-0.75), cores.azul, 'bold 12px Arial');
+
+        // trajetoria aproximada do fmincon a partir de (0,0)
+        const traj = [
+            [0, 0], [0.18, 0.02], [0.36, 0.10], [0.52, 0.24],
+            [0.65, 0.38], [0.72, 0.49], [0.765, 0.565], [0.784, 0.606], [0.7864, 0.6177]
+        ];
+        const n = Math.max(1, Math.floor(tt * (traj.length - 1)));
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+            const px_ = X(traj[i][0]), py_ = Y(traj[i][1]);
+            i ? ctx.lineTo(px_, py_) : ctx.moveTo(px_, py_);
+        }
+        ctx.stroke();
+        for (let i = 1; i <= n; i++) ponto(ctx, X(traj[i][0]), Y(traj[i][1]), cores.verm, 3.5);
+
+        ponto(ctx, X(0), Y(0), cores.claro, 6);
+        rotulo(ctx, 'x₀ = (0,0)', X(0) - 74, Y(0) + 6, cores.claro, 'bold 12px Arial');
+
+        // otimo irrestrito de Rosenbrock: (1,1), fora do disco
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 2;
+        const ox = X(1), oy = Y(1);
+        ctx.beginPath();
+        ctx.moveTo(ox-6, oy-6); ctx.lineTo(ox+6, oy+6);
+        ctx.moveTo(ox+6, oy-6); ctx.lineTo(ox-6, oy+6); ctx.stroke();
+        rotulo(ctx, '(1,1) fora do disco', ox - 40, oy - 14, cores.cinza, '11px Arial');
+
+        const at = traj[n];
+        ponto(ctx, X(at[0]), Y(at[1]), cores.ouro, 7);
+        if (t > 0.9) {
+            rotulo(ctx, 'x* ≈ (0,786 ; 0,618)', X(at[0]) - 40, Y(at[1]) + 26, '#b9770e', 'bold 12px Arial');
+            rotulo(ctx, 'na borda → restrição ativa', X(at[0]) - 44, Y(at[1]) + 44, '#666', '11px Arial');
+        }
+    });
+
+    /* =======================================================================
+       DISPARO DAS ANIMACOES
+       - desenha o quadro final de tudo (garante figura correta no PDF)
+       - toca a animacao ao entrar no slide correspondente
+       ======================================================================= */
+    const SLIDE_ANIM = {
+        cvIntro: 'intro', cvLocal: 'local', cvZigzag: 'zigzag', cvBarrier: 'barrier',
+        cvBarrier1D: 'barrier1d', cvBarrierMu: 'barrierMu',
+        cvSqpPasso: 'sqpPasso', cvTrustPasso: 'trustPasso',
+        cvSqp: 'sqp', cvTrust: 'trust', cvKkt: 'kkt', cvGrad: 'grad',
+        cvStop: 'stop', cvRosen: 'rosen'
+    };
+
+    etapaBarreira = 3;              // no quadro estatico/PDF, figura completa
+    Object.values(SLIDE_ANIM).forEach(quadroFinal);
+
+    const modoPdf = window.location.search.indexOf('print-pdf') !== -1;
+
+    function animarSlideAtual(slide) {
+        if (!slide || modoPdf) return;
+        slide.querySelectorAll('canvas').forEach(cv => {
+            // ao entrar no slide da barreira 1D, comeca da etapa 1
+            if (cv.id === 'cvBarrier1D') etapaBarreira = 1;
+            const nome = SLIDE_ANIM[cv.id];
+            if (!nome) return;
+            // figuras com passo a passo: ao entrar, volta para a 1a iteracao
+            if (PASSOS[nome] !== undefined) {
+                PASSO_ATUAL[nome] = PASSOS[nome];   // animacao termina no fim
+                atualizarCtrlPasso(nome);
+            }
+            if (ANIM[nome].dur > 1) tocar(nome);
+        });
+    }
+
+    Reveal.on('ready', (e) => animarSlideAtual(e.currentSlide));
+    Reveal.on('slidechanged', (e) => animarSlideAtual(e.currentSlide));
+
+    // botoes "repetir animacao"
+    document.querySelectorAll('.anim-ctrl[data-anim]').forEach(b => {
+        b.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            tocar(b.dataset.anim);
+        });
+    });
+
+    // botoes de etapa da barreira 1D (slide 8)
+    document.querySelectorAll('.anim-ctrl[data-etapa]').forEach(b => {
+        b.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            etapaBarreira = parseInt(b.dataset.etapa, 10);
+            tocar('barrier1d');
+        });
+    });
+
+    /* ---- Passo a passo: quantas iteracoes cada figura percorre ------------
+       Precisa casar com o numero de fatias que a propria draw() usa.        */
+    PASSOS.barrierMu  = 5;   // mus = [4, 1, 0.25, 0.05, 0.01]
+    PASSOS.sqp        = 5;   // iter de Newton no slide 10
+    PASSOS.sqpPasso   = 5;   // tabela SQP: k = 0..4 (+ linha final)
+    PASSOS.trustPasso = 5;   // tabela do rho: k = 0..4
+
+    Object.keys(PASSOS).forEach(nome => { PASSO_ATUAL[nome] = 0; });
+
+    document.querySelectorAll('[data-passo-de]').forEach(el => {
+        const nome = el.dataset.passoDe, acao = el.dataset.passoAcao;
+        if (acao === 'label') return;
+        el.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            acao === 'prev' ? passoAnterior(nome) : passoSeguinte(nome);
+        });
+    });
+
+    /* ---- Controle de velocidade -----------------------------------------
+       O slider anda de 0,5x (rapido) a 4x (bem lento). O valor multiplica a
+       duracao de todas as animacoes e fica salvo no navegador.            */
+    (function ligarControleVel() {
+        const range = document.getElementById('velRange');
+        const val   = document.getElementById('velVal');
+        if (!range || !val) return;
+
+        const aplicar = (v, salvar) => {
+            fatorVel = v;
+            val.textContent = v.toFixed(1).replace('.', ',') + '×';
+            if (salvar) { try { localStorage.setItem('fminconVel', String(v)); } catch (e) {} }
+        };
+
+        range.value = fatorVel;
+        aplicar(fatorVel, false);
+
+        range.addEventListener('input', () => aplicar(parseFloat(range.value), true));
+        // ao soltar, repete a animacao do slide atual na nova velocidade
+        range.addEventListener('change', () => {
+            const slide = Reveal.getCurrentSlide();
+            if (slide) animarSlideAtual(slide);
+        });
+        // o slider nao deve roubar as setas do teclado
+        range.addEventListener('keydown', (ev) => ev.stopPropagation());
+        range.addEventListener('click', (ev) => ev.stopPropagation());
+    })();
+
+    /* ---- Banner de ajuda nos cabecalhos das tabelas ----------------------
+       Aparece depois de ~0,6 s com o mouse parado sobre um <th data-tip>.
+       Posiciona-se acima do cabecalho (ou abaixo, se nao couber), com a
+       setinha alinhada ao centro da coluna.                                */
+    const TIP_DELAY = 600;
+    let tipTimer = null;
+    const tipBanner = document.createElement('div');
+    tipBanner.id = 'tipBanner';
+    document.body.appendChild(tipBanner);
+
+    function mostrarTip(th) {
+        const txt = th.dataset.tip;
+        if (!txt) return;
+        tipBanner.textContent = txt;
+        tipBanner.classList.remove('abaixo');
+        tipBanner.style.left = '0px';
+        tipBanner.style.top  = '0px';
+        tipBanner.classList.add('visivel');
+
+        const r  = th.getBoundingClientRect();
+        const bw = tipBanner.offsetWidth, bh = tipBanner.offsetHeight;
+        const margem = 10;
+
+        // centraliza no cabecalho, sem vazar da janela
+        let left = r.left + r.width/2 - bw/2;
+        left = Math.max(margem, Math.min(left, window.innerWidth - bw - margem));
+
+        // acima por padrao; abaixo se nao houver espaco
+        let top = r.top - bh - 9;
+        if (top < margem) {
+            top = r.bottom + 9;
+            tipBanner.classList.add('abaixo');
+        }
+
+        tipBanner.style.left = left + 'px';
+        tipBanner.style.top  = top + 'px';
+        // setinha apontando para o centro da coluna
+        const setaX = Math.max(12, Math.min(r.left + r.width/2 - left, bw - 12));
+        tipBanner.style.setProperty('--seta-x', (setaX - 6) + 'px');
+    }
+
+    function esconderTip() {
+        clearTimeout(tipTimer);
+        tipBanner.classList.remove('visivel');
+    }
+
+    document.addEventListener('mouseover', (ev) => {
+        const th = ev.target.closest ? ev.target.closest('th[data-tip]') : null;
+        if (!th) return;
+        clearTimeout(tipTimer);
+        tipTimer = setTimeout(() => mostrarTip(th), TIP_DELAY);
+    });
+    document.addEventListener('mouseout', (ev) => {
+        const th = ev.target.closest ? ev.target.closest('th[data-tip]') : null;
+        if (!th) return;
+        // ignora a troca entre elementos internos do proprio cabecalho (KaTeX)
+        if (ev.relatedTarget && ev.relatedTarget.closest &&
+            ev.relatedTarget.closest('th[data-tip]') === th) return;
+        esconderTip();
+    });
+    // ao trocar de slide o banner some junto
+    Reveal.on('slidechanged', esconderTip);
+
+    // setas ←/→ controlam a figura do slide atual (em vez de trocar de slide)
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+        const slide = Reveal.getCurrentSlide();
+        if (!slide) return;
+        const cv = slide.querySelector('canvas');
+        if (!cv) return;
+        const nome = SLIDE_ANIM[cv.id];
+        if (!nome || !PASSOS[nome]) return;
+        const i = PASSO_ATUAL[nome] ?? 0;
+        // so intercepta enquanto houver passo para andar naquela direcao
+        if (ev.key === 'ArrowRight' && i >= PASSOS[nome]) return;
+        if (ev.key === 'ArrowLeft'  && i <= 0) return;
+        ev.preventDefault(); ev.stopPropagation();
+        ev.key === 'ArrowRight' ? passoSeguinte(nome) : passoAnterior(nome);
+    }, true);
+</script>
+</body>
+</html>

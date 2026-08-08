@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otimização: Método da Dicotomia</title>
+
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <!-- Folha de estilo de impressao do Reveal.js (gera o PDF paginado) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/css/print/pdf.css" media="print">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <!-- KaTeX para fórmulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --ufpr-blue: #004a8e;
+            --math-red: #e74c3c;
+            --math-green: #27ae60;
+            --math-gold: #f39c12;
+            --grid-color: #f0f0f0;
+        }
+        .reveal h1, .reveal h2 { color: var(--ufpr-blue); font-weight: 800; text-transform: uppercase; }
+        .reveal h2 { border-bottom: 3px solid var(--ufpr-blue); display: inline-block; padding-bottom: 5px; margin-bottom: 20px; }
+        .reveal section { text-align: left; padding: 20px; }
+
+        .reveal section p { margin: 8px 0; }
+        .reveal section ul, .reveal section ol { margin: 8px 0; }
+
+        /* Slides com muito texto: reduz a fonte para caber tudo */
+        .reveal section.compact { font-size: 0.82em; }
+        .reveal section.compact li { margin: 5px 0; }
+
+        .formula-box {
+            background: #f8faff;
+            padding: 12px 16px;
+            border-left: 6px solid var(--ufpr-blue);
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .canvas-container {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            padding: 6px;
+            margin-top: 8px;
+        }
+        .canvas-container canvas { max-width: 100%; height: auto; }
+
+        .highlight { color: var(--ufpr-blue); font-weight: bold; }
+        .small-text { font-size: 0.7em; color: #666; }
+
+        table.numeric-example {
+            width: 100%;
+            font-size: 0.62em;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table.numeric-example th { background: var(--ufpr-blue); color: white; padding: 7px; }
+        table.numeric-example td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+
+        /* Layout de duas colunas */
+        .two-col { display: flex; align-items: center; gap: 40px; }
+        .two-col .col-text { flex: 1.2; }
+        .two-col .col-img { flex: 1; text-align: center; }
+        .icon-list { list-style: none; margin-left: 0; }
+        .icon-list li { margin: 14px 0; padding-left: 4px; }
+        .icon-list .ic { color: var(--ufpr-blue); margin-right: 8px; }
+
+        /* Timeline / fluxograma horizontal */
+        .timeline { position: relative; display: flex; justify-content: space-between; margin: 30px 0 14px; }
+        .timeline::before {
+            content: ""; position: absolute; top: 12px; left: 4%; right: 4%;
+            height: 3px; background: #d6dde7; z-index: 0;
+        }
+        .timeline .stage { position: relative; z-index: 1; flex: 1; text-align: center; padding: 0 8px; }
+        .timeline .dot {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--ufpr-blue); border: 4px solid #fff;
+            box-shadow: 0 0 0 2px var(--ufpr-blue);
+            margin: 0 auto 14px;
+        }
+        .timeline .stage h4 { color: #1a2b45; font-size: 0.95em; font-weight: 700; margin: 0 0 6px; }
+        .timeline .stage p { font-size: 0.72em; color: #555; margin: 0; line-height: 1.35em; }
+
+        /* Botao flutuante de gerar PDF */
+        #btnPdf {
+            position: fixed; top: 16px; right: 16px; z-index: 1000;
+            background: var(--ufpr-blue); color: #fff; border: none;
+            border-radius: 6px; padding: 8px 14px; font-size: 14px;
+            font-weight: 700; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            transition: background 0.2s, transform 0.1s;
+        }
+        #btnPdf:hover { background: #003567; }
+        #btnPdf:active { transform: scale(0.96); }
+        @media print { #btnPdf { display: none !important; } }
+
+        .reveal .slide-number {
+            background: var(--ufpr-blue); color: #fff; font-size: 16px;
+            padding: 4px 10px; border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<button id="btnPdf" title="Gerar PDF da apresentação" aria-label="Gerar PDF">
+    📄 PDF
+</button>
+
+<div class="reveal">
+    <div class="slides">
+
+        <!-- SLIDE 1: CAPA -->
+        <section style="text-align: center;">
+            <h1 style="font-size: 2.2em;">Otimização Numérica</h1>
+            <h2 style="border:none; color: #555;">Método da Dicotomia</h2>
+            <p>Busca Unidimensional por Eliminação de Intervalos</p>
+            <div style="margin-top: 100px;">
+                <p><strong>Aluno:</strong> Romulo de Aguiar Beninca</p>
+                <p><strong>Professor:</strong> Prof. Dr. Carlos Alberto Bavastri</p>
+                <p class="small-text">UFPR - Engenharia Mecânica</p>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: COMPARAÇÃO DOS TRÊS MÉTODOS -->
+        <section class="compact">
+            <h2>Três Métodos de Busca Unidimensional</h2>
+            <p style="font-size:0.9em;">Métodos que operam sobre um intervalo $[a,b]$ e o encolhem por comparação de valores da função — sem derivadas. Atenção ao <strong>objetivo</strong> de cada um:</p>
+            <table class="numeric-example" style="font-size:0.7em;">
+                <tr>
+                    <th style="width:16%;">Método</th>
+                    <th style="width:20%;">Objetivo</th>
+                    <th style="width:26%;">Como decide</th>
+                    <th style="width:20%;">Aval. de $f$ / iter.</th>
+                    <th>Redução do intervalo</th>
+                </tr>
+                <tr>
+                    <td><strong>Bisseção /<br>Bolzano</strong></td>
+                    <td>Achar <span class="highlight">raiz</span> $f(x)=0$</td>
+                    <td>Sinal de $f$ no ponto médio (Teorema de Bolzano: $f(a)\,f(b)<0$)</td>
+                    <td><strong>1</strong> (ponto médio)</td>
+                    <td>exatamente $\tfrac{1}{2}$ por passo</td>
+                </tr>
+                <tr>
+                    <td><strong>Dicotomia</strong></td>
+                    <td>Achar <span class="highlight">mínimo</span> de $f$</td>
+                    <td>Compara $f(x_1)$ e $f(x_2)$ em torno do centro (separados por $\delta$)</td>
+                    <td><strong>2</strong> pontos novos</td>
+                    <td>$\approx \tfrac{1}{2}$ por par de avaliações</td>
+                </tr>
+                <tr>
+                    <td><strong>Seção<br>Áurea</strong></td>
+                    <td>Achar <span class="highlight">mínimo</span> de $f$</td>
+                    <td>Compara $f$ em dois pontos na razão áurea $\varphi$; <strong>reaproveita 1 ponto</strong></td>
+                    <td><strong>1</strong> (após o 1º passo)</td>
+                    <td>fator fixo $1/\varphi \approx 0{,}618$</td>
+                </tr>
+            </table>
+            <div class="two-col" style="margin-top:14px; gap:24px; align-items:flex-start;">
+                <div class="col-text">
+                    <ul style="font-size:0.78em; line-height:1.45em;">
+                        <li><strong>Bisseção/Bolzano</strong> resolve um problema <em>diferente</em>: acha onde $f$ <strong>cruza zero</strong> (raiz), não onde tem mínimo. Aparece aqui por ser o "irmão" mais simples da eliminação de intervalos.</li>
+                        <li><strong>Dicotomia</strong> e <strong>Seção Áurea</strong> minimizam funções <span class="highlight">unimodais</span>. A Dicotomia gasta 2 avaliações por passo; a Áurea reaproveita um ponto e gasta só 1 — por isso é mais eficiente.</li>
+                        <li>Todos são <strong>robustos e simples</strong>, mas convergem <strong>linearmente</strong> (mais lentos que métodos com derivada).</li>
+                    </ul>
+                </div>
+                <div class="col-text">
+                    <div class="formula-box small-text">
+                        <strong>Foco desta apresentação:</strong> o método da <span class="highlight">Dicotomia</span> — a forma mais direta de aplicar a ideia de "eliminar meio intervalo" à <em>minimização</em>.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: INTRODUÇÃO -->
+        <section class="compact">
+            <h2>Introdução</h2>
+            <div class="two-col">
+                <div class="col-text">
+                    <ul class="icon-list">
+                        <li><span class="ic">▸</span><strong>Contexto:</strong> é um método de <span class="highlight">busca em linha (line search)</span> para minimizar uma função de <strong>uma variável</strong> $f(x)$ em um intervalo $[a,b]$.</li>
+                        <li><span class="ic">▸</span><strong>Ideia:</strong> a cada passo, <strong>elimina-se metade do intervalo</strong> onde o mínimo certamente não está — daí o nome <em>dicotomia</em> (divisão em dois).</li>
+                        <li><span class="ic">▸</span><strong>Requisito:</strong> a função deve ser <span class="highlight">unimodal</span> em $[a,b]$ (um único mínimo).</li>
+                        <li><span class="ic">▸</span><strong>Não usa derivadas:</strong> decide apenas comparando <strong>valores</strong> de $f$.</li>
+                    </ul>
+                </div>
+                <div class="col-img" style="flex:1.1;">
+                    <div class="canvas-container">
+                        <canvas id="canvasIntro" width="380" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: FUNÇÃO UNIMODAL -->
+        <section class="compact">
+            <h2>Função Unimodal</h2>
+            <p>Uma função é <span class="highlight">unimodal</span> em $[a,b]$ se tem <strong>um único mínimo</strong> $x^\*$: ela decresce até $x^\*$ e cresce depois dele.</p>
+            <div class="formula-box">
+                Para $x_1 < x_2$: &nbsp;
+                se $x_2 \le x^\*$ então $f(x_1) > f(x_2)$; &nbsp;
+                se $x_1 \ge x^\*$ então $f(x_1) < f(x_2)$.
+            </div>
+            <ul>
+                <li>É essa propriedade que <strong>garante</strong> poder eliminar um pedaço do intervalo com apenas duas avaliações da função.</li>
+                <li>Comparando $f$ em dois pontos internos, sabemos com certeza <strong>de que lado</strong> o mínimo está.</li>
+                <li>Sem unimodalidade, descartar meio intervalo poderia jogar fora o mínimo verdadeiro.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 4: A IDEIA CENTRAL -->
+        <section class="compact">
+            <h2>A Ideia Central</h2>
+            <div class="two-col">
+                <div class="col-img" style="flex:1.1;">
+                    <div class="canvas-container">
+                        <canvas id="canvasIdeia" width="420" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="col-text">
+                    <p>Tomam-se <strong>dois pontos simétricos</strong> em torno do meio do intervalo, separados por uma pequena distância $\delta$:</p>
+                    <div class="formula-box">
+                        $x_1 = \dfrac{a+b}{2} - \dfrac{\delta}{2}$ <br>
+                        $x_2 = \dfrac{a+b}{2} + \dfrac{\delta}{2}$
+                    </div>
+                    <ul>
+                        <li>Se $f(x_1) < f(x_2)$ → o mínimo está à <strong>esquerda</strong>: faz-se $b = x_2$.</li>
+                        <li>Se $f(x_1) > f(x_2)$ → o mínimo está à <strong>direita</strong>: faz-se $a = x_1$.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: O PARÂMETRO DELTA -->
+        <section class="compact">
+            <h2>O Parâmetro $\delta$</h2>
+            <p>A pequena distância $\delta$ (delta) separa os dois pontos de teste. Ela é essencial: <strong>sem separação, os dois pontos seriam iguais</strong> e não haveria como comparar.</p>
+            <div class="formula-box">
+                $0 < \delta \ll (b - a)$ &nbsp;&nbsp; <span class="small-text">(bem menor que o intervalo, tipicamente $\delta \approx 10^{-3}$ a $10^{-5}$)</span>
+            </div>
+            <ul>
+                <li><strong>$\delta$ muito grande:</strong> os pontos ficam longe do centro e cada passo elimina <em>menos</em> que metade → mais lento.</li>
+                <li><strong>$\delta$ muito pequeno:</strong> $f(x_1)$ e $f(x_2)$ ficam quase iguais → sensível a <strong>ruído numérico</strong> na comparação.</li>
+                <li>Compromisso prático: $\delta$ um pouco maior que a precisão da máquina, e menor que a tolerância desejada $\epsilon$.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 6: OS DOIS CASOS -->
+        <section class="compact">
+            <h2>Regra de Eliminação</h2>
+            <p>Cada iteração compara $f(x_1)$ e $f(x_2)$ e descarta o lado onde o mínimo <strong>não pode estar</strong>:</p>
+            <div class="two-col" style="align-items:flex-start;">
+                <div class="col-text">
+                    <div class="formula-box">
+                        <strong style="color:var(--math-green)">Caso A:</strong> $f(x_1) < f(x_2)$ <br>
+                        O mínimo está em $[a, x_2]$ <br>
+                        → novo intervalo: $b \leftarrow x_2$
+                    </div>
+                </div>
+                <div class="col-text">
+                    <div class="formula-box">
+                        <strong style="color:var(--math-red)">Caso B:</strong> $f(x_1) > f(x_2)$ <br>
+                        O mínimo está em $[x_1, b]$ <br>
+                        → novo intervalo: $a \leftarrow x_1$
+                    </div>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="canvasCasos" width="820" height="220"></canvas>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: CONVERGÊNCIA -->
+        <section class="compact">
+            <h2>Taxa de Convergência</h2>
+            <p>A cada iteração, o intervalo cai para pouco mais da metade. Depois de $k$ iterações (isto é, $2k$ avaliações de $f$), o comprimento é:</p>
+            <div class="formula-box">
+                $L_k = \dfrac{L_0}{2^{k}} + \delta\left(1 - \dfrac{1}{2^{k}}\right)$
+                &nbsp;&nbsp; <span class="small-text">$\longrightarrow \; L_k \approx \dfrac{L_0}{2^{k}}$ &nbsp;(para $\delta$ pequeno)</span>
+            </div>
+            <ul>
+                <li>A redução é <strong>linear</strong> (geométrica): o intervalo diminui por um fator $\approx \tfrac{1}{2}$ a cada par de avaliações.</li>
+                <li><strong>Custo:</strong> 2 avaliações de $f$ por iteração — menos eficiente que a <em>Seção Áurea</em>, que reaproveita 1 ponto.</li>
+                <li>Para reduzir o intervalo por um fator $10^{-p}$: cerca de $k \approx 3.32\,p$ iterações.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 8: ALGORITMO -->
+        <section class="compact">
+            <h2>Algoritmo (Pseudocódigo)</h2>
+            <ol style="font-size: 0.82em; line-height: 1.6em;">
+                <li>Definir intervalo inicial $[a, b]$, tolerância $\epsilon$ e separação $\delta$.</li>
+                <li><strong>Enquanto</strong> $(b - a) > \epsilon$:</li>
+                <li style="list-style:none; margin-left:24px;">a) $x_1 = \tfrac{a+b}{2} - \tfrac{\delta}{2}$ &nbsp;e&nbsp; $x_2 = \tfrac{a+b}{2} + \tfrac{\delta}{2}$</li>
+                <li style="list-style:none; margin-left:24px;">b) avaliar $f(x_1)$ e $f(x_2)$</li>
+                <li style="list-style:none; margin-left:24px;">c) <strong>se</strong> $f(x_1) < f(x_2)$: &nbsp; $b \leftarrow x_2$ &nbsp; <strong>senão</strong>: &nbsp; $a \leftarrow x_1$</li>
+                <li>Retornar $x^\* \approx \dfrac{a+b}{2}$.</li>
+            </ol>
+            <div class="formula-box small-text">
+                O laço termina quando o intervalo fica menor que a tolerância $\epsilon$; o mínimo estimado é o ponto médio final.
+            </div>
+        </section>
+
+        <!-- SLIDE 9: EXPLICAÇÃO DO CÓDIGO -->
+        <section class="compact">
+            <h2>Implementação em MATLAB / Octave</h2>
+            <div class="two-col" style="align-items:flex-start; gap:26px;">
+                <div class="col-text" style="flex:1.15;">
+                    <pre style="background:#0f1b2d; color:#e6edf3; font-size:0.62em; line-height:1.5em; padding:14px 16px; border-radius:8px; overflow:auto; margin:0;"><code><span style="color:#7ee787;">function</span> min = <span style="color:#79c0ff;">dicotomia</span>(funcao, a, b, epsilon)
+
+    <span style="color:#ff7b72;">while</span> abs(b - a) &gt; epsilon
+        x1 = (a + b)/2 - epsilon/20;
+        x2 = (a + b)/2 + epsilon/20;
+
+        f1 = funcao(x1);
+        f2 = funcao(x2);
+
+        <span style="color:#ff7b72;">if</span> f1 &gt; f2
+            a = x1;
+        <span style="color:#ff7b72;">else</span>
+            b = x2;
+        <span style="color:#ff7b72;">end</span>
+    <span style="color:#ff7b72;">end</span>
+
+    min = (a + b)/2;
+<span style="color:#ff7b72;">end</span></code></pre>
+                </div>
+                <div class="col-text">
+                    <ul style="font-size:0.82em; line-height:1.5em;">
+                        <li><strong>Assinatura:</strong> recebe a <span class="highlight">função</span>, o intervalo $[a,b]$ e a tolerância <code>epsilon</code>; devolve o mínimo estimado.</li>
+                        <li><strong>Condição do laço</strong> <code>abs(b-a) &gt; epsilon</code>: repete enquanto o intervalo for maior que a tolerância.</li>
+                        <li><strong>Pontos de teste:</strong> $x_1,x_2$ ficam em torno do centro, afastados por $\delta = \tfrac{\epsilon}{20}$. Dividir por 20 evita que $x_1=x_2$ e o loop trave.</li>
+                        <li><strong>Decisão:</strong> se $f_1 > f_2$ o mínimo está à direita → <code>a = x1</code>; senão à esquerda → <code>b = x2</code>.</li>
+                        <li><strong>Retorno:</strong> o ponto médio final $(a+b)/2$.</li>
+                    </ul>
+                    <div class="formula-box small-text" style="margin-top:6px;">
+                        Aqui a separação $\delta$ não é um parâmetro independente: é derivada de $\epsilon$ (<code>epsilon/20</code>), simplificando a chamada.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 10: EXECUÇÃO PASSO A PASSO DO CÓDIGO -->
+        <section class="compact">
+            <h2>Execução Passo a Passo</h2>
+            <p style="font-size:0.9em;">Chamada: <code>dicotomia(@(x) (x-3).^2, 2.7, 3.7, 0.001)</code> &nbsp;→&nbsp; $\delta = \tfrac{\epsilon}{20} = 0{,}00005$, mínimo exato em $x^\*=3$.</p>
+            <table class="numeric-example">
+                <tr>
+                    <th>Iter.</th><th>$b-a$</th><th>$[a,\,b]$</th>
+                    <th>$x_1$</th><th>$x_2$</th><th>$f_1$</th><th>$f_2$</th>
+                    <th><code>if f1&gt;f2</code></th><th>Atualiza</th>
+                </tr>
+                <tr>
+                    <td>1</td><td>1.0000</td><td>[2.70000, 3.70000]</td>
+                    <td>3.19995</td><td>3.20005</td><td>0.03994</td><td>0.04003</td>
+                    <td>não</td><td>$b = x_2 = 3.20005$</td>
+                </tr>
+                <tr>
+                    <td>2</td><td>0.50005</td><td>[2.70000, 3.20005]</td>
+                    <td>2.94998</td><td>2.95008</td><td>2.503e-3</td><td>2.493e-3</td>
+                    <td>sim</td><td>$a = x_1 = 2.94998$</td>
+                </tr>
+                <tr>
+                    <td>3</td><td>0.25007</td><td>[2.94998, 3.20005]</td>
+                    <td>3.07496</td><td>3.07506</td><td>5.619e-3</td><td>5.634e-3</td>
+                    <td>não</td><td>$b = x_2 = 3.07506$</td>
+                </tr>
+                <tr>
+                    <td>4</td><td>0.12509</td><td>[2.94998, 3.07506]</td>
+                    <td>3.01247</td><td>3.01257</td><td>1.555e-4</td><td>1.580e-4</td>
+                    <td>não</td><td>$b = x_2 = 3.01257$</td>
+                </tr>
+                <tr>
+                    <td>⋯</td><td>⋯</td><td>⋯</td><td>⋯</td><td>⋯</td><td>⋯</td><td>⋯</td><td>⋯</td><td>⋯</td>
+                </tr>
+                <tr>
+                    <td>11</td><td>0.00108</td><td>[2.99977, 3.00085]</td>
+                    <td>3.00026</td><td>3.00036</td><td>6.91e-8</td><td>1.32e-7</td>
+                    <td>não</td><td>$b = x_2$ → sai do laço</td>
+                </tr>
+            </table>
+            <p class="small-text" style="margin-top:10px;">
+                O intervalo cai de $1{,}0$ para $\approx 6\times10^{-4}$ em <strong>11 iterações</strong> ($\log_2(1/\epsilon)\approx 10$). Resultado: <span class="highlight">$x^\* \approx (a+b)/2 = 3{,}00007$</span> — praticamente o mínimo exato $x=3$.
+            </p>
+        </section>
+
+        <!-- SLIDE 11: FLUXO -->
+        <section class="compact">
+            <h2>Fluxo de uma Iteração</h2>
+            <div class="timeline">
+                <div class="stage">
+                    <div class="dot"></div>
+                    <h4>Pontos de teste</h4>
+                    <p>Calcular $x_1$ e $x_2$ em torno do centro, separados por $\delta$.</p>
+                </div>
+                <div class="stage">
+                    <div class="dot"></div>
+                    <h4>Avaliar $f$</h4>
+                    <p>Calcular $f(x_1)$ e $f(x_2)$.</p>
+                </div>
+                <div class="stage">
+                    <div class="dot"></div>
+                    <h4>Comparar</h4>
+                    <p>Descobrir de que lado está o mínimo.</p>
+                </div>
+                <div class="stage">
+                    <div class="dot"></div>
+                    <h4>Eliminar</h4>
+                    <p>Descartar metade do intervalo e repetir.</p>
+                </div>
+            </div>
+            <p class="small-text" style="text-align:center; font-style:italic;">
+                Repete-se até que $(b-a) < \epsilon$.
+            </p>
+        </section>
+
+        <!-- SLIDE 10: EXEMPLO NUMÉRICO -->
+        <section>
+            <h2>Exemplo Numérico</h2>
+            <p>Minimizar $f(x) = (x - 2)^2$ em $[0, 5]$, com $\delta = 0.1$ (mínimo exato em $x^\*=2$).</p>
+            <table class="numeric-example">
+                <tr>
+                    <th>Iter.</th><th>$[a, b]$</th><th>$x_1$</th><th>$x_2$</th>
+                    <th>$f(x_1)$</th><th>$f(x_2)$</th><th>Ação</th>
+                </tr>
+                <tr>
+                    <td>1</td><td>[0.00, 5.00]</td><td>2.45</td><td>2.55</td>
+                    <td>0.2025</td><td>0.3025</td><td>$f_1<f_2$ → $b=2.55$</td>
+                </tr>
+                <tr>
+                    <td>2</td><td>[0.00, 2.55]</td><td>1.225</td><td>1.325</td>
+                    <td>0.6006</td><td>0.4556</td><td>$f_1>f_2$ → $a=1.225$</td>
+                </tr>
+                <tr>
+                    <td>3</td><td>[1.225, 2.55]</td><td>1.8375</td><td>1.9375</td>
+                    <td>0.0264</td><td>0.0039</td><td>$f_1>f_2$ → $a=1.8375$</td>
+                </tr>
+                <tr>
+                    <td>4</td><td>[1.8375, 2.55]</td><td>2.1437</td><td>2.2437</td>
+                    <td>0.0207</td><td>0.0595</td><td>$f_1<f_2$ → $b=2.2437$</td>
+                </tr>
+            </table>
+            <p class="small-text">O intervalo encolhe de $5.0$ para $\approx 0.41$ em 4 iterações, cercando $x^\*=2$.</p>
+        </section>
+
+        <!-- SLIDE 11: VANTAGENS E DESVANTAGENS -->
+        <section class="compact">
+            <h2>Vantagens e Desvantagens</h2>
+            <div class="two-col" style="align-items:flex-start;">
+                <div class="col-text">
+                    <h3 style="margin-top:0; color:var(--math-green);">✔ Vantagens</h3>
+                    <ul>
+                        <li><strong>Não usa derivadas</strong> — só valores de $f$.</li>
+                        <li><strong>Simples</strong> de entender e implementar.</li>
+                        <li><strong>Robusto</strong>: convergência garantida para funções unimodais.</li>
+                        <li>Bom como <strong>busca em linha</strong> dentro de métodos maiores.</li>
+                    </ul>
+                </div>
+                <div class="col-text">
+                    <h3 style="margin-top:0; color:var(--math-red);">✘ Desvantagens</h3>
+                    <ul>
+                        <li>Exige <strong>2 avaliações</strong> de $f$ por iteração (custoso).</li>
+                        <li>Menos eficiente que a <strong>Seção Áurea</strong> e a <strong>Interpolação Quadrática</strong>.</li>
+                        <li>Exige que a função seja <strong>unimodal</strong> no intervalo.</li>
+                        <li>Escolha de $\delta$ afeta desempenho e estabilidade.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 12: REFERÊNCIAS -->
+        <section class="compact">
+            <h2>Referências</h2>
+            <ul style="font-size:0.9em; line-height:1.5em;">
+                <li>RAO, S. S. <em>Engineering Optimization: Theory and Practice</em>. 4. ed. Hoboken: Wiley, 2009. (cap. Métodos de eliminação de intervalos)</li>
+                <li>ARORA, J. S. <em>Introduction to Optimum Design</em>. 4. ed. Academic Press, 2016.</li>
+                <li>BAVASTRI, C. A. <em>Notas de aula — Otimização Não Linear</em>. PPGEM, Universidade Federal do Paraná (UFPR).</li>
+                <li>NOCEDAL, J.; WRIGHT, S. J. <em>Numerical Optimization</em>. 2. ed. New York: Springer, 2006.</li>
+                <li>CHAPRA, S. C.; CANALE, R. P. <em>Numerical Methods for Engineers</em>. McGraw-Hill.</li>
+            </ul>
+        </section>
+
+        <!-- SLIDE 13: ENCERRAMENTO -->
+        <section style="text-align:center;">
+            <h1 style="font-size:2.4em; border:none;">Obrigado!</h1>
+            <p style="font-size:1.1em; color:#555;">Método da Dicotomia — Otimização Numérica</p>
+            <div style="margin-top:70px;">
+                <p><strong>Romulo de Aguiar Beninca</strong></p>
+                <p class="small-text">Prof. Dr. Carlos Alberto Bavastri · UFPR — Engenharia Mecânica</p>
+            </div>
+            <p style="margin-top:40px; font-size:0.9em; color:#888;">Perguntas?</p>
+        </section>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+<script>
+    Reveal.initialize({
+        hash: true, center: true, transition: 'slide',
+        slideNumber: 'c/t', width: 1100, height: 800,
+        margin: 0.04, minScale: 0.2, maxScale: 1.5
+    });
+
+    // --- Botao Gerar PDF ---
+    document.getElementById('btnPdf').addEventListener('click', function () {
+        if (window.location.search.indexOf('print-pdf') === -1) {
+            const sep = window.location.search ? '&' : '?';
+            window.location.href = window.location.pathname + window.location.search + sep + 'print-pdf';
+        } else {
+            window.print();
+        }
+    });
+    if (window.location.search.indexOf('print-pdf') !== -1) {
+        window.addEventListener('load', () => setTimeout(() => window.print(), 800));
+    }
+
+    // Renderiza as formulas com KaTeX
+    renderMathInElement(document.body, {
+        delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$',  right: '$',  display: false }
+        ],
+        throwOnError: false
+    });
+
+    // ---- Helper: desenha uma parabola (funcao unimodal) num canvas ----
+    // Mapeia dominio [x0,x1] -> largura do canvas; f cresce para baixo em tela.
+    function parabola(ctx, w, h, opts) {
+        const o = opts || {};
+        const cx = o.cx !== undefined ? o.cx : 0.5;   // posicao do minimo em [0,1]
+        const pad = 30;
+        // curva
+        ctx.strokeStyle = '#004a8e'; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let px = pad; px <= w - pad; px++) {
+            const t = (px - pad) / (w - 2*pad);        // 0..1
+            const d = t - cx;
+            const y = (h - pad) - (0.9*(h - 2*pad)) * (1 - 4*d*d < 0 ? 0 : (1 - 4*d*d));
+            // usa 1 - (2d)^2 => vale suave; garante valores dentro do canvas
+            const val = 1 - Math.min(1, (2*d)*(2*d));
+            const yy = (h - pad) - (h - 2*pad) * val;
+            px === pad ? ctx.moveTo(px, yy) : ctx.lineTo(px, yy);
+        }
+        ctx.stroke();
+        return { pad, cx };
+    }
+
+    // helper: x-em-tela e f(x)-em-tela para a mesma parabola
+    function mapX(t, w, pad) { return pad + t * (w - 2*pad); }
+    function valAt(t, cx) { const d = t - cx; return 1 - Math.min(1, (2*d)*(2*d)); }
+    function mapY(t, cx, h, pad) { return (h - pad) - (h - 2*pad) * valAt(t, cx); }
+
+    function eixo(ctx, w, h, pad) {
+        ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(w-pad, h-pad); ctx.stroke(); // x
+        ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, h-pad); ctx.stroke();     // y
+    }
+    function ponto(ctx, x, y, cor, r) {
+        ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(x, y, r || 5, 0, Math.PI*2); ctx.fill();
+    }
+    function rotulo(ctx, txt, x, y, cor, font) {
+        ctx.fillStyle = cor || '#1a2b45'; ctx.font = font || 'bold 12px Arial';
+        ctx.fillText(txt, x, y);
+    }
+
+    // SLIDE 2: parabola simples com minimo marcado
+    (function () {
+        const cv = document.getElementById('canvasIntro'); if (!cv) return;
+        const ctx = cv.getContext('2d'); const w = cv.width, h = cv.height, pad = 30;
+        eixo(ctx, w, h, pad);
+        parabola(ctx, w, h, { cx: 0.5 });
+        const xm = mapX(0.5, w, pad), ym = mapY(0.5, 0.5, h, pad);
+        ctx.setLineDash([4,4]); ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(xm, ym); ctx.lineTo(xm, h-pad); ctx.stroke(); ctx.setLineDash([]);
+        ponto(ctx, xm, ym, '#e74c3c', 6);
+        rotulo(ctx, 'x*', xm - 6, h - pad + 16, '#e74c3c');
+        rotulo(ctx, 'f(x)', pad + 4, pad + 4, '#004a8e', 'italic 12px Arial');
+        rotulo(ctx, 'a', pad - 3, h - pad + 16, '#555');
+        rotulo(ctx, 'b', w - pad - 3, h - pad + 16, '#555');
+    })();
+
+    // SLIDE 4: parabola com x1, x2 em torno do centro e regiao eliminada
+    (function () {
+        const cv = document.getElementById('canvasIdeia'); if (!cv) return;
+        const ctx = cv.getContext('2d'); const w = cv.width, h = cv.height, pad = 30;
+        const cx = 0.42; // minimo à esquerda do centro
+        eixo(ctx, w, h, pad);
+        parabola(ctx, w, h, { cx });
+        const t1 = 0.5 - 0.05, t2 = 0.5 + 0.05;
+        const x1 = mapX(t1, w, pad), x2 = mapX(t2, w, pad);
+        const y1 = mapY(t1, cx, h, pad), y2 = mapY(t2, cx, h, pad);
+        // regiao eliminada (à direita de x2) sombreada
+        ctx.fillStyle = 'rgba(231,76,60,0.10)';
+        ctx.fillRect(x2, pad, (w - pad) - x2, h - pad - pad);
+        // linhas verticais nos pontos de teste
+        [[x1,y1,'#27ae60','x1'],[x2,y2,'#e74c3c','x2']].forEach(p => {
+            ctx.setLineDash([3,3]); ctx.strokeStyle = p[2]; ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0], h-pad); ctx.stroke();
+            ctx.setLineDash([]);
+            ponto(ctx, p[0], p[1], p[2], 5);
+            rotulo(ctx, p[3], p[0] - 6, h - pad + 16, p[2]);
+        });
+        rotulo(ctx, 'eliminado', x2 + 8, pad + 16, '#e74c3c', 'italic 11px Arial');
+        rotulo(ctx, 'f(x1) < f(x2)', pad + 6, pad + 4, '#1a2b45', 'bold 12px Arial');
+    })();
+
+    // SLIDE 6: dois paineis lado a lado (Caso A e Caso B)
+    (function () {
+        const cv = document.getElementById('canvasCasos'); if (!cv) return;
+        const ctx = cv.getContext('2d'); const W = cv.width, h = cv.height;
+        const pw = W / 2;
+
+        function painel(ox, cx, elimDir, titulo, cor) {
+            const pad = 30, w = pw;
+            // eixo local
+            ctx.save(); ctx.translate(ox, 0);
+            ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(w-pad, h-pad); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, h-pad); ctx.stroke();
+            // parabola local
+            ctx.strokeStyle = '#004a8e'; ctx.lineWidth = 2.2; ctx.beginPath();
+            for (let px = pad; px <= w - pad; px++) {
+                const t = (px - pad) / (w - 2*pad);
+                const yy = mapY(t, cx, h, pad);
+                px === pad ? ctx.moveTo(px, yy) : ctx.lineTo(px, yy);
+            }
+            ctx.stroke();
+            const t1 = 0.5 - 0.06, t2 = 0.5 + 0.06;
+            const x1 = mapX(t1, w, pad), x2 = mapX(t2, w, pad);
+            const y1 = mapY(t1, cx, h, pad), y2 = mapY(t2, cx, h, pad);
+            // sombra da regiao eliminada
+            ctx.fillStyle = 'rgba(231,76,60,0.10)';
+            if (elimDir === 'right') ctx.fillRect(x2, pad, (w - pad) - x2, h - 2*pad);
+            else ctx.fillRect(pad, pad, x1 - pad, h - 2*pad);
+            ponto(ctx, x1, y1, '#27ae60', 5); ponto(ctx, x2, y2, '#e74c3c', 5);
+            rotulo(ctx, 'x1', x1 - 14, h - pad + 15, '#27ae60');
+            rotulo(ctx, 'x2', x2 + 2, h - pad + 15, '#e74c3c');
+            rotulo(ctx, titulo, pad + 4, pad - 6, cor, 'bold 13px Arial');
+            ctx.restore();
+        }
+        painel(0,   0.35, 'right', 'Caso A: f(x1) < f(x2)  →  b = x2', '#27ae60');
+        painel(pw,  0.65, 'left',  'Caso B: f(x1) > f(x2)  →  a = x1', '#e74c3c');
+    })();
+</script>
+</body>
+</html>
