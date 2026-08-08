@@ -112,6 +112,77 @@
         .card p { margin:3px 0 0; font-size:0.56em; color:#5b6a7d; line-height:1.35; }
         .card .ano { font-size:0.5em; color:#9aa7b8; font-weight:700; }
 
+        /* ===================== Janela de dados dos calculos ===================== */
+        .plot-btn.dados { border-color:var(--ga-purple, #7d3c98); color:#5b2c6f; }
+        .plot-btn.dados:hover { background:#f8f2fd; }
+        .plot-btn.dados.aberto { background:#5b2c6f; border-color:#5b2c6f; color:#fff; }
+
+        /* Ancorado na base: a janela nao tapa a animacao, para que o passo a passo e
+           os numeros correspondentes fiquem visiveis ao mesmo tempo. */
+        .dados-modal { position:fixed; inset:0; z-index:2500; display:flex; align-items:flex-end;
+            justify-content:center; background:rgba(17,27,39,.30); padding:0 12px 12px;
+            opacity:0; visibility:hidden; transition:opacity .2s ease, visibility .2s;
+            pointer-events:none; }
+        .dados-modal.open { opacity:1; visibility:visible; }
+        .dados-modal .dados-card { pointer-events:auto; }
+        .dados-card { position:relative; width:min(1080px, 96vw); max-height:62vh; overflow:hidden;
+            display:flex; flex-direction:column; background:#fff; border-radius:12px;
+            border-top:7px solid var(--pso-teal); padding:18px 22px 14px;
+            box-shadow:0 18px 55px rgba(0,0,0,.34); font-family:Arial, sans-serif;
+            transform:translateY(12px) scale(.98); transition:transform .2s ease; }
+        .dados-modal.open .dados-card { transform:translateY(0) scale(1); }
+        .dados-card h3 { margin:0 0 2px; color:var(--ufpr-dark); font-size:20px; }
+        .dados-sub { margin:0 0 8px; color:#6b7d99; font-size:13px; font-weight:700; }
+        .dados-fechar { position:absolute; top:10px; right:12px; border:0; background:transparent;
+            color:#8a93a8; font-size:19px; font-weight:800; cursor:pointer; line-height:1;
+            padding:4px 8px; border-radius:6px; }
+        .dados-fechar:hover { color:var(--accent-red); background:#fdf0ef; }
+        .dados-formula { background:#f2f7fc; border-left:5px solid var(--ufpr-blue); border-radius:4px;
+            padding:8px 12px; margin:0 0 10px; font-size:14px; color:#263548; }
+        /* No slide (nao mais em modal): 280px comportam o cabecalho duplo (46px) e as
+           9 particulas (~23px cada = 207px), com folga. Se faltar, rola. */
+        .dados-scroll { overflow:auto; max-height:300px; border:1px solid #dde5ee; border-radius:8px;
+            background:#fff; box-shadow:0 3px 10px rgba(30,50,80,0.08); }
+        table.dados-tab { width:100%; border-collapse:collapse; font-size:12.5px;
+            font-variant-numeric:tabular-nums; }
+        table.dados-tab th { position:sticky; top:0; z-index:1; background:var(--ufpr-blue); color:#fff;
+            padding:6px 8px; font-size:12px; font-weight:800; text-align:right; white-space:nowrap; }
+        table.dados-tab th:first-child { text-align:center; }
+        table.dados-tab th.grupo { background:var(--ufpr-dark); text-align:center; }
+        table.dados-tab td { border-bottom:1px solid #eef2f7; padding:5px 8px; text-align:right;
+            font-family:'Consolas','Menlo',monospace; color:#344254; white-space:nowrap; }
+        table.dados-tab td:first-child { text-align:center; font-weight:800; color:var(--ufpr-dark);
+            font-family:Arial, sans-serif; }
+        table.dados-tab tbody tr:nth-child(even) td { background:#f7fafd; }
+        table.dados-tab tbody tr.alvo td { background:#fdecea !important; }
+        table.dados-tab tbody tr.alvo td:first-child { box-shadow:inset 3px 0 0 var(--accent-red); }
+        table.dados-tab tbody tr.melhor td { font-weight:800; color:#14603a; }
+        table.dados-tab .c-iner { color:#7a8497; }
+        table.dados-tab .c-cog  { color:#c0392b; }
+        table.dados-tab .c-soc  { color:#17787d; }
+        table.dados-tab .c-res  { font-weight:800; color:var(--ufpr-dark); }
+        /* realce da coluna que a fase corrente esta calculando */
+        table.dados-tab .foco { background:#fff6d9 !important; box-shadow:inset 0 0 0 1px #f0c96b; }
+        table.dados-tab th.foco { background:#a8710a !important; }
+        .dados-nota { margin:8px 0 0; font-size:11.5px; color:#8a93a8; }
+        @media print { .dados-modal { display:none !important; } }
+
+        /* Tabela de iteracoes ao lado da animacao do ciclo */
+        /* Abaixo da animacao, em largura total: cabem ~9 iteracoes, o resto rola */
+        .tab-scroll { max-height:200px; overflow-y:auto; border:1px solid #dde5ee; border-radius:8px;
+            background:#fff; box-shadow:0 3px 10px rgba(30,50,80,0.08); margin-top:4px; }
+        .tab-scroll table.tab-iter thead th { position:sticky; top:0; z-index:1; }
+        table.tab-iter { font-size:0.52em; margin-top:0; table-layout:fixed; }
+        table.tab-iter th { padding:3px 6px; font-size:1.0em; }
+        table.tab-iter td { padding:2px 6px; text-align:right; font-variant-numeric:tabular-nums;
+            font-family:'Consolas','Menlo',monospace; }
+        table.tab-iter td:first-child, table.tab-iter th:first-child { text-align:center; width:7%; }
+        table.tab-iter tbody tr.atual td { background:#e6f0fa !important; font-weight:800; color:var(--ufpr-dark); }
+        table.tab-iter tbody tr.atual td:first-child { box-shadow:inset 3px 0 0 var(--pso-teal); }
+        table.tab-iter .v-iner { color:#7a8497; }
+        table.tab-iter .v-cog  { color:#c0392b; }
+        table.tab-iter .v-soc  { color:#17787d; }
+
         .plot-host { width:100%; height:360px; background:#fafcff; border:1px solid #dde5ee;
             border-radius:12px; box-shadow:0 3px 14px rgba(30,50,80,0.10); margin:2px 0 4px; }
         .plot-toolbar { display:flex; align-items:center; gap:8px; margin:6px 0 4px; flex-wrap:wrap; }
@@ -358,19 +429,26 @@
         <!-- 9. O ciclo animado -->
         <section class="compact" id="slide-pso-ciclo">
             <h2>O Ciclo do PSO</h2>
-            <p>Cada iteração percorre as mesmas quatro etapas para todas as partículas:</p>
             <div class="plot-toolbar" style="margin:2px 0 4px;">
-                <button class="plot-btn go" id="btnPsoCiclo">↻ Reiniciar animação</button>
+                <button class="plot-btn go" id="btnPsoPlay">▶ Play</button>
+                <button class="plot-btn" id="btnPsoAnt" title="fase anterior">⏮ </button>
+                <button class="plot-btn" id="btnPsoProx" title="próxima fase"> ⏭</button>
+                <button class="plot-btn" id="btnPsoCiclo" title="voltar ao início">↻ </button>
+                <span style="font-size:.6em; font-weight:800; color:#48566b; margin-left:6px;">ir para:</span>
                 <button class="plot-btn" data-fase="0">1 · Avaliar</button>
-                <button class="plot-btn" data-fase="1">2 · Atualizar $p_i$ e $g$</button>
-                <button class="plot-btn" data-fase="2">3 · Nova velocidade</button>
+                <button class="plot-btn" data-fase="1">2 · $p_i$ e $g$</button>
+                <button class="plot-btn" data-fase="2">3 · Velocidade</button>
                 <button class="plot-btn" data-fase="3">4 · Mover</button>
             </div>
             <div class="stage-box"><div id="anim-pso"></div></div>
-            <div class="formula-box" style="font-size:0.78em; margin:4px 0;">
-                A partícula <b>nunca é descartada</b>: ela carrega sua memória $p_i$ para sempre. O que muda a cada iteração é apenas a <b>velocidade</b> — e é a soma dos três vetores que decide para onde ela vai.
+            <p class="dados-sub" id="psoDadosSub" style="margin:4px 0 3px;"></p>
+            <div class="dados-scroll">
+                <table class="dados-tab" id="psoDadosTab">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
             </div>
-            <p class="stage-cap">Note o mecanismo: quanto mais longe de $g$, maior o termo social — a atração cresce com a distância, como uma mola.</p>
+            <p class="stage-cap" style="margin-top:3px;">Uma linha por <b>partícula</b>. As colunas <b style="background:#fff6d9; padding:0 3px;">realçadas</b> são as que a fase corrente calcula. Linha <b style="color:#c0392b">vermelha</b>: partícula destacada no gráfico · <b style="color:#14603a">verde</b>: melhor da iteração. $v = $ inércia $+$ cognitivo $+$ social.</p>
         </section>
 
         <!-- 10. Parâmetros -->
@@ -909,16 +987,118 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
        que compoem a nova velocidade desenhados explicitamente.
        ===================================================================== */
     (function () {
-        const W = 880, H = 300;
+        // Altura moderada: a figura nao pode crescer a ponto de empurrar a tabela
+        // para fora do slide. O ganho de espaco vem do DOMINIO, nao do tamanho.
+        const W = 700, H = 178;
         // paisagem 1D: um vale bom (global) e dois rasos, so para ilustrar
         const fP = x => 0.9*Math.sin(x*1.6) + 0.5*Math.sin(x*3.1 + 1) + 0.05*x*x;
-        const XA = -6, XB = 6, X0 = 46, X1 = 842, Y0 = 78, Y1 = 232;
+        // Dominio ajustado a faixa que as particulas de fato percorrem (-2,2 a 3,5):
+        // com [-4,5; 4,5] elas ocupavam so 63% da largura, deixando as bordas vazias.
+        // Agora usam ~83%, e a curva preenche a area util da ilustracao.
+        const XA = -2.8, XB = 4.1, X0 = 26, X1 = 680, Y0 = 54, Y1 = 146;
         const sx = x => X0 + (x - XA) / (XB - XA) * (X1 - X0);
-        const sy = f => Y1 - (f + 2.2) / 5.2 * (Y1 - Y0);
+        // Escala vertical casada com a faixa REAL de f no dominio plotado
+        // (f vai de -1,344 a 1,542). A folga equivale a ~9px, so o bastante para o
+        // marcador da particula nao ser cortado — assim a curva preenche a area.
+        const F_LO = -1.59, F_HI = 1.79;
+        const sy = f => Y1 - (f - F_LO) / (F_HI - F_LO) * (Y1 - Y0);
         const N = 9;
 
-        let parts = [], marcasP = [], marcaG = null, setas = [], rotP = null, subP = null, hist = [];
+        let parts = [], nums = [], marcasP = [], marcaG = null, setas = [], rotP = null, subP = null, hist = [];
+        const IDX_TAB = 0;              // particula acompanhada na tabela de iteracoes
 
+        /* ---- Janela de dados: os calculos de TODAS as particulas -----------------
+           Mostra, para a iteracao e fase correntes, os numeros que entram em cada
+           termo da equacao de velocidade. As colunas da fase em curso ficam
+           realcadas, ligando o passo da animacao a conta que ele representa.      */
+        let ultimoDado = '', estadoAtual = { it: 0, fase: 0 };
+
+        const fmt = (x, d) => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(d === undefined ? 3 : d).replace('.', ',');
+        const fmtU = (x, d) => x.toFixed(d === undefined ? 3 : d).replace('.', ',');
+
+        // colunas realcadas em cada fase: 0 avaliar | 1 memorias | 2 velocidade | 3 mover
+        const FOCO_FASE = [['fx'], ['pi', 'fpi', 'g'], ['iner', 'cog', 'soc', 'v'], ['x', 'xn']];
+
+        function preencherDados(it, fase) {
+            // a tabela vive no proprio slide: preenche sempre que houver historico
+            if (!document.getElementById('psoDadosTab') || !hist.length) return;
+            const chave = it + ':' + fase;
+            if (chave === ultimoDado) return;          // evita reconstruir a cada quadro
+            ultimoDado = chave;
+
+            const h = hist[Math.max(0, Math.min(hist.length - 1, it))];
+            const prox = hist[Math.min(hist.length - 1, it + 1)];
+            const foco = FOCO_FASE[fase] || [];
+            const cls = k => foco.includes(k) ? ' class="foco"' : '';
+            const nomeFase = ['1 · Avaliar f(xᵢ)', '2 · Atualizar pᵢ e g',
+                              '3 · Nova velocidade', '4 · Mover'][fase];
+
+            // cabecalho: estado da iteracao + a formula com cada termo na sua cor
+            document.getElementById('psoDadosSub').innerHTML =
+                `Iteração <b>${it + 1}</b>/${hist.length} · <b>${nomeFase}</b> · ` +
+                `w = <b>${fmtU(h.w, 2)}</b> · g = <b>${fmtU(h.g, 3)}</b> ` +
+                `(f = ${fmtU(h.fg !== undefined ? h.fg : fP(h.g), 3)})` +
+                ' &nbsp;&nbsp;|&nbsp;&nbsp; <b>v<sub>i</sub></b> = ' +
+                '<span style="color:#7a8497">w·v<sub>i</sub></span> + ' +
+                '<span style="color:#c0392b">c₁r₁(p<sub>i</sub>−x<sub>i</sub>)</span> + ' +
+                '<span style="color:#17787d">c₂r₂(g−x<sub>i</sub>)</span>' +
+                ' <span style="color:#8a93a8">(c₁ = c₂ = 1,49)</span>';
+
+            const tab = document.getElementById('psoDadosTab');
+            tab.querySelector('thead').innerHTML =
+                '<tr>' +
+                '<th rowspan="2">i</th>' +
+                `<th${cls('x')} rowspan="2">xᵢ</th>` +
+                `<th${cls('fx')} rowspan="2">f(xᵢ)</th>` +
+                `<th${cls('pi')} rowspan="2">pᵢ</th>` +
+                `<th${cls('fpi')} rowspan="2">f(pᵢ)</th>` +
+                '<th class="grupo" colspan="3">termos da velocidade</th>' +
+                `<th${cls('v')} rowspan="2">vᵢ</th>` +
+                // "xi novo" e nao "xi + vi": a velocidade passa por vmax e a posicao
+                // pelo dominio, entao a soma literal nem sempre fecha
+                `<th${cls('xn')} rowspan="2" title="após limitar v a vmáx e x ao domínio">xᵢ novo</th>` +
+                '</tr><tr>' +
+                `<th${cls('iner')}>w·vᵢ</th>` +
+                `<th${cls('cog')}>c₁r₁(pᵢ−xᵢ)</th>` +
+                `<th${cls('soc')}>c₂r₂(g−xᵢ)</th>` +
+                '</tr>';
+
+            // melhor particula da iteracao, para marcar em verde
+            let iMelhor = 0;
+            h.X.forEach((x, i) => { if (h.fx[i] < h.fx[iMelhor]) iMelhor = i; });
+
+            const linhas = h.X.map((x, i) => {
+                const v = h.vet[i];
+                const soma = v.iner + v.cog + v.soc;
+                const marca = (i === IDX_TAB ? ' alvo' : '') + (i === iMelhor ? ' melhor' : '');
+                return '<tr class="' + marca.trim() + '">' +
+                    `<td>${i + 1}</td>` +
+                    `<td${cls('x')}>${fmt(x)}</td>` +
+                    `<td${cls('fx')}>${fmt(h.fx[i])}</td>` +
+                    `<td${cls('pi')}>${fmt(h.P[i])}</td>` +
+                    `<td${cls('fpi')}>${fmt(h.fPb[i])}</td>` +
+                    `<td class="c-iner${foco.includes('iner') ? ' foco' : ''}">${fmt(v.iner)}` +
+                        `<span style="color:#aab3c0"> = ${fmtU(h.w, 2)}·${fmt(v.vAnt, 2)}</span></td>` +
+                    `<td class="c-cog${foco.includes('cog') ? ' foco' : ''}">${fmt(v.cog)}` +
+                        `<span style="color:#aab3c0"> r₁=${fmtU(v.r1, 2)}</span></td>` +
+                    `<td class="c-soc${foco.includes('soc') ? ' foco' : ''}">${fmt(v.soc)}` +
+                        `<span style="color:#aab3c0"> r₂=${fmtU(v.r2, 2)}</span></td>` +
+                    `<td class="c-res${foco.includes('v') ? ' foco' : ''}">${fmt(soma)}</td>` +
+                    `<td${cls('xn')}>${fmt(prox.X[i])}</td>` +
+                '</tr>';
+            }).join('');
+            tab.querySelector('tbody').innerHTML = linhas;
+        }
+
+        // Marcos de fase, em tempo GLOBAL: as 4 fases sao internas a cada uma das 26
+        // iteracoes, entao cada marco local vale (k + l + margem) / 26 na linha do
+        // tempo. Usados pelos botoes de passo a passo e de salto direto para a fase.
+        const NIT_PSO = 26, LOC_FASE = [0, 0.26, 0.52, 0.76];
+        const MARCOS_PSO = [];
+        for (let k = 0; k < NIT_PSO; k++)
+            LOC_FASE.forEach(l => MARCOS_PSO.push((k + l + 0.02) / NIT_PSO));
+
+        // Setas dos vetores: criadas uma vez e reposicionadas a cada quadro.
         function seta(svg, cor, larg) {
             const g = svgEl('g', { opacity: 0 });
             const l = svgEl('line', { stroke: cor, 'stroke-width': larg, 'stroke-linecap': 'round' });
@@ -938,6 +1118,7 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
 
         ANIM['anim-pso'] = {
             dur: 13000,
+            fases: MARCOS_PSO,
             build() {
                 const svg = mkSvg('anim-pso', W, H);
                 // curva da paisagem
@@ -957,11 +1138,14 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
                 for (let k = 0; k < 26; k++) {
                     const w = 0.9 - 0.5 * k / 25;
                     // guarda o ESTADO ANTES do movimento, com os vetores desta iteracao
+                    // guarda tambem r1, r2 e a velocidade anterior: o modal de dados
+                    // reconstroi a conta completa de cada termo, nao so o resultado
                     const vet = X.map((x, i) => {
                         const r1 = rand(), r2 = rand();
-                        return { iner: w * V[i], cog: 1.49 * r1 * (P[i] - x), soc: 1.49 * r2 * (g - x) };
+                        return { iner: w * V[i], cog: 1.49 * r1 * (P[i] - x), soc: 1.49 * r2 * (g - x),
+                                 r1, r2, vAnt: V[i] };
                     });
-                    hist.push({ X: X.slice(), P: P.slice(), g, vet });
+                    hist.push({ X: X.slice(), P: P.slice(), g, vet, w, fg, fx: X.map(fP), fPb: fPb.slice() });
                     for (let i = 0; i < N; i++) {
                         V[i] = vet[i].iner + vet[i].cog + vet[i].soc;
                         V[i] = Math.max(-1.1, Math.min(1.1, V[i]));
@@ -981,18 +1165,30 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
                 marcaG = svgEl('circle', { r: 9, fill: 'none', stroke: '#17787d', 'stroke-width': 3 });
                 svg.appendChild(marcaG);
                 for (let i = 0; i < N; i++) {
-                    const c = svgEl('circle', { r: 6, fill: '#17787d', stroke: '#fff', 'stroke-width': 1.6 });
+                    // a particula RASTREADA ganha contorno vermelho: e a que aparece na tabela
+                    const alvo = i === IDX_TAB;
+                    // circulo um pouco maior: precisa acomodar o numero da particula
+                    const c = svgEl('circle', { r: alvo ? 9.5 : 8.5, fill: '#17787d',
+                        stroke: alvo ? '#c0392b' : '#fff', 'stroke-width': alvo ? 2.6 : 1.6 });
                     svg.appendChild(c); parts.push(c);
+                    // indice i dentro do circulo: liga cada particula a sua linha na tabela
+                    const n = svgEl('text', { 'text-anchor': 'middle', 'font-size': 9.5,
+                        'font-weight': 800, fill: '#fff', 'pointer-events': 'none' });
+                    n.textContent = i + 1;
+                    svg.appendChild(n); nums.push(n);
                     setas.push({ iner: seta(svg, '#7a8497', 2.4), cog: seta(svg, '#c0392b', 2.4), soc: seta(svg, '#17787d', 2.4) });
                 }
-                rotP = svgEl('text', { x: W/2, y: 22, 'text-anchor': 'middle', class: 'svg-title' });
+                // textos das etapas descidos ~50px: ficam sobre a area do grafico, acima da
+                // curva, aproximando a descricao da acao que ela narra
+                rotP = svgEl('text', { x: W/2, y: 18, 'text-anchor': 'middle', class: 'svg-title' });
                 svg.appendChild(rotP);
-                subP = svgEl('text', { x: W/2, y: 42, 'text-anchor': 'middle', class: 'svg-label' });
+                subP = svgEl('text', { x: W/2, y: 34, 'text-anchor': 'middle', class: 'svg-label' });
                 svg.appendChild(subP);
                 // legenda dos vetores
                 const leg = [['inércia  w·v', '#7a8497'], ['cognitivo  c₁r₁(pᵢ−xᵢ)', '#c0392b'], ['social  c₂r₂(g−xᵢ)', '#17787d']];
                 leg.forEach(([txt, cor], i) => {
-                    const x = 60 + i * 250;
+                    // distribui as tres entradas na largura util do viewBox
+                    const x = 24 + i * ((W - 60) / 3);
                     svg.appendChild(svgEl('line', { x1: x, y1: H - 12, x2: x + 22, y2: H - 12, stroke: cor, 'stroke-width': 3, 'stroke-linecap': 'round' }));
                     const t = svgEl('text', { x: x + 28, y: H - 8, class: 'svg-label', fill: cor });
                     t.textContent = txt; svg.appendChild(t);
@@ -1001,6 +1197,7 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
             draw(t) {
                 // Quatro fases por iteracao: avaliar / atualizar p e g / vetores / mover.
                 // A animacao percorre varias iteracoes; dentro de cada uma, as 4 fases.
+                if (!hist.length) return;      // draw antes do build: nada a desenhar
                 const NIT = hist.length;
                 const passo = 1 / NIT;
                 const it = Math.max(0, Math.min(NIT - 1, Math.floor(t / passo)));
@@ -1010,15 +1207,22 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
 
                 // fase local: 0 avaliar | 1 memorias | 2 vetores | 3 mover
                 const fase = loc < 0.26 ? 0 : loc < 0.52 ? 1 : loc < 0.76 ? 2 : 3;
+                estadoAtual = { it, fase };
+                preencherDados(it, fase); // janela de dados, se estiver aberta
                 const fl = fase === 0 ? loc / 0.26 : fase === 1 ? (loc - 0.26) / 0.26
                          : fase === 2 ? (loc - 0.52) / 0.24 : (loc - 0.76) / 0.24;
 
                 h.X.forEach((x, i) => {
                     // na fase 3 a particula desliza para a posicao da proxima iteracao
                     const xr = fase === 3 ? lerp(x, prox.X[i], ease(fl)) : x;
-                    parts[i].setAttribute('cx', sx(xr).toFixed(1));
-                    parts[i].setAttribute('cy', sy(fP(xr)).toFixed(1));
+                    const px = sx(xr), py = sy(fP(xr));
+                    parts[i].setAttribute('cx', px.toFixed(1));
+                    parts[i].setAttribute('cy', py.toFixed(1));
                     parts[i].setAttribute('opacity', fase === 0 ? (0.35 + 0.65 * fl).toFixed(2) : 1);
+                    // o numero acompanha o circulo (+3,3 centraliza verticalmente o texto)
+                    nums[i].setAttribute('x', px.toFixed(1));
+                    nums[i].setAttribute('y', (py + 3.3).toFixed(1));
+                    nums[i].setAttribute('opacity', parts[i].getAttribute('opacity'));
                     // marca de p_i aparece na fase 1
                     marcasP[i].setAttribute('transform',
                         `translate(${sx(h.P[i]).toFixed(1)},${(sy(fP(h.P[i])) + 13).toFixed(1)})`);
@@ -1038,16 +1242,18 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
                 marcaG.setAttribute('cy', sy(fP(h.g)).toFixed(1));
                 marcaG.setAttribute('opacity', fase >= 1 ? 1 : 0.3);
 
+                // Titulo: o QUE esta sendo feito. Subtitulo: o que isso SIGNIFICA e
+                // por que a etapa existe — narra a acao, em vez de so definir simbolos.
                 rotP.textContent =
-                    fase === 0 ? `${it + 1}ª iteração · 1 · Avaliar f(xᵢ) em cada partícula`
-                  : fase === 1 ? `${it + 1}ª iteração · 2 · Atualizar memórias: pᵢ (▲) e g (○)`
-                  : fase === 2 ? `${it + 1}ª iteração · 3 · Compor a nova velocidade`
-                               : `${it + 1}ª iteração · 4 · Mover: xᵢ ← xᵢ + vᵢ`;
+                    fase === 0 ? `${it + 1}ª iteração · Etapa 1 · Avaliar: quão boa é cada posição?`
+                  : fase === 1 ? `${it + 1}ª iteração · Etapa 2 · Comparar: alguém melhorou sua marca?`
+                  : fase === 2 ? `${it + 1}ª iteração · Etapa 3 · Decidir: para onde ir e com que força?`
+                               : `${it + 1}ª iteração · Etapa 4 · Mover: o enxame dá um passo`;
                 subP.textContent =
-                    fase === 0 ? 'cada partícula é uma solução candidata'
-                  : fase === 1 ? 'pᵢ = melhor posição própria · g = melhor do enxame'
-                  : fase === 2 ? 'v = inércia + cognitivo + social (soma dos três vetores)'
-                               : 'nenhuma partícula é eliminada — todas apenas mudam de lugar';
+                    fase === 0 ? 'cada partícula é uma solução candidata — calcula-se f(xᵢ) na posição em que ela está'
+                  : fase === 1 ? 'quem achou um ponto melhor que o próprio recorde atualiza pᵢ (▲); o melhor de todos vira g (○)'
+                  : fase === 2 ? 'soma de três puxões: seguir em frente (inércia), voltar ao próprio melhor (pᵢ) e ir na direção de g'
+                               : 'cada partícula anda o que sua velocidade manda — nenhuma é eliminada, todas seguem para a próxima iteração';
             }
         };
     })();
@@ -1273,26 +1479,77 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
         function garantir(id) { if (!pronto[id]) construir(id); return pronto[id]; }
         function parar() { if (raf) cancelAnimationFrame(raf); raf = null; atual = null; }
 
+        // Estado da reproducao do slide corrente: guarda a posicao na linha do tempo
+        // (0 a 1) para que seja possivel pausar, retomar e avancar passo a passo.
+        let reprod = { ids: [], dur: 0, t: 0, tocando: false };
+
+        function desenharEm(t) {
+            // Number.isFinite descarta NaN e Infinity — que apareceriam se dur fosse 0
+            // (figura ainda nao registrada). Todo desenho passa por aqui, entao esta e
+            // a barreira que garante t sempre valido para os draw().
+            reprod.t = Number.isFinite(t) ? Math.max(0, Math.min(1, t)) : 0;
+            reprod.ids.forEach(id => ANIM[id].draw(reprod.t));
+        }
+
         // Toca as figuras do slide. 'inicio' (0 a 1) permite recomecar de um ponto
-        // qualquer da linha do tempo — usado pelos botoes de fase do ciclo do ABC.
-        function tocar(slide, inicio) {
+        // qualquer da linha do tempo — usado pelos botoes de fase e de passo.
+        function tocar(slide, inicio, autoPlay) {
             parar();
             if (!slide) return;
             const ids = Object.keys(ANIM).filter(id => slide.querySelector('#' + id) && garantir(id));
+            reprod = { ids, dur: ids.length ? Math.max(...ids.map(id => ANIM[id].dur)) : 0,
+                       t: inicio || 0, tocando: false };
             if (!ids.length) return;
-            const t0 = performance.now();
-            const dur = Math.max(...ids.map(id => ANIM[id].dur));
-            const desl = (inicio || 0) * dur;          // deslocamento inicial, em ms
+            desenharEm(reprod.t);
+            if (autoPlay === false) { sinalizarPlay(); return; }
+            retomar();
+        }
+
+        // Retoma a partir da posicao corrente (nao reinicia do zero).
+        function retomar() {
+            if (!reprod.ids.length || reprod.tocando) return;
+            if (reprod.t >= 1) reprod.t = 0;          // no fim, o play recomeca
+            parar();
+            const dur = reprod.dur, base = reprod.t * dur, t0 = performance.now();
+            reprod.tocando = true;
             atual = { dur };
             const meu = atual;
             (function loop(now) {
                 if (atual !== meu) return;
-                const el = (now - t0) * globalAnimSpeed + desl;
+                const el = (now - t0) * globalAnimSpeed + base;
                 // t sempre em [0,1]: o rAF pode entregar timestamp anterior a t0
-                ids.forEach(id => ANIM[id].draw(Math.max(0, Math.min(1, el / ANIM[id].dur))));
+                desenharEm(el / dur);
                 if (el < dur) raf = requestAnimationFrame(loop);
-                else raf = null;
+                else { raf = null; reprod.tocando = false; sinalizarPlay(); }
             })(performance.now());
+            sinalizarPlay();
+        }
+
+        function pausar() {
+            parar();
+            reprod.tocando = false;
+            sinalizarPlay();
+        }
+
+        // Avanca/retrocede uma fase (as figuras declaram os limiares em ANIM[id].fases).
+        function passo(dir) {
+            if (!reprod.ids.length) return;
+            pausar();
+            const marcos = ANIM[reprod.ids[0]].fases;
+            if (!marcos || !marcos.length) {          // sem fases: passo de 5%
+                desenharEm(reprod.t + dir * 0.05);
+                return;
+            }
+            const eps = 1e-4;
+            const alvo = dir > 0
+                ? marcos.find(m => m > reprod.t + eps)
+                : [...marcos].reverse().find(m => m < reprod.t - eps);
+            desenharEm(alvo === undefined ? (dir > 0 ? 1 : 0) : alvo);
+        }
+
+        function sinalizarPlay() {
+            const b = document.getElementById('btnPsoPlay');
+            if (b) b.textContent = reprod.tocando ? '⏸ Pausar' : '▶ Play';
         }
 
         function aoEntrar(slide) {
@@ -1302,34 +1559,43 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
                 if (slide.querySelector('#plot-pso')) window.__psoPlot.mostrar();
                 else window.__psoPlot.ocultar();
             }
-            tocar(slide, 0);
+            // O slide do ciclo do PSO entra PAUSADO no primeiro quadro, para a fase 1
+            // poder ser explicada antes de avancar. Os demais slides tocam sozinhos.
+            const manual = !!slide.querySelector('#btnPsoPlay');
+            tocar(slide, 0, !manual);
         }
 
         // Exposto para os controles de reinicio/fase dos slides
         window.__anim = {
-            reiniciar(inicio) { tocar(Reveal.getCurrentSlide(), inicio || 0); }
+            reiniciar(inicio) { tocar(Reveal.getCurrentSlide(), inicio || 0); },
+            // posiciona sem tocar (usado pelos saltos de fase, que param no quadro)
+            irPara(inicio) { tocar(Reveal.getCurrentSlide(), inicio || 0, false); },
+            play() { retomar(); },
+            pausa() { pausar(); },
+            passo(dir) { passo(dir); },
+            tocando() { return reprod.tocando; }
         };
 
-        // Controles do slide "O Ciclo do PSO": reiniciar e saltar para uma fase.
-        // ATENCAO: na figura anim-pso as quatro fases sao internas a CADA iteracao,
-        // e a animacao percorre NIT iteracoes. Logo a fase F comeca, em tempo GLOBAL,
-        // em (1/NIT) * inicio_local(F) — e nao em inicio_local(F). Usar o valor local
-        // direto faria os botoes caírem em iteracoes adiantadas e na fase errada.
+        // Controles do slide "O Ciclo do PSO": play/pausa, passo a passo, reinicio e
+        // salto direto para uma fase da PRIMEIRA iteracao.
         (function () {
-            const NIT = 26;                       // iteracoes simuladas em anim-pso
-            const LOCAL = [0, 0.26, 0.52, 0.76];  // limiares dentro de uma iteracao
-            const MARGEM = 0.02;                  // entra com folga dentro da faixa
-            const INICIO_FASE = LOCAL.map(l => (l + (l ? MARGEM : MARGEM / 2)) / NIT);
+            const NIT = 26, LOCAL = [0, 0.26, 0.52, 0.76], MARGEM = 0.02;
+            const INICIO_FASE = LOCAL.map(l => (l + MARGEM) / NIT);
             document.addEventListener('DOMContentLoaded', () => {
-                const rb = document.getElementById('btnPsoCiclo');
-                if (rb) rb.addEventListener('click', ev => {
-                    ev.stopPropagation();
-                    window.__anim.reiniciar(0);
-                });
+                const liga = (id, fn) => {
+                    const b = document.getElementById(id);
+                    if (b) b.addEventListener('click', ev => { ev.stopPropagation(); fn(); });
+                };
+                liga('btnPsoPlay',  () => window.__anim.tocando() ? window.__anim.pausa() : window.__anim.play());
+                liga('btnPsoProx',  () => window.__anim.passo(+1));
+                liga('btnPsoAnt',   () => window.__anim.passo(-1));
+                // reiniciar volta ao primeiro quadro e FICA pausado, pronto para o passo a passo
+                liga('btnPsoCiclo', () => window.__anim.irPara(0));
                 document.querySelectorAll('.plot-btn[data-fase]').forEach(b => {
                     b.addEventListener('click', ev => {
                         ev.stopPropagation();
-                        window.__anim.reiniciar(INICIO_FASE[+b.dataset.fase] || 0);
+                        // salta e PARA no quadro, para a fase poder ser explicada
+                        window.__anim.irPara(INICIO_FASE[+b.dataset.fase] || 0);
                     });
                 });
             });
