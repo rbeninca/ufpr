@@ -41,7 +41,7 @@
               border-radius: 6px; border: 1px solid #5b6a7d; background: #2a3646; color: #fff; cursor: pointer; }
         .psoBtn:hover { background: #364559; }
         .psoBtn:disabled { opacity: .4; cursor: default; }
-        .psoBtn.go { background: #1f6f43; border-color: #2c9c5e; }
+        .psoBtn.go { background: #1f6f43; border-color: #43d886; }
         .psoBtn.go:hover { background: #24824d; }
         #psoGbest { font-size: 12px; color: #ffe7a3; margin-left: auto; text-align: right; line-height: 1.5; }
         #psoScroll { overflow-x: auto; }
@@ -134,7 +134,7 @@
         import { clone as clonarComEsqueleto } from 'three/addons/utils/SkeletonUtils.js';
 
         // --- CONFIGURAÇÕES ---
-        const WORLD_SIZE = 800;
+        const WORLD_SIZE = 1200;
         const TREE_COUNT = 800;
         const ROCK_COUNT = 1000;
         const ALTURA_MAX = 100;       // altura visual do relevo apos normalizado (unidades de mundo)
@@ -313,7 +313,7 @@
             document.body.appendChild(renderer.domElement);
 
             controls = new OrbitControls(camera, renderer.domElement);
-            controls.maxDistance = 1200;
+            controls.maxDistance = 2000;
             clock = new THREE.Clock();
             ligarPainelCamera();
 
@@ -326,7 +326,9 @@
             sun.setFromSphericalCoords(1, phi, THREE.MathUtils.degToRad(180));
             sky.material.uniforms['sunPosition'].value.copy(sun);
 
-            scene.fog = new THREE.Fog(0x87CEEB, 400, 2000);
+            // Neblina desligada por pedido do usuario: queria nitidez total
+            // ao afastar a camera, sem o desbotamento gradual para o azul do
+            // ceu que o THREE.Fog produzia a partir de 400 unidades.
 
             // Sem sombras projetadas, o relevo ainda ganha volume pelo
             // sombreamento normal do MeshStandardMaterial: encostas viradas
