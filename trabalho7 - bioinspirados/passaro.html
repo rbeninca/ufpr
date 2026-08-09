@@ -55,6 +55,15 @@
         table.psoTab td.psoSoLeitura { color: #b9c6d6; }
         table.psoTab tr.psoGbestRow td { background: rgba(255, 210, 122, 0.12); }
         #psoAjuda { font-size: 10.5px; color: #93a3b8; margin-top: 6px; }
+        table.psoTab .psoColHead { cursor: pointer; padding: 1px 4px; border-radius: 3px; display: inline-block; }
+        table.psoTab .psoColHead:hover { background: rgba(255,255,255,.12); }
+        table.psoTab .psoColHead.psoSeguindo { background: #2a7fd6; color: #fff; }
+        table.psoTab .psoHistBtn { font-size: 8.5px; font-weight: 700; padding: 1px 5px; margin-left: 3px;
+              border-radius: 3px; border: 1px solid #5b6a7d; background: #2a3646; color: #cfe3ff; cursor: pointer; }
+        table.psoTab .psoHistBtn:hover { background: #364559; }
+        table.psoTab .psoHistBtn.psoHistAtivo { background: #b8590f; border-color: #e07a3f; color: #fff; }
+        table.psoTab .psoHistBtn.psoHistParcial { background: #7a4a20; border-color: #e07a3f; color: #ffd9b0; }
+        table.psoTab th.psoRot .psoHistBtn { position: static; }
     </style>
 </head>
 <body>
@@ -75,11 +84,13 @@
         <select id="fnSelect"></select>
         <div id="fnCarregando">gerando terreno…</div>
         <button class="psoBtn" id="btnEixos" style="margin-top:10px; width:100%;">Mostrar eixos e grades</button>
+        <button class="psoBtn" id="btnCinema" style="margin-top:6px; width:100%;">🎥 Câmera cinematográfica</button>
+        <button class="psoBtn go" id="btnCompartilhar" style="margin-top:6px; width:100%;">🔗 Compartilhar</button>
     </div>
     <div id="waterPicker">
         <div class="seek-col">
             <label for="waterSlider">Nível<br>da água</label>
-            <input type="range" id="waterSlider" min="0" max="100" value="50" step="1">
+            <input type="range" id="waterSlider" min="0" max="100" value="50" step="0.1">
             <span id="waterValor">—</span>
         </div>
         <div class="seek-col">
@@ -99,9 +110,10 @@
             <button class="psoBtn go" id="btnPsoPlay" disabled>▶ Play</button>
             <label id="psoVelLabel" style="display:flex; align-items:center; gap:6px;">
                 Velocidade
-                <input type="range" id="psoVel" min="1" max="10" value="3" step="1" style="width:90px;">
-                <span id="psoVelValor">3</span>
+                <input type="range" id="psoVel" min="1" max="10" value="1" step="1" style="width:90px;">
+                <span id="psoVelValor">1</span>
             </label>
+            <button class="psoBtn" id="btnCameraLivre" style="display:none;">📷 Câmera livre</button>
             <span id="psoGbest">enxame não iniciado</span>
         </div>
         <div id="psoScroll">
@@ -110,7 +122,9 @@
                 <tbody></tbody>
             </table>
             <table class="psoTab" id="psoTabEstado" style="display:none; margin-top:8px;">
-                <thead><tr><th class="psoRot">parâmetro</th></tr></thead>
+                <thead><tr><th class="psoRot">parâmetro
+                    <button class="psoHistBtn" id="btnHistTodos" title="mostrar/ocultar rastro de voo de todas as partículas">hist</button>
+                </th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -137,8 +151,8 @@
         const WORLD_SIZE = 1200;
         const TREE_COUNT = 800;
         const ROCK_COUNT = 1000;
-        const ALTURA_MAX = 100;       // altura visual do relevo apos normalizado (unidades de mundo)
-        let LAKE_FRAC = 0.09;        // fracao da altura normalizada que vira lago (0..1);
+        const ALTURA_MAX = 200;       // altura visual do relevo apos normalizado (unidades de mundo)
+        let LAKE_FRAC = 0.01;        // fracao da altura normalizada que vira lago (0..1);
                                      // ajustavel pelo seekbar vertical de nivel da agua
         const ROCK_FRAC = 0.5;       // acima dessa fracao normalizada, vira "rocha" (picos)
 
@@ -274,7 +288,7 @@
         let scene, camera, renderer, mixer, clock, bird, controls;
         let terrainGroup;   // grupo com tudo que depende da funcao (terreno, agua, arvores, rochas)
         let waterMesh;      // referencia direta a agua, para o seekbar mover sem reconstruir tudo
-        let birdScale = 0.2; // escala do passaro, ajustavel pelo seekbar (valor original do modelo)
+        let birdScale = 0.4; // escala do passaro, ajustavel pelo seekbar (valor original do modelo)
 
         // referencias aos spans do painel de camera, resolvidas uma vez
         const uiCam = {};
@@ -304,7 +318,7 @@
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1.0, 20000);
-            camera.position.set(150, 100, 250);
+            camera.position.set(955, 837, 1000);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -339,11 +353,13 @@
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
             dirLight.position.copy(sun).multiplyScalar(200);
             scene.add(dirLight);
-            scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+            scene.add(new THREE.AmbientLight(0xffffff, 1.2));
             scene.add(new THREE.HemisphereLight(0xbfd9ff, 0x3a4a2a, 1.1));
 
             construirEixosEGrades();
             ligarBotaoEixos();
+            ligarSobrevoo();
+            ligarBotaoCinema();
 
             prepararFuncao(fnAtual);
             construirTerreno();
@@ -351,16 +367,26 @@
             // --- PÁSSARO --- (voo decorativo ate o enxame PSO ser iniciado)
             const loader = new GLTFLoader();
             loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Stork.glb', (gltf) => {
-                bird = gltf.scene;
-                bird.scale.setScalar(birdScale);
-                scene.add(bird);
-                mixer = new THREE.AnimationMixer(bird);
-                mixer.clipAction(gltf.animations[0]).play();
                 // guarda o modelo original para clonar quando o enxame for
                 // iniciado (clonarComEsqueleto preserva bones/skinning, ao
                 // contrario de um clone() simples de Object3D)
                 birdTemplate.scene = gltf.scene;
                 birdTemplate.clip = gltf.animations[0];
+                if (pso) {
+                    // o enxame ja foi iniciado (ex.: auto-inicio via URL com
+                    // play=1/cinema=1/hist=1/camera) ANTES do GLTF terminar
+                    // de carregar — construirPassarosPSO() saiu sem criar
+                    // nenhum clone naquela hora (birdTemplate.scene ainda era
+                    // null); agora que o modelo chegou, criamos os passaros
+                    // do enxame que ficaram faltando.
+                    construirPassarosPSO();
+                } else {
+                    bird = gltf.scene;
+                    bird.scale.setScalar(birdScale);
+                    scene.add(bird);
+                    mixer = new THREE.AnimationMixer(bird);
+                    mixer.clipAction(gltf.animations[0]).play();
+                }
             });
 
             ligarSeletor();
@@ -398,7 +424,7 @@
                 if (h < lakeLevel + ALTURA_MAX * 0.03) {
                     color.setHex(0xd2b48c); // Areia
                 } else if (h < rockLevel) {
-                    color.setHex(0x3a5a2b); // Terra / Grama
+                    color.setHex(0x5c8a44); // Terra / Grama
                 } else {
                     // Rocha (Picos): mistura cinza/marrom por vertice (ruido
                     // pseudo-aleatorio barato baseado na posicao, para nao
@@ -596,6 +622,171 @@
             btn.addEventListener('click', alternarEixos);
         }
 
+        /* =====================================================================
+           SOBREVOO — camera acompanha uma particula do enxame ao clicar no
+           cabecalho da sua coluna na tabela de estado. Mantem o OFFSET
+           relativo (camera - target) capturado no instante em que o
+           acompanhamento comeca, entao o usuario pode continuar orbitando/
+           dando zoom com o mouse enquanto a particula se move — a camera
+           "gruda" na particula mas preserva o angulo/distancia escolhidos.
+           ===================================================================== */
+        let seguindoParticula = null;      // indice da particula sob sobrevoo, ou null
+        let cameraLivreSalva = null;       // {pos: Vector3, target: Vector3} de antes do sobrevoo
+
+        // guarda a camera livre atual, se ainda nao houver nada salvo — chamado
+        // ao entrar em QUALQUER modo assistido (sobrevoo de particula OU
+        // cinematografico), para "Camera livre" sempre poder restaurar o
+        // ultimo estado manual do usuario, seja qual for o modo que o levou embora
+        function salvarCameraLivreSeNecessario() {
+            if (!cameraLivreSalva) {
+                cameraLivreSalva = { pos: camera.position.clone(), target: controls.target.clone() };
+            }
+        }
+
+        function iniciarSobrevoo(i) {
+            if (!pso || !birdSwarm[i]) return;
+            if (cinemaAtivo) desligarCinema();
+            salvarCameraLivreSeNecessario();
+            seguindoParticula = i;
+            document.getElementById('btnCameraLivre').style.display = '';
+            document.querySelectorAll('#psoTabEstado .psoColHead').forEach(th => {
+                th.classList.toggle('psoSeguindo', +th.dataset.p === i);
+            });
+        }
+
+        function voltarCameraLivre() {
+            seguindoParticula = null;
+            if (cinemaAtivo) desligarCinema();
+            document.getElementById('btnCameraLivre').style.display = 'none';
+            document.querySelectorAll('#psoTabEstado .psoColHead').forEach(th => th.classList.remove('psoSeguindo'));
+            if (cameraLivreSalva) {
+                camera.position.copy(cameraLivreSalva.pos);
+                controls.target.copy(cameraLivreSalva.target);
+                controls.update();
+                cameraLivreSalva = null;
+            }
+        }
+
+        // chamado a cada frame de animate() enquanto seguindoParticula != null:
+        // move o TARGET do OrbitControls para a particula, e a camera junto,
+        // preservando o offset (posicao relativa) capturado ao iniciar o sobrevoo
+        let sobrevooOffset = null;
+        function atualizarSobrevoo() {
+            if (seguindoParticula === null || !pso) return;
+            const bird3 = birdSwarm[seguindoParticula];
+            if (!bird3) return;
+            if (!sobrevooOffset) sobrevooOffset = camera.position.clone().sub(controls.target);
+            const alvo = bird3.position;
+            controls.target.copy(alvo);
+            camera.position.copy(alvo).add(sobrevooOffset);
+            controls.update();
+        }
+
+        function ligarSobrevoo() {
+            document.getElementById('psoTabEstado').addEventListener('click', ev => {
+                const histBtn = ev.target.closest('.psoHistBtn');
+                if (histBtn) {
+                    ev.stopPropagation();
+                    alternarHistorico(+histBtn.dataset.p);
+                    return;
+                }
+                const colHead = ev.target.closest('.psoColHead');
+                if (!colHead) return;
+                ev.stopPropagation();
+                sobrevooOffset = null;   // recaptura o offset relativo a partir da camera atual
+                iniciarSobrevoo(+colHead.dataset.p);
+            });
+            const btnLivre = document.getElementById('btnCameraLivre');
+            ['click', 'pointerdown', 'keydown'].forEach(t => btnLivre.addEventListener(t, ev => ev.stopPropagation()));
+            btnLivre.addEventListener('click', voltarCameraLivre);
+            // girar/zoom manualmente durante o sobrevoo muda o offset relativo;
+            // recapturamos ao soltar o mouse/toque, para a camera continuar
+            // "grudada" no novo angulo escolhido pelo usuario. Usamos o evento
+            // real de interacao do DOM (nao o 'change'/'start' do OrbitControls,
+            // que tambem dispara pelo controls.update() programatico do
+            // sobrevoo e causaria recaptura a cada frame)
+            renderer.domElement.addEventListener('pointerup', () => {
+                if (seguindoParticula !== null) sobrevooOffset = null;
+            });
+            renderer.domElement.addEventListener('wheel', () => {
+                if (seguindoParticula !== null) sobrevooOffset = null;
+            });
+        }
+
+        /* =====================================================================
+           MODO CINEMATOGRAFICO — a camera orbita lentamente em torno do
+           centro do mundo (origem), com a altura e o angulo de elevacao
+           oscilando ao longo do tempo (senoides de periodos diferentes, para
+           o movimento nao parecer repetitivo), dando uma visao ampla e
+           continua de todo o cenario. Liga/desliga por um unico botao;
+           reaproveita cameraLivreSalva para restaurar a posicao manual do
+           usuario ao desligar, do mesmo jeito que "Camera livre" faz com o
+           sobrevoo de particula.
+           ===================================================================== */
+        let cinemaAtivo = false;
+        let cinemaTempo = 0;
+        const CINEMA_RAIO_BASE = WORLD_SIZE * 0.85;   // distancia horizontal media da camera a origem
+        const CINEMA_RAIO_VAR = WORLD_SIZE * 0.25;    // variacao do raio (aproxima/afasta um pouco)
+        const CINEMA_ALT_BASE = ALTURA_MAX * 4.5;     // altura media da camera acima do relevo
+        const CINEMA_ALT_VAR = ALTURA_MAX * 3;        // variacao vertical (sobe/desce)
+        const CINEMA_VEL_ORBITA = 0.045;              // rad/s de giro em torno da origem (bem lento)
+
+        function atualizarCinema(delta) {
+            if (!cinemaAtivo) return;
+            cinemaTempo += delta;
+            const t = cinemaTempo;
+            const ang = t * CINEMA_VEL_ORBITA;
+            // raio e altura oscilam em periodos incomensuraveis com a orbita
+            // (razoes nao inteiras) para o percurso nunca se repetir de forma
+            // obvia, dando uma sensacao de sobrevoo livre e continuo
+            const raio = CINEMA_RAIO_BASE + Math.sin(t * 0.11) * CINEMA_RAIO_VAR;
+            const altura = CINEMA_ALT_BASE + Math.sin(t * 0.07 + 1.3) * CINEMA_ALT_VAR;
+            camera.position.set(Math.cos(ang) * raio, altura, Math.sin(ang) * raio);
+            // o alvo tambem balanca suavemente perto do centro do mundo, em vez
+            // de fixo na origem exata — reforca a sensacao de "olhar em volta"
+            controls.target.set(Math.sin(t * 0.05) * WORLD_SIZE * 0.08, ALTURA_MAX * 0.6,
+                Math.cos(t * 0.065) * WORLD_SIZE * 0.08);
+            controls.update();
+        }
+
+        function ligarCinema() {
+            if (seguindoParticula !== null) voltarCameraLivre();
+            salvarCameraLivreSeNecessario();
+            cinemaAtivo = true;
+            cinemaTempo = 0;
+            rotularBotaoCinema();
+        }
+
+        function desligarCinema() {
+            cinemaAtivo = false;
+            rotularBotaoCinema();
+            if (seguindoParticula === null && cameraLivreSalva) {
+                camera.position.copy(cameraLivreSalva.pos);
+                controls.target.copy(cameraLivreSalva.target);
+                controls.update();
+                cameraLivreSalva = null;
+            }
+        }
+
+        function rotularBotaoCinema() {
+            const btn = document.getElementById('btnCinema');
+            if (btn) {
+                btn.textContent = cinemaAtivo ? '🎥 Câmera cinematográfica (ligada)' : '🎥 Câmera cinematográfica';
+                btn.classList.toggle('psoHistAtivo', cinemaAtivo);
+            }
+        }
+
+        function ligarBotaoCinema() {
+            const btn = document.getElementById('btnCinema');
+            if (!btn) return;
+            ['click', 'pointerdown', 'keydown'].forEach(t => btn.addEventListener(t, ev => ev.stopPropagation()));
+            btn.addEventListener('click', () => cinemaAtivo ? desligarCinema() : ligarCinema());
+            // interagir manualmente com o mouse durante o modo cinematografico
+            // desliga o piloto automatico, devolvendo o controle ao usuario
+            renderer.domElement.addEventListener('pointerdown', () => { if (cinemaAtivo) desligarCinema(); });
+            renderer.domElement.addEventListener('wheel', () => { if (cinemaAtivo) desligarCinema(); });
+        }
+
         // Troca a funcao ativa: recalcula heightFn/lakeLevel e reconstroi o
         // terreno. O calculo de min/max (amostragem O(N^2)) e rapido o
         // bastante para nao travar a interface, mas mostramos um aviso de
@@ -651,7 +842,11 @@
                     return val;
                 });
                 const fit = fitnessAtual(x[0], x[1]);
-                return { x, v, fit, pbestX: x.slice(), pbestFit: fit };
+                // historico de posicoes (no dominio da funcao) para o rastro
+                // "hist" — guarda x e fit, a conversao p/ mundo (com a altura
+                // de voo) e feita so na hora de desenhar, reaproveitando a
+                // mesma logica de reposicionarPassarosPSO
+                return { x, v, fit, pbestX: x.slice(), pbestFit: fit, hist: [{ x: x.slice(), fit }] };
             });
             let gIdx = 0;
             parts.forEach((p, i) => { if (p.pbestFit < parts[gIdx].pbestFit) gIdx = i; });
@@ -674,6 +869,7 @@
                 }
                 p.fit = fitnessAtual(p.x[0], p.x[1]);
                 if (p.fit < p.pbestFit) { p.pbestFit = p.fit; p.pbestX = p.x.slice(); }
+                p.hist.push({ x: p.x.slice(), fit: p.fit });
             });
             let gIdx = pso.gIdx;
             pso.parts.forEach((p, i) => { if (p.pbestFit < pso.parts[gIdx].pbestFit) gIdx = i; });
@@ -769,6 +965,10 @@
             psoAnteriores = null;
             psoTempoNoQuadro = 0;
             rotularPlayPSO();
+            // as particulas do enxame anterior nao existem mais: encerra sobrevoo
+            // e descarta rastros "hist" antigos
+            if (seguindoParticula !== null) voltarCameraLivre();
+            descartarTodasTrilhas();
             construirTabelaEstado(pso.N);
             atualizarUiPSO();
             construirPassarosPSO();
@@ -782,8 +982,14 @@
             const tab = document.getElementById('psoTabEstado');
             const thead = tab.querySelector('thead tr');
             const tbody = tab.querySelector('tbody');
-            thead.innerHTML = '<th class="psoRot">parâmetro</th>' +
-                Array.from({ length: N }, (_, i) => `<th>P${i + 1}</th>`).join('');
+            thead.innerHTML = '<th class="psoRot">parâmetro' +
+                '<button class="psoHistBtn" id="btnHistTodos" title="mostrar/ocultar rastro de voo de todas as partículas">hist</button>' +
+                '</th>' +
+                Array.from({ length: N }, (_, i) =>
+                    `<th><span class="psoColHead" data-p="${i}" title="sobrevoar esta partícula">P${i + 1}</span>` +
+                    `<button class="psoHistBtn" data-p="${i}" title="mostrar/ocultar rastro de voo">hist</button></th>`
+                ).join('');
+            ligarBotaoHistTodos();
 
             const linhas = [];
             for (let d = 0; d < D; d++) linhas.push({ id: `x${d}`, rot: `x${d + 1} atual` });
@@ -944,11 +1150,143 @@
             });
         }
 
+        /* =====================================================================
+           RASTRO "HIST" — desenha, para uma particula, a curva suave
+           (CatmullRomCurve3) que passa por TODAS as posicoes ja visitadas
+           (uma por iteracao, guardadas em p.hist), convertidas para o mundo
+           3D com a altura de voo que a particula tinha em CADA iteracao —
+           entao o rastro reproduz fielmente a trajetoria voada, nao so os
+           pontos (x1,x2) no domínio da funcao.
+           ===================================================================== */
+        let trilhasAtivas = {};   // indice da particula -> THREE.Line (ou objeto) do rastro
+
+        // converte um ponto do historico (x no dominio da funcao + fit
+        // daquela iteracao k) para posicao de mundo, usando o extrasVoo
+        // calibrado para a iteracao k — reproduz a altura real de voo que a
+        // particula tinha naquele momento, nao a altura da iteracao atual
+        function pontoHistParaMundo(ponto, iterK, todosFitsDaIteracaoK) {
+            const wx = fromX(ponto.x[0]), wz = fromY(ponto.x[1]);
+            const ex = extrasVoo(iterK, todosFitsDaIteracaoK);
+            const extraRel = (ponto.fit - ex.fmin) / ex.span * ex.EXTRA_REL_MAX;
+            const wy = heightFn(wx, wz) + 8 + ex.extraDecaimento + extraRel;
+            return new THREE.Vector3(wx, wy, wz);
+        }
+
+        function construirTrilha(i) {
+            const p = pso.parts[i];
+            if (!p || p.hist.length < 2) return null;
+            // fits de TODAS as particulas em cada iteracao k, para extrasVoo
+            // calcular a mesma dispersao relativa que valia naquele momento
+            const pontos = p.hist.map((h, k) => {
+                const fitsNaIteracaoK = pso.parts.map(pp => (pp.hist[k] ? pp.hist[k].fit : pp.fit));
+                return pontoHistParaMundo(h, k, fitsNaIteracaoK);
+            });
+            const curva = new THREE.CatmullRomCurve3(pontos, false, 'catmullrom', 0.5);
+            const amostras = Math.max(2, pontos.length * 8);   // suaviza bem mais que 1 segmento/iteracao
+            const geo = new THREE.TubeGeometry(curva, amostras, 0.9, 6, false);
+            const cor = new THREE.Color().setHSL((i * 0.618033988749895) % 1, 0.75, 0.55);
+            const mat = new THREE.MeshBasicMaterial({ color: cor, transparent: true, opacity: 0.85 });
+            return new THREE.Mesh(geo, mat);
+        }
+
+        function alternarHistorico(i) {
+            if (trilhasAtivas[i]) {
+                scene.remove(trilhasAtivas[i]);
+                trilhasAtivas[i].geometry.dispose();
+                trilhasAtivas[i].material.dispose();
+                delete trilhasAtivas[i];
+            } else {
+                const trilha = construirTrilha(i);
+                if (trilha) { scene.add(trilha); trilhasAtivas[i] = trilha; }
+            }
+            document.querySelectorAll(`.psoHistBtn[data-p="${i}"]`).forEach(b =>
+                b.classList.toggle('psoHistAtivo', !!trilhasAtivas[i]));
+            // desligar uma trilha manualmente invalida a intencao "todas
+            // ligadas"; ligar a ultima que faltava a restaura
+            if (pso) histTodosLigado = Object.keys(trilhasAtivas).length === pso.N;
+            atualizarBotaoHistTodos();
+        }
+
+        // intencao persistente de "historico de todas ligado": diferente de
+        // trilhasAtivas (que so tem entrada quando ha >=2 pontos p/ desenhar
+        // a curva), esta flag continua true mesmo logo apos iniciar o enxame
+        // (hist.length=1, nada pra desenhar ainda) — e o que faz a URL
+        // compartilhada lembrar a intencao, nao so o resultado visual do
+        // momento em que o link foi gerado.
+        let histTodosLigado = false;
+
+        // liga/desliga o rastro de TODAS as particulas de uma vez. Se TODAS
+        // ja estiverem visiveis, o clique desliga todas; caso contrario
+        // (nenhuma ou so algumas visiveis), o clique liga as que faltam.
+        function alternarTodosHistoricos() {
+            if (!pso) return;
+            const todasAtivas = Object.keys(trilhasAtivas).length === pso.N;
+            histTodosLigado = !todasAtivas;
+            for (let i = 0; i < pso.N; i++) {
+                const estaAtiva = !!trilhasAtivas[i];
+                if (todasAtivas ? estaAtiva : !estaAtiva) alternarHistorico(i);
+            }
+        }
+
+        // reflete no botao "hist" do cabecalho se TODAS as particulas tem
+        // trilha visivel (ativo), NENHUMA (inativo) ou so ALGUMAS (parcial)
+        function atualizarBotaoHistTodos() {
+            const btn = document.getElementById('btnHistTodos');
+            if (!btn || !pso) return;
+            const n = Object.keys(trilhasAtivas).length;
+            btn.classList.toggle('psoHistAtivo', n === pso.N);
+            btn.classList.toggle('psoHistParcial', n > 0 && n < pso.N);
+        }
+
+        function ligarBotaoHistTodos() {
+            const btn = document.getElementById('btnHistTodos');
+            if (!btn) return;
+            ['click', 'pointerdown', 'keydown'].forEach(t => btn.addEventListener(t, ev => ev.stopPropagation()));
+            btn.addEventListener('click', alternarTodosHistoricos);
+            atualizarBotaoHistTodos();
+        }
+
+        // reconstroi as trilhas ativas apos uma nova iteracao (o historico
+        // cresceu) — chamado de umaIteracaoPSO/avancarIteracaoTocando.
+        // Tambem CRIA as trilhas que faltavam quando histTodosLigado esta
+        // ativo mas a particula so tinha 1 ponto no historico na hora do
+        // "ligar" (ex.: hist ligado via URL logo apos iniciar o enxame,
+        // antes de qualquer iteracao real ter rodado).
+        function atualizarTrilhasAtivas() {
+            Object.keys(trilhasAtivas).forEach(i => {
+                i = +i;
+                scene.remove(trilhasAtivas[i]);
+                trilhasAtivas[i].geometry.dispose();
+                trilhasAtivas[i].material.dispose();
+                const nova = construirTrilha(i);
+                if (nova) { scene.add(nova); trilhasAtivas[i] = nova; } else { delete trilhasAtivas[i]; }
+            });
+            if (histTodosLigado && pso) {
+                for (let i = 0; i < pso.N; i++) {
+                    if (!trilhasAtivas[i]) {
+                        const nova = construirTrilha(i);
+                        if (nova) { scene.add(nova); trilhasAtivas[i] = nova; }
+                    }
+                }
+            }
+            atualizarBotaoHistTodos();
+        }
+
+        function descartarTodasTrilhas() {
+            Object.values(trilhasAtivas).forEach(t => {
+                scene.remove(t);
+                t.geometry.dispose();
+                t.material.dispose();
+            });
+            trilhasAtivas = {};
+        }
+
         function umaIteracaoPSO() {
             if (!pso) return;
             iterarPSO();
             atualizarUiPSO();
             reposicionarPassarosPSO();
+            atualizarTrilhasAtivas();
             psoAnteriores = null;   // proximo play recomeca o snapshot a partir daqui
         }
 
@@ -959,7 +1297,7 @@
            nova (senao os passaros "teleportariam" a cada passo do algoritmo).
            ===================================================================== */
         let psoTocando = false;
-        let psoVelocidade = 3;             // 1 (lento) a 10 (rapido)
+        let psoVelocidade = 1;             // 1 (lento) a 10 (rapido)
         const PSO_DUR_ITER = 1.4;          // segundos por iteracao em velocidade=1
         let psoAnteriores = null;          // snapshot de x[] por particula ANTES do passo em curso
         let psoTempoNoQuadro = 0;          // segundos decorridos dentro da iteracao em curso
@@ -973,6 +1311,7 @@
             psoAnteriores = snapshotPosicoes();
             iterarPSO();
             atualizarUiPSO();
+            atualizarTrilhasAtivas();
             psoTempoNoQuadro = 0;
         }
 
@@ -1048,6 +1387,8 @@
 
             const vel = document.getElementById('psoVel');
             const velValor = document.getElementById('psoVelValor');
+            vel.value = psoVelocidade;
+            if (velValor) velValor.textContent = psoVelocidade;
             vel.addEventListener('input', () => {
                 psoVelocidade = parseInt(vel.value, 10);
                 if (velValor) velValor.textContent = vel.value;
@@ -1083,9 +1424,147 @@
             } else {
                 birdMixers.forEach(m => { if (m) m.update(delta); });
                 atualizarPlayPSO(delta);
+                atualizarSobrevoo();
             }
+            atualizarCinema(delta);
             atualizarPainelCamera();
             renderer.render(scene, camera);
+        }
+
+        /* =====================================================================
+           COMPARTILHAR — serializa os parametros de INICIO da simulacao (nao
+           as posicoes/velocidades individuais das particulas) na URL, via
+           query string, e le-os de volta ao carregar a pagina. Isso permite
+           mandar um link que abre ja com a mesma funcao, nivel de agua,
+           tamanho do passaro, N de particulas, velocidade, modo cinema,
+           historico "todas" ligado/desligado, posicao da camera e se o
+           enxame esta tocando (play) ou pausado.
+           ===================================================================== */
+        const URL_PARAMS = {
+            fn: 'fn', agua: 'agua', passaro: 'passaro', n: 'n', vel: 'vel', eixos: 'eixos',
+            hist: 'hist', cinema: 'cinema', play: 'play',
+            cx: 'cx', cy: 'cy', cz: 'cz', tx: 'tx', ty: 'ty', tz: 'tz'
+        };
+
+        // parametros que so fazem sentido com um enxame ja existente (camera
+        // de sobrevoo generico nao se aplica, mas play/hist/posicao da camera
+        // sim) — se algum estiver na URL, o enxame e iniciado automaticamente
+        // apos init(), antes de aplicar esses estados
+        function urlPedeEnxame(p) {
+            return p.has(URL_PARAMS.hist) || p.has(URL_PARAMS.cinema) || p.has(URL_PARAMS.play) ||
+                   p.has(URL_PARAMS.cx) || p.has(URL_PARAMS.cy) || p.has(URL_PARAMS.cz);
+        }
+
+        // aplica os parametros da URL (se presentes) ANTES de init() construir
+        // a UI — assim os controles ja nascem refletindo o link compartilhado.
+        // Retorna true se, apos init(), o enxame deve ser auto-iniciado para
+        // os demais parametros (camera/play/cinema/hist) fazerem sentido.
+        function aplicarParametrosDaURL() {
+            const p = new URLSearchParams(window.location.search);
+            if (p.has(URL_PARAMS.fn) && CATALOGO[p.get(URL_PARAMS.fn)]) fnAtual = p.get(URL_PARAMS.fn);
+            if (p.has(URL_PARAMS.agua)) {
+                const v = parseFloat(p.get(URL_PARAMS.agua));
+                if (isFinite(v)) LAKE_FRAC = Math.max(0, Math.min(1, v));
+            }
+            if (p.has(URL_PARAMS.passaro)) {
+                const v = parseFloat(p.get(URL_PARAMS.passaro));
+                if (isFinite(v)) birdScale = Math.max(0.05, Math.min(2, v));
+            }
+            if (p.has(URL_PARAMS.n)) {
+                const v = parseInt(p.get(URL_PARAMS.n), 10);
+                if (isFinite(v)) document.getElementById('psoN').value = Math.max(1, Math.min(60, v));
+            }
+            if (p.has(URL_PARAMS.vel)) {
+                const v = parseInt(p.get(URL_PARAMS.vel), 10);
+                if (isFinite(v)) psoVelocidade = Math.max(1, Math.min(10, v));
+            }
+            return urlPedeEnxame(p);
+        }
+
+        // aplica os estados que dependem do enxame ja existir: historico de
+        // todas as particulas, modo cinematografico, posicao/alvo da camera
+        // e se o enxame comeca tocando (play) ou pausado. Chamado depois de
+        // init() (e, se necessario, depois de iniciarEnxame()).
+        function aplicarParametrosDependentesDaURL() {
+            const p = new URLSearchParams(window.location.search);
+            const temCamera = p.has(URL_PARAMS.cx) || p.has(URL_PARAMS.cy) || p.has(URL_PARAMS.cz);
+            if (temCamera && camera) {
+                const cx = parseFloat(p.get(URL_PARAMS.cx)), cy = parseFloat(p.get(URL_PARAMS.cy)),
+                      cz = parseFloat(p.get(URL_PARAMS.cz));
+                if (isFinite(cx) && isFinite(cy) && isFinite(cz)) camera.position.set(cx, cy, cz);
+                const txv = parseFloat(p.get(URL_PARAMS.tx)), tyv = parseFloat(p.get(URL_PARAMS.ty)),
+                      tzv = parseFloat(p.get(URL_PARAMS.tz));
+                if (isFinite(txv) && isFinite(tyv) && isFinite(tzv) && controls) controls.target.set(txv, tyv, tzv);
+                if (controls) controls.update();
+            }
+            if (p.get(URL_PARAMS.cinema) === '1') ligarCinema();
+            if (p.get(URL_PARAMS.hist) === '1' && pso) {
+                histTodosLigado = true;
+                atualizarTrilhasAtivas();   // cria as trilhas que ja tiverem >=2 pontos
+            }
+            // play=1: como 'play' entra em urlPedeEnxame(), o enxame ja foi
+            // auto-iniciado (pso existe) antes desta funcao ser chamada —
+            // playPSO() liga psoTocando=true, e atualizarPlayPSO() (chamado
+            // a cada frame de animate()) assume dai em diante a evolucao
+            // automatica das iteracoes, exatamente como um clique manual no
+            // botao Play faria.
+            if (p.get(URL_PARAMS.play) === '1' && pso) playPSO();
+            if (p.get(URL_PARAMS.eixos) === '1' && !eixosVisiveis) alternarEixos();
+            else if (p.get(URL_PARAMS.eixos) === '0' && eixosVisiveis) alternarEixos();
+        }
+
+        // monta a URL com os parametros ATUAIS (o que esta configurado agora
+        // na interface, nao os valores de quando a pagina abriu)
+        function montarURLCompartilhavel() {
+            const p = new URLSearchParams();
+            p.set(URL_PARAMS.fn, fnAtual);
+            p.set(URL_PARAMS.agua, LAKE_FRAC.toFixed(3));
+            p.set(URL_PARAMS.passaro, birdScale.toFixed(2));
+            p.set(URL_PARAMS.n, document.getElementById('psoN').value);
+            p.set(URL_PARAMS.vel, psoVelocidade);
+            p.set(URL_PARAMS.eixos, eixosVisiveis ? '1' : '0');
+            // historico "todas": usa a INTENCAO (histTodosLigado), nao so o
+            // resultado visual do momento — assim a URL preserva "hist
+            // ligado" mesmo se compartilhada logo apos iniciar o enxame,
+            // antes de qualquer trilha ter pontos suficientes para desenhar
+            p.set(URL_PARAMS.hist, histTodosLigado ? '1' : '0');
+            p.set(URL_PARAMS.cinema, cinemaAtivo ? '1' : '0');
+            p.set(URL_PARAMS.play, psoTocando ? '1' : '0');
+            if (camera) {
+                p.set(URL_PARAMS.cx, camera.position.x.toFixed(1));
+                p.set(URL_PARAMS.cy, camera.position.y.toFixed(1));
+                p.set(URL_PARAMS.cz, camera.position.z.toFixed(1));
+            }
+            if (controls) {
+                p.set(URL_PARAMS.tx, controls.target.x.toFixed(1));
+                p.set(URL_PARAMS.ty, controls.target.y.toFixed(1));
+                p.set(URL_PARAMS.tz, controls.target.z.toFixed(1));
+            }
+            const url = new URL(window.location.href);
+            url.search = p.toString();
+            return url.toString();
+        }
+
+        function ligarBotaoCompartilhar() {
+            const btn = document.getElementById('btnCompartilhar');
+            if (!btn) return;
+            ['click', 'pointerdown', 'keydown'].forEach(t => btn.addEventListener(t, ev => ev.stopPropagation()));
+            const rotuloOriginal = btn.textContent;
+            btn.addEventListener('click', async () => {
+                const url = montarURLCompartilhavel();
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(url);
+                        btn.textContent = '✅ Link copiado!';
+                    } else {
+                        window.prompt('Copie o link:', url);
+                        btn.textContent = rotuloOriginal;
+                    }
+                } catch (e) {
+                    window.prompt('Copie o link:', url);
+                }
+                setTimeout(() => { btn.textContent = rotuloOriginal; }, 2200);
+            });
         }
 
         // Chamado apos TODAS as declaracoes do modulo (D, birdTemplate, PSO_PARAMS
@@ -1094,7 +1573,14 @@
         // antes delas serem declaradas no arquivo, cairia na temporal dead zone
         // (ReferenceError "Cannot access before initialization"), mesmo com
         // function hoisting cobrindo a propria funcao init.
+        const precisaEnxameDaURL = aplicarParametrosDaURL();
         init();
+        ligarBotaoCompartilhar();
+        // hist/cinema/play/posicao-de-camera so fazem sentido com particulas
+        // existentes: se a URL pediu algum desses, inicia o enxame com o N
+        // ja aplicado a interface antes de aplicar esses estados dependentes
+        if (precisaEnxameDaURL) iniciarEnxame();
+        aplicarParametrosDependentesDaURL();
         animate();
     </script>
 </body>
