@@ -14,6 +14,15 @@
         #fnSelect { font-family: sans-serif; font-size: 14px; padding: 6px 8px; border-radius: 6px;
               border: 1px solid #5b6a7d; background: #1b2430; color: #fff; min-width: 220px; }
         #fnCarregando { font-size: 11px; color: #ffd27a; margin-top: 6px; display: none; }
+
+        #waterPicker { position: absolute; top: 160px; right: 15px; color: white; font-family: sans-serif;
+              background: rgba(0,0,0,0.55); padding: 12px 10px; border-radius: 8px;
+              display: flex; flex-direction: column; align-items: center; }
+        #waterPicker label { font-size: 12px; font-weight: 700; margin-bottom: 8px;
+              text-transform: uppercase; letter-spacing: .04em; color: #cfe3ff; text-align: center; }
+        #waterSlider { writing-mode: vertical-lr; direction: rtl; width: 24px; height: 220px;
+              accent-color: #2a7fd6; cursor: pointer; }
+        #waterValor { font-size: 12px; margin-top: 8px; color: #fff; font-variant-numeric: tabular-nums; }
     </style>
 </head>
 <body>
@@ -33,6 +42,11 @@
         <label for="fnSelect">Função da paisagem</label>
         <select id="fnSelect"></select>
         <div id="fnCarregando">gerando terreno…</div>
+    </div>
+    <div id="waterPicker">
+        <label for="waterSlider">Nível<br>da água</label>
+        <input type="range" id="waterSlider" min="0" max="100" value="50" step="1">
+        <span id="waterValor">—</span>
     </div>
 
     <script type="importmap">
@@ -55,7 +69,8 @@
         const TREE_COUNT = 800;
         const ROCK_COUNT = 1000;
         const ALTURA_MAX = 60;       // altura visual do relevo apos normalizado (unidades de mundo)
-        const LAKE_FRAC = 0.09;      // fracao da altura normalizada que vira lago (0..1)
+        let LAKE_FRAC = 0.09;        // fracao da altura normalizada que vira lago (0..1);
+                                     // ajustavel pelo seekbar vertical de nivel da agua
         const ROCK_FRAC = 0.5;       // acima dessa fracao normalizada, vira "rocha" (picos)
 
         // --- CATÁLOGO DE 25 FUNÇÕES DE TESTE CLÁSSICAS -----------------------
@@ -180,6 +195,7 @@
 
         let scene, camera, renderer, mixer, clock, bird, controls;
         let terrainGroup;   // grupo com tudo que depende da funcao (terreno, agua, arvores, rochas)
+        let waterMesh;      // referencia direta a agua, para o seekbar mover sem reconstruir tudo
 
         // referencias aos spans do painel de camera, resolvidas uma vez
         const uiCam = {};
@@ -297,7 +313,12 @@
                 } else if (h < rockLevel) {
                     color.setHex(0x3a5a2b); // Terra / Grama
                 } else {
-                    color.setHex(0x777777); // Rocha (Picos)
+                    // Rocha (Picos): mistura cinza/marrom por vertice (ruido
+                    // pseudo-aleatorio barato baseado na posicao, para nao
+                    // ficar um cinza solido e uniforme) — tons de rocha
+                    // marrom-avermelhada intercalados com a rocha cinza.
+                    const ruido = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+                    color.setHex(ruido < 0.45 ? 0x8a6a4a : 0x777777);
                 }
                 colors.push(color.r, color.g, color.b);
             }
@@ -310,13 +331,13 @@
             terrainGroup.add(terrain);
 
             // --- ÁGUA ---
-            const water = new THREE.Mesh(
+            waterMesh = new THREE.Mesh(
                 new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
                 new THREE.MeshStandardMaterial({ color: 0x0044ff, transparent: true, opacity: 0.6, metalness: 0.1, roughness: 0.1 })
             );
-            water.rotation.x = -Math.PI / 2;
-            water.position.y = lakeLevel;
-            terrainGroup.add(water);
+            waterMesh.rotation.x = -Math.PI / 2;
+            waterMesh.position.y = lakeLevel;
+            terrainGroup.add(waterMesh);
 
             // --- ÁRVORES (Instanciadas: Tronco + Copa) ---
             const trunkGeo = new THREE.CylinderGeometry(0.6, 0.8, 6);
@@ -386,6 +407,35 @@
             });
             ['click', 'pointerdown', 'keydown'].forEach(t => sel.addEventListener(t, ev => ev.stopPropagation()));
             sel.addEventListener('change', () => trocarFuncao(sel.value));
+
+            ligarSeekbarAgua();
+        }
+
+        // Seekbar vertical do nivel da agua: 0-100 mapeado para 0-ALTURA_MAX.
+        // Durante o arraste ('input'), so move o plano da agua — barato,
+        // fica fluido. Ao soltar ('change'), refaz a classificacao de
+        // praia/terra/rocha e replanta arvores para o novo nivel, o que
+        // exige reconstruir o terreno (caro, por isso so no solte).
+        function ligarSeekbarAgua() {
+            const slider = document.getElementById('waterSlider');
+            const valorEl = document.getElementById('waterValor');
+            if (!slider) return;
+            ['click', 'pointerdown', 'keydown'].forEach(t => slider.addEventListener(t, ev => ev.stopPropagation()));
+
+            const pct = () => Math.round(LAKE_FRAC * 100);
+            slider.value = pct();
+            if (valorEl) valorEl.textContent = pct() + '%';
+
+            slider.addEventListener('input', () => {
+                const frac = slider.value / 100;
+                if (valorEl) valorEl.textContent = slider.value + '%';
+                if (waterMesh) waterMesh.position.y = ALTURA_MAX * frac;
+            });
+            slider.addEventListener('change', () => {
+                LAKE_FRAC = slider.value / 100;
+                lakeLevel = ALTURA_MAX * LAKE_FRAC;
+                construirTerreno();
+            });
         }
 
         // Troca a funcao ativa: recalcula heightFn/lakeLevel e reconstroi o
