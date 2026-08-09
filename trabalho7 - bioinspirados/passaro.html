@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Vast Landscape - Nature & Math</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        #ui { position: absolute; top: 15px; left: 15px; color: white; font-family: sans-serif;
+              background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; pointer-events: none; }
+        #fnPicker { position: absolute; top: 15px; right: 15px; color: white; font-family: sans-serif;
+              background: rgba(0,0,0,0.55); padding: 12px 14px; border-radius: 8px; }
+        #fnPicker label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px;
+              text-transform: uppercase; letter-spacing: .04em; color: #cfe3ff; }
+        #fnSelect { font-family: sans-serif; font-size: 14px; padding: 6px 8px; border-radius: 6px;
+              border: 1px solid #5b6a7d; background: #1b2430; color: #fff; min-width: 220px; }
+        #fnCarregando { font-size: 11px; color: #ffd27a; margin-top: 6px; display: none; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <b>Vale de Rastrigin Avançado</b><br>
+        • Biomas por altitude (Areia, Terra, Rocha)<br>
+        • Árvores com copa e rochas procedurais
+        <hr style="border-color:rgba(255,255,255,.25); margin:8px 0;">
+        <b>Câmera</b><br>
+        posição: <span id="uiCamPos">—</span><br>
+        alvo (target): <span id="uiCamTarget">—</span><br>
+        distância ao alvo: <span id="uiCamDist">—</span><br>
+        azimute / elevação: <span id="uiCamAng">—</span><br>
+        FOV: <span id="uiCamFov">—</span>
+    </div>
+    <div id="fnPicker">
+        <label for="fnSelect">Função da paisagem</label>
+        <select id="fnSelect"></select>
+        <div id="fnCarregando">gerando terreno…</div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { Sky } from 'three/addons/objects/Sky.js';
+
+        // --- CONFIGURAÇÕES ---
+        const WORLD_SIZE = 800;
+        const TREE_COUNT = 800;
+        const ROCK_COUNT = 1000;
+        const ALTURA_MAX = 60;       // altura visual do relevo apos normalizado (unidades de mundo)
+        const LAKE_FRAC = 0.09;      // fracao da altura normalizada que vira lago (0..1)
+        const ROCK_FRAC = 0.5;       // acima dessa fracao normalizada, vira "rocha" (picos)
+
+        // --- CATÁLOGO DE 25 FUNÇÕES DE TESTE CLÁSSICAS -----------------------
+        // Cada entrada define f(x,y) no seu domínio matemático clássico. O
+        // mundo do Three.js ([-WORLD_SIZE/2, WORLD_SIZE/2]) é mapeado para
+        // esse domínio, e a saída de f é normalizada linearmente (min/max
+        // amostrados no próprio domínio renderizado) para [0, ALTURA_MAX] —
+        // sem isso, funções como Schwefel ou Goldstein-Price (que variam de
+        // ordens de grandeza bem diferentes) ficariam ou achatadas ou
+        // gigantescas comparadas à Rastrigin original.
+        const PI = Math.PI;
+        const CATALOGO = {
+            rastrigin: { nome: 'Rastrigin — muitos vales periódicos', dom: 5.12,
+                f: (x, y) => 20 + (x * x - 10 * Math.cos(2 * PI * x)) + (y * y - 10 * Math.cos(2 * PI * y)) },
+            ackley: { nome: 'Ackley — funil rugoso', dom: 5,
+                f: (x, y) => -20 * Math.exp(-0.2 * Math.sqrt(0.5 * (x * x + y * y)))
+                    - Math.exp(0.5 * (Math.cos(2 * PI * x) + Math.cos(2 * PI * y))) + Math.E + 20 },
+            himmelblau: { nome: 'Himmelblau — quatro mínimos', dom: 5,
+                f: (x, y) => (x * x + y - 11) ** 2 + (x + y * y - 7) ** 2 },
+            schwefel: { nome: 'Schwefel — vales longe do centro', dom: 500,
+                f: (x, y) => 837.9658 - (x * Math.sin(Math.sqrt(Math.abs(x))) + y * Math.sin(Math.sqrt(Math.abs(y)))) },
+            griewank: { nome: 'Griewank — muitos mínimos locais', dom: 600,
+                f: (x, y) => 1 + (x * x + y * y) / 4000 - Math.cos(x) * Math.cos(y / Math.SQRT2) },
+            levy: { nome: 'Levy — vales irregulares', dom: 10,
+                f: (x, y) => { const w1 = 1 + (x - 1) / 4, w2 = 1 + (y - 1) / 4;
+                    return Math.sin(PI * w1) ** 2 + (w1 - 1) ** 2 * (1 + 10 * Math.sin(PI * w1 + 1) ** 2)
+                         + (w2 - 1) ** 2 * (1 + Math.sin(2 * PI * w2) ** 2); } },
+            michalewicz: { nome: 'Michalewicz — vales estreitos', dom0: 0, dom1: PI,
+                f: (x, y) => -(Math.sin(x) * Math.sin(x * x / PI) ** 20 + Math.sin(y) * Math.sin(2 * y * y / PI) ** 20) },
+            shubert: { nome: 'Shubert — muitos mínimos locais', dom: 5.12,
+                f: (x, y) => { let sx = 0, sy = 0;
+                    for (let i = 1; i <= 5; i++) { sx += i * Math.cos((i + 1) * x + i); sy += i * Math.cos((i + 1) * y + i); }
+                    return sx * sy; } },
+            eggholder: { nome: 'Eggholder — superfície irregular', dom: 512,
+                f: (x, y) => -(y + 47) * Math.sin(Math.sqrt(Math.abs(x / 2 + (y + 47))))
+                    - x * Math.sin(Math.sqrt(Math.abs(x - (y + 47)))) },
+            holdertable: { nome: 'Holder Table — quatro mínimos globais', dom: 10,
+                f: (x, y) => -Math.abs(Math.sin(x) * Math.cos(y) * Math.exp(Math.abs(1 - Math.sqrt(x * x + y * y) / PI))) },
+            crossintray: { nome: 'Cross-in-Tray — relevo abrupto', dom: 10,
+                f: (x, y) => -0.0001 * (Math.abs(Math.sin(x) * Math.sin(y)
+                    * Math.exp(Math.abs(100 - Math.sqrt(x * x + y * y) / PI))) + 1) ** 0.1 },
+            dropwave: { nome: 'Drop-Wave — ondulações concêntricas', dom: 5.12,
+                f: (x, y) => -(1 + Math.cos(12 * Math.sqrt(x * x + y * y))) / (0.5 * (x * x + y * y) + 2) },
+            sixhump: { nome: 'Six-Hump Camel — dois mínimos globais', dom0X: -3, dom1X: 3, dom0Y: -2, dom1Y: 2,
+                f: (x, y) => (4 - 2.1 * x * x + x ** 4 / 3) * x * x + x * y + (-4 + 4 * y * y) * y * y },
+            bukin6: { nome: 'Bukin N.6 — vale estreito e irregular', dom0X: -15, dom1X: -5, dom0Y: -3, dom1Y: 3,
+                f: (x, y) => 100 * Math.sqrt(Math.abs(y - 0.01 * x * x)) + 0.01 * Math.abs(x + 10) },
+            schaffer2: { nome: 'Schaffer N.2 — ondulações radiais', dom: 100,
+                f: (x, y) => 0.5 + (Math.sin(x * x - y * y) ** 2 - 0.5) / (1 + 0.001 * (x * x + y * y)) ** 2 },
+            schaffer4: { nome: 'Schaffer N.4 — muitos anéis', dom: 100,
+                f: (x, y) => 0.5 + (Math.cos(Math.sin(Math.abs(x * x - y * y))) ** 2 - 0.5) / (1 + 0.001 * (x * x + y * y)) ** 2 },
+            styblinski: { nome: 'Styblinski–Tang — diversos vales', dom: 5,
+                f: (x, y) => 0.5 * ((x ** 4 - 16 * x * x + 5 * x) + (y ** 4 - 16 * y * y + 5 * y)) },
+            alpine1: { nome: 'Alpine N.1 — picos e vales periódicos', dom: 10,
+                f: (x, y) => Math.abs(x * Math.sin(x) + 0.1 * x) + Math.abs(y * Math.sin(y) + 0.1 * y) },
+            alpine2: { nome: 'Alpine N.2 — multimodal assimétrica', dom0: 0, dom1: 10,
+                f: (x, y) => -(Math.sqrt(Math.max(1e-9, x)) * Math.sin(x) * Math.sqrt(Math.max(1e-9, y)) * Math.sin(y)) },
+            salomon: { nome: 'Salomon — ondulações concêntricas', dom: 100,
+                f: (x, y) => { const r = Math.sqrt(x * x + y * y); return 1 - Math.cos(2 * PI * r) + 0.1 * r; } },
+            xinsheyang2: { nome: 'Xin-She Yang N.2 — múltiplos mínimos', dom: PI,
+                f: (x, y) => (Math.abs(x) + Math.abs(y)) * Math.exp(-(Math.sin(x * x) + Math.sin(y * y))) },
+            xinsheyang3: { nome: 'Xin-She Yang N.3 — regiões diferentes', dom: 20,
+                f: (x, y) => { const m = 5, beta = 15, r2 = x * x + y * y;
+                    return Math.exp(-Math.pow(x / beta, 2 * m) - Math.pow(y / beta, 2 * m))
+                        - 2 * Math.exp(-r2) * Math.cos(x) ** 2 * Math.cos(y) ** 2; } },
+            shekel: { nome: 'Shekel (Foxholes) — vários poços', dom: 65.536,
+                f: (x, y) => { const vals = [-32, -16, 0, 16, 32]; let s = 0.002;
+                    for (let j = 0; j < 25; j++) {
+                        const d = (x - vals[j % 5]) ** 6 + (y - vals[Math.floor(j / 5) % 5]) ** 6;
+                        s += 1 / ((j + 1) + d);
+                    }
+                    return 1 / s; } },
+            hartmann: { nome: 'Hartmann 3D (projeção 2D)', dom0: 0, dom1: 1,
+                f: (x, y) => { const alpha = [1.0, 1.2, 3.0, 3.2];
+                    const A = [[3, 10, 30], [0.1, 10, 35], [3, 10, 30], [0.1, 10, 35]];
+                    const P = [[0.3689, 0.1170, 0.2673], [0.4699, 0.4387, 0.7470],
+                               [0.1091, 0.8732, 0.5547], [0.03815, 0.5743, 0.8828]];
+                    let outer = 0;
+                    for (let i = 0; i < 4; i++) { let inner = 0; const xv = [x, y, 0.5];
+                        for (let j = 0; j < 3; j++) inner += A[i][j] * (xv[j] - P[i][j]) ** 2;
+                        outer += alpha[i] * Math.exp(-inner); }
+                    return -outer; } },
+            goldsteinprice: { nome: 'Goldstein–Price — vários vales', dom: 2,
+                f: (x, y) => {
+                    const a = 1 + (x + y + 1) ** 2 * (19 - 14 * x + 3 * x * x - 14 * y + 6 * x * y + 3 * y * y);
+                    const b = 30 + (2 * x - 3 * y) ** 2 * (18 - 32 * x + 12 * x * x + 48 * y - 36 * x * y + 27 * y * y);
+                    return a * b; } }
+        };
+
+        let fnAtual = 'rastrigin';
+        let heightFn = null;        // (worldX, worldZ) -> altura normalizada [0, ALTURA_MAX]
+        let lakeLevel = 0;
+
+        // prepara heightFn/lakeLevel para o id do catalogo: mapeia o mundo
+        // para o dominio classico da funcao e normaliza min/max amostrados
+        function prepararFuncao(id) {
+            const def = CATALOGO[id];
+            let x0, x1, y0, y1;
+            if (def.dom !== undefined) { x0 = y0 = -def.dom; x1 = y1 = def.dom; }
+            else if (def.dom0 !== undefined) { x0 = y0 = def.dom0; x1 = y1 = def.dom1; }
+            else { x0 = def.dom0X; x1 = def.dom1X; y0 = def.dom0Y; y1 = def.dom1Y; }
+            const toX = wx => x0 + (wx / WORLD_SIZE + 0.5) * (x1 - x0);
+            const toY = wz => y0 + (wz / WORLD_SIZE + 0.5) * (y1 - y0);
+
+            // amostra min/max no dominio efetivamente renderizado (nao no
+            // dominio classico completo, que pode nao coincidir 1:1). N=220
+            // e mais fino que a malha do terreno (400 segmentos) para nao
+            // perder picos estreitos de funcoes muito oscilantes (Schaffer,
+            // Griewank, Salomon); roda uma vez por troca de funcao, entao o
+            // custo O(N^2) nao afeta o frame-rate da animacao.
+            const N = 220;
+            let mn = Infinity, mx = -Infinity;
+            for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) {
+                const wx = -WORLD_SIZE / 2 + WORLD_SIZE * i / N, wz = -WORLD_SIZE / 2 + WORLD_SIZE * j / N;
+                const v = def.f(toX(wx), toY(wz));
+                if (v < mn) mn = v; if (v > mx) mx = v;
+            }
+            const span = (mx - mn) || 1;
+            heightFn = (wx, wz) => (def.f(toX(wx), toY(wz)) - mn) / span * ALTURA_MAX;
+            lakeLevel = ALTURA_MAX * LAKE_FRAC;
+        }
+
+        let scene, camera, renderer, mixer, clock, bird, controls;
+        let terrainGroup;   // grupo com tudo que depende da funcao (terreno, agua, arvores, rochas)
+
+        // referencias aos spans do painel de camera, resolvidas uma vez
+        const uiCam = {};
+        function ligarPainelCamera() {
+            ['uiCamPos', 'uiCamTarget', 'uiCamDist', 'uiCamAng', 'uiCamFov']
+                .forEach(id => { uiCam[id] = document.getElementById(id); });
+        }
+        // Atualiza o painel a cada frame com a posicao/orientacao reais da
+        // camera do OrbitControls — nao ha estado propio, e sempre leitura
+        // direta de camera.position/controls.target, entao nunca desalinha
+        // do que esta de fato sendo renderizado.
+        function atualizarPainelCamera() {
+            if (!camera || !controls) return;
+            const p = camera.position, t = controls.target;
+            const n = v => v.toFixed(1);
+            if (uiCam.uiCamPos) uiCam.uiCamPos.textContent = `(${n(p.x)}, ${n(p.y)}, ${n(p.z)})`;
+            if (uiCam.uiCamTarget) uiCam.uiCamTarget.textContent = `(${n(t.x)}, ${n(t.y)}, ${n(t.z)})`;
+            const dist = p.distanceTo(t);
+            if (uiCam.uiCamDist) uiCam.uiCamDist.textContent = `${dist.toFixed(1)} u`;
+            const dx = p.x - t.x, dy = p.y - t.y, dz = p.z - t.z;
+            const azimuteDeg = THREE.MathUtils.radToDeg(Math.atan2(dx, dz));
+            const elevDeg = THREE.MathUtils.radToDeg(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+            if (uiCam.uiCamAng) uiCam.uiCamAng.textContent = `${azimuteDeg.toFixed(0)}° / ${elevDeg.toFixed(0)}°`;
+            if (uiCam.uiCamFov) uiCam.uiCamFov.textContent = `${camera.fov.toFixed(0)}°`;
+        }
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1.0, 20000);
+            camera.position.set(150, 100, 250);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            document.body.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.maxDistance = 1200;
+            clock = new THREE.Clock();
+            ligarPainelCamera();
+
+            // --- CÉU E SOL ---
+            const sky = new Sky();
+            sky.scale.setScalar(15000);
+            scene.add(sky);
+            const sun = new THREE.Vector3();
+            const phi = THREE.MathUtils.degToRad(82);
+            sun.setFromSphericalCoords(1, phi, THREE.MathUtils.degToRad(180));
+            sky.material.uniforms['sunPosition'].value.copy(sun);
+
+            scene.fog = new THREE.Fog(0x87CEEB, 400, 2000);
+
+            // Sem sombras projetadas, o relevo ainda ganha volume pelo
+            // sombreamento normal do MeshStandardMaterial: encostas viradas
+            // para longe do sol ficam mais escuras so pela sua inclinacao.
+            // Para suavizar isso, reduzimos bastante a luz direcional (que
+            // e a fonte desse contraste) e aumentamos ambiente/hemisferica
+            // (que iluminam por igual, independente da normal da face).
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.copy(sun).multiplyScalar(200);
+            scene.add(dirLight);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+            scene.add(new THREE.HemisphereLight(0xbfd9ff, 0x3a4a2a, 1.1));
+
+            prepararFuncao(fnAtual);
+            construirTerreno();
+
+            // --- PÁSSARO ---
+            const loader = new GLTFLoader();
+            loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Stork.glb', (gltf) => {
+                bird = gltf.scene;
+                bird.scale.set(0.2, 0.2, 0.2);
+                scene.add(bird);
+                mixer = new THREE.AnimationMixer(bird);
+                mixer.clipAction(gltf.animations[0]).play();
+            });
+
+            ligarSeletor();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // Constroi (ou reconstroi) tudo que depende de heightFn: terreno,
+        // agua, arvores e rochas. Agrupados em terrainGroup para poderem ser
+        // descartados de uma vez ao trocar de funcao pelo combo box.
+        function construirTerreno() {
+            if (terrainGroup) {
+                scene.remove(terrainGroup);
+                terrainGroup.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) o.material.dispose();
+                });
+            }
+            terrainGroup = new THREE.Group();
+
+            // --- TERRENO COM CORES POR ALTITUDE ---
+            const terrainGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 400, 400);
+            const pos = terrainGeo.attributes.position;
+            const colors = [];
+            const color = new THREE.Color();
+            const rockLevel = ALTURA_MAX * ROCK_FRAC;
+
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const z = pos.getY(i);
+                const h = heightFn(x, z);
+                pos.setZ(i, h);
+
+                // Lógica de Pintura
+                if (h < lakeLevel + ALTURA_MAX * 0.03) {
+                    color.setHex(0xd2b48c); // Areia
+                } else if (h < rockLevel) {
+                    color.setHex(0x3a5a2b); // Terra / Grama
+                } else {
+                    color.setHex(0x777777); // Rocha (Picos)
+                }
+                colors.push(color.r, color.g, color.b);
+            }
+            terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            terrainGeo.computeVertexNormals();
+
+            const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
+            const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+            terrain.rotation.x = -Math.PI / 2;
+            terrainGroup.add(terrain);
+
+            // --- ÁGUA ---
+            const water = new THREE.Mesh(
+                new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
+                new THREE.MeshStandardMaterial({ color: 0x0044ff, transparent: true, opacity: 0.6, metalness: 0.1, roughness: 0.1 })
+            );
+            water.rotation.x = -Math.PI / 2;
+            water.position.y = lakeLevel;
+            terrainGroup.add(water);
+
+            // --- ÁRVORES (Instanciadas: Tronco + Copa) ---
+            const trunkGeo = new THREE.CylinderGeometry(0.6, 0.8, 6);
+            const foliageGeo = new THREE.ConeGeometry(3, 10, 8);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4b3621 });
+            const foliageMat = new THREE.MeshStandardMaterial({ color: 0x1a3300 });
+
+            const iTrunks = new THREE.InstancedMesh(trunkGeo, trunkMat, TREE_COUNT);
+            const iFoliage = new THREE.InstancedMesh(foliageGeo, foliageMat, TREE_COUNT);
+
+            const dummy = new THREE.Object3D();
+            let treeIdx = 0;
+            for (let i = 0; i < TREE_COUNT; i++) {
+                const tx = (Math.random() - 0.5) * (WORLD_SIZE * 0.9);
+                const tz = (Math.random() - 0.5) * (WORLD_SIZE * 0.9);
+                const ty = heightFn(tx, tz);
+
+                // Só nasce em solo firme (Terra)
+                if (ty > lakeLevel + ALTURA_MAX * 0.05 && ty < rockLevel) {
+                    const scale = 0.5 + Math.random();
+                    // Tronco
+                    dummy.position.set(tx, ty + 3 * scale, tz);
+                    dummy.scale.set(scale, scale, scale);
+                    dummy.updateMatrix();
+                    iTrunks.setMatrixAt(treeIdx, dummy.matrix);
+                    // Copa
+                    dummy.position.set(tx, ty + (6 + 3) * scale, tz);
+                    dummy.updateMatrix();
+                    iFoliage.setMatrixAt(treeIdx, dummy.matrix);
+                    treeIdx++;
+                }
+            }
+            iTrunks.count = treeIdx;
+            iFoliage.count = treeIdx;
+            terrainGroup.add(iTrunks, iFoliage);
+
+            // --- ROCHAS (Instanciadas) ---
+            const rockGeo = new THREE.DodecahedronGeometry(1, 0);
+            const rockMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+            const iRocks = new THREE.InstancedMesh(rockGeo, rockMat, ROCK_COUNT);
+            for (let i = 0; i < ROCK_COUNT; i++) {
+                const rx = (Math.random() - 0.5) * WORLD_SIZE;
+                const rz = (Math.random() - 0.5) * WORLD_SIZE;
+                const ry = heightFn(rx, rz);
+                const rScale = 1 + Math.random() * 3;
+                dummy.position.set(rx, ry, rz);
+                dummy.rotation.set(Math.random(), Math.random(), Math.random());
+                dummy.scale.set(rScale, rScale * 0.6, rScale);
+                dummy.updateMatrix();
+                iRocks.setMatrixAt(i, dummy.matrix);
+            }
+            terrainGroup.add(iRocks);
+
+            scene.add(terrainGroup);
+        }
+
+        // Preenche o combo box com o catalogo e liga a troca de funcao
+        function ligarSeletor() {
+            const sel = document.getElementById('fnSelect');
+            if (!sel) return;
+            Object.entries(CATALOGO).forEach(([id, def]) => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = def.nome;
+                if (id === fnAtual) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            ['click', 'pointerdown', 'keydown'].forEach(t => sel.addEventListener(t, ev => ev.stopPropagation()));
+            sel.addEventListener('change', () => trocarFuncao(sel.value));
+        }
+
+        // Troca a funcao ativa: recalcula heightFn/lakeLevel e reconstroi o
+        // terreno. O calculo de min/max (amostragem O(N^2)) e rapido o
+        // bastante para nao travar a interface, mas mostramos um aviso de
+        // "gerando terreno" porque a reconstrucao da geometria (400x400
+        // segmentos + 800 arvores + 1000 rochas) leva uma fracao de segundo.
+        function trocarFuncao(id) {
+            if (!CATALOGO[id] || id === fnAtual) return;
+            fnAtual = id;
+            const aviso = document.getElementById('fnCarregando');
+            if (aviso) aviso.style.display = 'block';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    prepararFuncao(fnAtual);
+                    construirTerreno();
+                    if (aviso) aviso.style.display = 'none';
+                });
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const elapsed = clock.getElapsedTime();
+
+            if (mixer) mixer.update(delta);
+            if (bird) {
+                const radius = 250;
+                bird.position.x = Math.sin(elapsed * 0.2) * radius;
+                bird.position.z = Math.cos(elapsed * 0.2) * radius;
+                bird.position.y = 60 + Math.sin(elapsed * 0.5) * 15;
+                bird.rotation.y = elapsed * 0.2 + Math.PI;
+            }
+            atualizarPainelCamera();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
