@@ -17,12 +17,15 @@
 
         #waterPicker { position: absolute; top: 160px; right: 15px; color: white; font-family: sans-serif;
               background: rgba(0,0,0,0.55); padding: 12px 10px; border-radius: 8px;
-              display: flex; flex-direction: column; align-items: center; }
+              display: flex; flex-direction: row; align-items: flex-start; gap: 18px; }
+        #waterPicker .seek-col { display: flex; flex-direction: column; align-items: center; }
         #waterPicker label { font-size: 12px; font-weight: 700; margin-bottom: 8px;
               text-transform: uppercase; letter-spacing: .04em; color: #cfe3ff; text-align: center; }
-        #waterSlider { writing-mode: vertical-lr; direction: rtl; width: 24px; height: 220px;
-              accent-color: #2a7fd6; cursor: pointer; }
-        #waterValor { font-size: 12px; margin-top: 8px; color: #fff; font-variant-numeric: tabular-nums; }
+        #waterSlider, #birdSlider { writing-mode: vertical-lr; direction: rtl; width: 24px; height: 220px;
+              cursor: pointer; }
+        #waterSlider { accent-color: #2a7fd6; }
+        #birdSlider { accent-color: #e07a3f; }
+        #waterValor, #birdValor { font-size: 12px; margin-top: 8px; color: #fff; font-variant-numeric: tabular-nums; }
     </style>
 </head>
 <body>
@@ -44,9 +47,16 @@
         <div id="fnCarregando">gerando terreno…</div>
     </div>
     <div id="waterPicker">
-        <label for="waterSlider">Nível<br>da água</label>
-        <input type="range" id="waterSlider" min="0" max="100" value="50" step="1">
-        <span id="waterValor">—</span>
+        <div class="seek-col">
+            <label for="waterSlider">Nível<br>da água</label>
+            <input type="range" id="waterSlider" min="0" max="100" value="50" step="1">
+            <span id="waterValor">—</span>
+        </div>
+        <div class="seek-col">
+            <label for="birdSlider">Tamanho<br>do pássaro</label>
+            <input type="range" id="birdSlider" min="5" max="200" value="50" step="1">
+            <span id="birdValor">—</span>
+        </div>
     </div>
 
     <script type="importmap">
@@ -196,6 +206,7 @@
         let scene, camera, renderer, mixer, clock, bird, controls;
         let terrainGroup;   // grupo com tudo que depende da funcao (terreno, agua, arvores, rochas)
         let waterMesh;      // referencia direta a agua, para o seekbar mover sem reconstruir tudo
+        let birdScale = 0.2; // escala do passaro, ajustavel pelo seekbar (valor original do modelo)
 
         // referencias aos spans do painel de camera, resolvidas uma vez
         const uiCam = {};
@@ -271,7 +282,7 @@
             const loader = new GLTFLoader();
             loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Stork.glb', (gltf) => {
                 bird = gltf.scene;
-                bird.scale.set(0.2, 0.2, 0.2);
+                bird.scale.setScalar(birdScale);
                 scene.add(bird);
                 mixer = new THREE.AnimationMixer(bird);
                 mixer.clipAction(gltf.animations[0]).play();
@@ -409,6 +420,7 @@
             sel.addEventListener('change', () => trocarFuncao(sel.value));
 
             ligarSeekbarAgua();
+            ligarSeekbarPassaro();
         }
 
         // Seekbar vertical do nivel da agua: 0-100 mapeado para 0-ALTURA_MAX.
@@ -435,6 +447,26 @@
                 LAKE_FRAC = slider.value / 100;
                 lakeLevel = ALTURA_MAX * LAKE_FRAC;
                 construirTerreno();
+            });
+        }
+
+        // Seekbar vertical do tamanho do passaro: 5-200 no HTML mapeado para
+        // escala real 0,05-2,0 (o modelo Stork.glb usa 0,2 por padrao). So
+        // reescala o objeto ja carregado — nao precisa recarregar o GLTF,
+        // entao o efeito e instantaneo mesmo durante o arraste.
+        function ligarSeekbarPassaro() {
+            const slider = document.getElementById('birdSlider');
+            const valorEl = document.getElementById('birdValor');
+            if (!slider) return;
+            ['click', 'pointerdown', 'keydown'].forEach(t => slider.addEventListener(t, ev => ev.stopPropagation()));
+
+            slider.value = Math.round(birdScale * 100);
+            if (valorEl) valorEl.textContent = birdScale.toFixed(2) + '×';
+
+            slider.addEventListener('input', () => {
+                birdScale = slider.value / 100;
+                if (valorEl) valorEl.textContent = birdScale.toFixed(2) + '×';
+                if (bird) bird.scale.setScalar(birdScale);
             });
         }
 
