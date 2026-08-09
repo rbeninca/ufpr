@@ -8,24 +8,25 @@
         #ui { position: absolute; top: 15px; left: 15px; color: white; font-family: sans-serif;
               background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; pointer-events: none; }
         #fnPicker { position: absolute; top: 15px; right: 15px; color: white; font-family: sans-serif;
-              background: rgba(0,0,0,0.55); padding: 12px 14px; border-radius: 8px; }
-        #fnPicker label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px;
+              background: rgba(0,0,0,0.55); padding: 8px 10px; border-radius: 8px; width: 130px;
+              box-sizing: border-box; }
+        #fnPicker label { display: block; font-size: 10px; font-weight: 700; margin-bottom: 4px;
               text-transform: uppercase; letter-spacing: .04em; color: #cfe3ff; }
-        #fnSelect { font-family: sans-serif; font-size: 14px; padding: 6px 8px; border-radius: 6px;
-              border: 1px solid #5b6a7d; background: #1b2430; color: #fff; min-width: 220px; }
+        #fnSelect { font-family: sans-serif; font-size: 11px; padding: 4px 5px; border-radius: 5px;
+              border: 1px solid #5b6a7d; background: #1b2430; color: #fff; width: 100%; box-sizing: border-box; }
         #fnCarregando { font-size: 11px; color: #ffd27a; margin-top: 6px; display: none; }
 
-        #waterPicker { position: absolute; top: 160px; right: 15px; color: white; font-family: sans-serif;
-              background: rgba(0,0,0,0.55); padding: 12px 10px; border-radius: 8px;
-              display: flex; flex-direction: row; align-items: flex-start; gap: 18px; }
+        #waterPicker { position: absolute; top: 175px; right: 15px; color: white; font-family: sans-serif;
+              background: rgba(0,0,0,0.55); padding: 8px 6px; border-radius: 8px; width: 130px;
+              box-sizing: border-box; display: flex; flex-direction: row; justify-content: center; gap: 12px; }
         #waterPicker .seek-col { display: flex; flex-direction: column; align-items: center; }
-        #waterPicker label { font-size: 12px; font-weight: 700; margin-bottom: 8px;
-              text-transform: uppercase; letter-spacing: .04em; color: #cfe3ff; text-align: center; }
-        #waterSlider, #birdSlider { writing-mode: vertical-lr; direction: rtl; width: 24px; height: 220px;
+        #waterPicker label { font-size: 9px; font-weight: 700; margin-bottom: 4px;
+              text-transform: uppercase; letter-spacing: .03em; color: #cfe3ff; text-align: center; line-height: 1.15; }
+        #waterSlider, #birdSlider { writing-mode: vertical-lr; direction: rtl; width: 18px; height: 130px;
               cursor: pointer; }
         #waterSlider { accent-color: #2a7fd6; }
         #birdSlider { accent-color: #e07a3f; }
-        #waterValor, #birdValor { font-size: 12px; margin-top: 8px; color: #fff; font-variant-numeric: tabular-nums; }
+        #waterValor, #birdValor { font-size: 10px; margin-top: 4px; color: #fff; font-variant-numeric: tabular-nums; }
 
         /* --- PAINEL PSO --- */
         #psoPanel { position: absolute; left: 15px; right: 15px; bottom: 15px; max-height: 46vh;
@@ -35,6 +36,7 @@
               color: #cfe3ff; }
         #psoTopo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-bottom: 8px; }
         #psoTopo label { font-size: 12px; color: #cfe3ff; }
+        #psoConteudo.psoRecolhido { display: none; }
         #psoN { width: 60px; font-size: 13px; padding: 3px 6px; border-radius: 5px;
               border: 1px solid #5b6a7d; background: #1b2430; color: #fff; }
         .psoBtn { font-family: sans-serif; font-size: 12px; font-weight: 700; padding: 6px 12px;
@@ -68,9 +70,7 @@
 </head>
 <body>
     <div id="ui">
-        <b>Vale de Rastrigin Avançado</b><br>
-        • Biomas por altitude (Areia, Terra, Rocha)<br>
-        • Árvores com copa e rochas procedurais
+        <b>Exame de particulas<br>
         <hr style="border-color:rgba(255,255,255,.25); margin:8px 0;">
         <b>Câmera</b><br>
         posição: <span id="uiCamPos">—</span><br>
@@ -83,9 +83,9 @@
         <label for="fnSelect">Função da paisagem</label>
         <select id="fnSelect"></select>
         <div id="fnCarregando">gerando terreno…</div>
-        <button class="psoBtn" id="btnEixos" style="margin-top:10px; width:100%;">Mostrar eixos e grades</button>
-        <button class="psoBtn" id="btnCinema" style="margin-top:6px; width:100%;">🎥 Câmera cinematográfica</button>
-        <button class="psoBtn go" id="btnCompartilhar" style="margin-top:6px; width:100%;">🔗 Compartilhar</button>
+        <button class="psoBtn" id="btnEixos" style="margin-top:8px; width:100%; font-size:10px; padding:5px 4px; white-space:normal; line-height:1.2;">Eixos e grades</button>
+        <button class="psoBtn" id="btnCinema" style="margin-top:5px; width:100%; font-size:10px; padding:5px 4px; white-space:normal; line-height:1.2;">🎥 Câmera cinema.</button>
+        <button class="psoBtn go" id="btnCompartilhar" style="margin-top:5px; width:100%; font-size:10px; padding:5px 4px; white-space:normal; line-height:1.2;">🔗 Compartilhar</button>
     </div>
     <div id="waterPicker">
         <div class="seek-col">
@@ -115,20 +115,23 @@
             </label>
             <button class="psoBtn" id="btnCameraLivre" style="display:none;">📷 Câmera livre</button>
             <span id="psoGbest">enxame não iniciado</span>
+            <button class="psoBtn" id="btnPsoRecolher" style="margin-left:auto;" title="ocultar tabelas para liberar espaço na visualização">▲ Ocultar tabelas</button>
         </div>
-        <div id="psoScroll">
-            <table class="psoTab" id="psoTabInit">
-                <thead><tr><th class="psoRot">parâmetro</th></tr></thead>
-                <tbody></tbody>
-            </table>
-            <table class="psoTab" id="psoTabEstado" style="display:none; margin-top:8px;">
-                <thead><tr><th class="psoRot">parâmetro
-                    <button class="psoHistBtn" id="btnHistTodos" title="mostrar/ocultar rastro de voo de todas as partículas">hist</button>
-                </th></tr></thead>
-                <tbody></tbody>
-            </table>
+        <div id="psoConteudo">
+            <div id="psoScroll">
+                <table class="psoTab" id="psoTabInit">
+                    <thead><tr><th class="psoRot">parâmetro</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+                <table class="psoTab" id="psoTabEstado" style="display:none; margin-top:8px;">
+                    <thead><tr><th class="psoRot">parâmetro
+                        <button class="psoHistBtn" id="btnHistTodos" title="mostrar/ocultar rastro de voo de todas as partículas">hist</button>
+                    </th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p id="psoAjuda">Deixe uma célula como <b>rnd</b> para inicialização aleatória dentro do domínio da função; edite para um valor manual. Combinação de células manuais e <b>rnd</b> é permitida.</p>
         </div>
-        <p id="psoAjuda">Deixe uma célula como <b>rnd</b> para inicialização aleatória dentro do domínio da função; edite para um valor manual. Combinação de células manuais e <b>rnd</b> é permitida.</p>
     </div>
 
     <script type="importmap">
@@ -771,7 +774,7 @@
         function rotularBotaoCinema() {
             const btn = document.getElementById('btnCinema');
             if (btn) {
-                btn.textContent = cinemaAtivo ? '🎥 Câmera cinematográfica (ligada)' : '🎥 Câmera cinematográfica';
+                btn.textContent = cinemaAtivo ? '🎥 Câmera cinema. (ligada)' : '🎥 Câmera cinema.';
                 btn.classList.toggle('psoHistAtivo', cinemaAtivo);
             }
         }
@@ -1376,6 +1379,25 @@
             rotularPlayPSO();
         }
 
+        // liga/desliga a exibicao das tabelas (init + estado) e da dica de
+        // ajuda, mantendo so a linha de controles (gerar tabela, iniciar
+        // enxame, 1 iteracao, play, velocidade, camera livre, gbest) visivel
+        // no rodape — libera espaco de tela para a visualizacao 3D
+        let psoTabelasRecolhidas = false;
+        function alternarTabelasPSO() {
+            psoTabelasRecolhidas = !psoTabelasRecolhidas;
+            const conteudo = document.getElementById('psoConteudo');
+            const btn = document.getElementById('btnPsoRecolher');
+            if (conteudo) conteudo.classList.toggle('psoRecolhido', psoTabelasRecolhidas);
+            if (btn) btn.textContent = psoTabelasRecolhidas ? '▼ Mostrar tabelas' : '▲ Ocultar tabelas';
+        }
+        function ligarBotaoRecolher() {
+            const btn = document.getElementById('btnPsoRecolher');
+            if (!btn) return;
+            ['click', 'pointerdown', 'keydown'].forEach(t => btn.addEventListener(t, ev => ev.stopPropagation()));
+            btn.addEventListener('click', alternarTabelasPSO);
+        }
+
         function ligarPainelPSO() {
             document.getElementById('btnPsoGerarTabela').addEventListener('click', gerarTabelaInit);
             document.getElementById('btnPsoIniciar').addEventListener('click', () => {
@@ -1393,6 +1415,8 @@
                 psoVelocidade = parseInt(vel.value, 10);
                 if (velValor) velValor.textContent = vel.value;
             });
+
+            ligarBotaoRecolher();
 
             const painel = document.getElementById('psoPanel');
             ['click', 'pointerdown', 'keydown', 'wheel'].forEach(t => painel.addEventListener(t, ev => ev.stopPropagation()));
