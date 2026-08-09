@@ -26,6 +26,35 @@
         #waterSlider { accent-color: #2a7fd6; }
         #birdSlider { accent-color: #e07a3f; }
         #waterValor, #birdValor { font-size: 12px; margin-top: 8px; color: #fff; font-variant-numeric: tabular-nums; }
+
+        /* --- PAINEL PSO --- */
+        #psoPanel { position: absolute; left: 15px; right: 15px; bottom: 15px; max-height: 46vh;
+              color: #fff; font-family: sans-serif; background: rgba(0,0,0,0.62);
+              border-radius: 8px; padding: 10px 14px; overflow-y: auto; }
+        #psoPanel h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em;
+              color: #cfe3ff; }
+        #psoTopo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-bottom: 8px; }
+        #psoTopo label { font-size: 12px; color: #cfe3ff; }
+        #psoN { width: 60px; font-size: 13px; padding: 3px 6px; border-radius: 5px;
+              border: 1px solid #5b6a7d; background: #1b2430; color: #fff; }
+        .psoBtn { font-family: sans-serif; font-size: 12px; font-weight: 700; padding: 6px 12px;
+              border-radius: 6px; border: 1px solid #5b6a7d; background: #2a3646; color: #fff; cursor: pointer; }
+        .psoBtn:hover { background: #364559; }
+        .psoBtn:disabled { opacity: .4; cursor: default; }
+        .psoBtn.go { background: #1f6f43; border-color: #2c9c5e; }
+        .psoBtn.go:hover { background: #24824d; }
+        #psoGbest { font-size: 12px; color: #ffe7a3; margin-left: auto; text-align: right; line-height: 1.5; }
+        #psoScroll { overflow-x: auto; }
+        table.psoTab { border-collapse: collapse; font-size: 10.5px; white-space: nowrap; }
+        table.psoTab th, table.psoTab td { padding: 2px 6px; border: 1px solid rgba(255,255,255,.12); text-align: center; }
+        table.psoTab th.psoRot { text-align: left; position: sticky; left: 0; background: rgba(20,26,36,.95); z-index: 1; }
+        table.psoTab td.psoRot { text-align: left; font-weight: 700; color: #cfe3ff; position: sticky; left: 0;
+              background: rgba(20,26,36,.95); z-index: 1; }
+        table.psoTab input[type="text"] { width: 56px; font-size: 10.5px; padding: 1px 3px; border-radius: 3px;
+              border: 1px solid #5b6a7d; background: #10161f; color: #fff; text-align: center; }
+        table.psoTab td.psoSoLeitura { color: #b9c6d6; }
+        table.psoTab tr.psoGbestRow td { background: rgba(255, 210, 122, 0.12); }
+        #psoAjuda { font-size: 10.5px; color: #93a3b8; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -45,6 +74,7 @@
         <label for="fnSelect">Função da paisagem</label>
         <select id="fnSelect"></select>
         <div id="fnCarregando">gerando terreno…</div>
+        <button class="psoBtn" id="btnEixos" style="margin-top:10px; width:100%;">Mostrar eixos e grades</button>
     </div>
     <div id="waterPicker">
         <div class="seek-col">
@@ -57,6 +87,34 @@
             <input type="range" id="birdSlider" min="5" max="200" value="50" step="1">
             <span id="birdValor">—</span>
         </div>
+    </div>
+
+    <div id="psoPanel">
+        <h3>Enxame de Partículas (PSO)</h3>
+        <div id="psoTopo">
+            <label>N de partículas: <input type="number" id="psoN" value="10" min="1" max="60" step="1"></label>
+            <button class="psoBtn" id="btnPsoGerarTabela">Gerar tabela</button>
+            <button class="psoBtn go" id="btnPsoIniciar">Iniciar enxame</button>
+            <button class="psoBtn" id="btnPsoUmaIter" disabled>1 Iteração</button>
+            <button class="psoBtn go" id="btnPsoPlay" disabled>▶ Play</button>
+            <label id="psoVelLabel" style="display:flex; align-items:center; gap:6px;">
+                Velocidade
+                <input type="range" id="psoVel" min="1" max="10" value="3" step="1" style="width:90px;">
+                <span id="psoVelValor">3</span>
+            </label>
+            <span id="psoGbest">enxame não iniciado</span>
+        </div>
+        <div id="psoScroll">
+            <table class="psoTab" id="psoTabInit">
+                <thead><tr><th class="psoRot">parâmetro</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <table class="psoTab" id="psoTabEstado" style="display:none; margin-top:8px;">
+                <thead><tr><th class="psoRot">parâmetro</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <p id="psoAjuda">Deixe uma célula como <b>rnd</b> para inicialização aleatória dentro do domínio da função; edite para um valor manual. Combinação de células manuais e <b>rnd</b> é permitida.</p>
     </div>
 
     <script type="importmap">
@@ -73,12 +131,13 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { Sky } from 'three/addons/objects/Sky.js';
+        import { clone as clonarComEsqueleto } from 'three/addons/utils/SkeletonUtils.js';
 
         // --- CONFIGURAÇÕES ---
         const WORLD_SIZE = 800;
         const TREE_COUNT = 800;
         const ROCK_COUNT = 1000;
-        const ALTURA_MAX = 60;       // altura visual do relevo apos normalizado (unidades de mundo)
+        const ALTURA_MAX = 100;       // altura visual do relevo apos normalizado (unidades de mundo)
         let LAKE_FRAC = 0.09;        // fracao da altura normalizada que vira lago (0..1);
                                      // ajustavel pelo seekbar vertical de nivel da agua
         const ROCK_FRAC = 0.5;       // acima dessa fracao normalizada, vira "rocha" (picos)
@@ -173,6 +232,11 @@
         let fnAtual = 'rastrigin';
         let heightFn = null;        // (worldX, worldZ) -> altura normalizada [0, ALTURA_MAX]
         let lakeLevel = 0;
+        // dominio classico ativo + conversoes mundo<->dominio, expostas para
+        // o motor do PSO (que trabalha no dominio classico da funcao, nao no
+        // mundo 3D — fitness fiel a definicao matematica de cada funcao)
+        let dom = { x0: -5.12, x1: 5.12, y0: -5.12, y1: 5.12 };
+        let toX = null, toY = null, fromX = null, fromY = null;
 
         // prepara heightFn/lakeLevel para o id do catalogo: mapeia o mundo
         // para o dominio classico da funcao e normaliza min/max amostrados
@@ -182,8 +246,12 @@
             if (def.dom !== undefined) { x0 = y0 = -def.dom; x1 = y1 = def.dom; }
             else if (def.dom0 !== undefined) { x0 = y0 = def.dom0; x1 = y1 = def.dom1; }
             else { x0 = def.dom0X; x1 = def.dom1X; y0 = def.dom0Y; y1 = def.dom1Y; }
-            const toX = wx => x0 + (wx / WORLD_SIZE + 0.5) * (x1 - x0);
-            const toY = wz => y0 + (wz / WORLD_SIZE + 0.5) * (y1 - y0);
+            dom = { x0, x1, y0, y1 };
+            toX = wx => x0 + (wx / WORLD_SIZE + 0.5) * (x1 - x0);
+            toY = wz => y0 + (wz / WORLD_SIZE + 0.5) * (y1 - y0);
+            // inversas: do dominio classico da funcao de volta para o mundo 3D
+            fromX = dx => (( dx - x0) / (x1 - x0) - 0.5) * WORLD_SIZE;
+            fromY = dy => (( dy - y0) / (y1 - y0) - 0.5) * WORLD_SIZE;
 
             // amostra min/max no dominio efetivamente renderizado (nao no
             // dominio classico completo, que pode nao coincidir 1:1). N=220
@@ -233,9 +301,6 @@
             if (uiCam.uiCamFov) uiCam.uiCamFov.textContent = `${camera.fov.toFixed(0)}°`;
         }
 
-        init();
-        animate();
-
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1.0, 20000);
@@ -275,10 +340,13 @@
             scene.add(new THREE.AmbientLight(0xffffff, 0.9));
             scene.add(new THREE.HemisphereLight(0xbfd9ff, 0x3a4a2a, 1.1));
 
+            construirEixosEGrades();
+            ligarBotaoEixos();
+
             prepararFuncao(fnAtual);
             construirTerreno();
 
-            // --- PÁSSARO ---
+            // --- PÁSSARO --- (voo decorativo ate o enxame PSO ser iniciado)
             const loader = new GLTFLoader();
             loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Stork.glb', (gltf) => {
                 bird = gltf.scene;
@@ -286,9 +354,15 @@
                 scene.add(bird);
                 mixer = new THREE.AnimationMixer(bird);
                 mixer.clipAction(gltf.animations[0]).play();
+                // guarda o modelo original para clonar quando o enxame for
+                // iniciado (clonarComEsqueleto preserva bones/skinning, ao
+                // contrario de um clone() simples de Object3D)
+                birdTemplate.scene = gltf.scene;
+                birdTemplate.clip = gltf.animations[0];
             });
 
             ligarSeletor();
+            ligarPainelPSO();
             window.addEventListener('resize', onWindowResize);
         }
 
@@ -467,7 +541,57 @@
                 birdScale = slider.value / 100;
                 if (valorEl) valorEl.textContent = birdScale.toFixed(2) + '×';
                 if (bird) bird.scale.setScalar(birdScale);
+                birdSwarm.forEach(b => b.scale.setScalar(birdScale));
             });
+        }
+
+        /* =====================================================================
+           EIXOS CARTESIANOS E GRADES — AxesHelper (X vermelho, Y verde,
+           Z azul, convencao padrao do Three.js) + um GridHelper por plano
+           (XZ no chao, XY e YZ verticais passando pela origem), todos
+           ocultos por padrao e ligados/desligados por um unico botao.
+           ===================================================================== */
+        let eixosGrupo = null;
+        let eixosVisiveis = false;
+
+        function construirEixosEGrades() {
+            eixosGrupo = new THREE.Group();
+            const extensao = WORLD_SIZE;             // eixos vao ate a borda do mundo
+            const divisoes = 20;
+
+            eixosGrupo.add(new THREE.AxesHelper(extensao / 2));
+
+            // grade no plano XZ (chao, y=0) — orientacao padrao do GridHelper
+            const gridXZ = new THREE.GridHelper(extensao, divisoes, 0xff5555, 0x557799);
+            eixosGrupo.add(gridXZ);
+
+            // grade no plano XY (parede vertical, z=0) — gira o GridHelper
+            // (que por padrao fica no plano XZ) 90 graus em torno de X
+            const gridXY = new THREE.GridHelper(extensao, divisoes, 0x55ff55, 0x557799);
+            gridXY.rotation.x = Math.PI / 2;
+            eixosGrupo.add(gridXY);
+
+            // grade no plano YZ (parede vertical, x=0) — gira 90 graus em torno de Z
+            const gridYZ = new THREE.GridHelper(extensao, divisoes, 0x5599ff, 0x557799);
+            gridYZ.rotation.z = Math.PI / 2;
+            eixosGrupo.add(gridYZ);
+
+            eixosGrupo.visible = eixosVisiveis;
+            scene.add(eixosGrupo);
+        }
+
+        function alternarEixos() {
+            eixosVisiveis = !eixosVisiveis;
+            if (eixosGrupo) eixosGrupo.visible = eixosVisiveis;
+            const btn = document.getElementById('btnEixos');
+            if (btn) btn.textContent = eixosVisiveis ? 'Ocultar eixos e grades' : 'Mostrar eixos e grades';
+        }
+
+        function ligarBotaoEixos() {
+            const btn = document.getElementById('btnEixos');
+            if (!btn) return;
+            ['click', 'pointerdown', 'keydown'].forEach(t => btn.addEventListener(t, ev => ev.stopPropagation()));
+            btn.addEventListener('click', alternarEixos);
         }
 
         // Troca a funcao ativa: recalcula heightFn/lakeLevel e reconstroi o
@@ -485,8 +609,451 @@
                     prepararFuncao(fnAtual);
                     construirTerreno();
                     if (aviso) aviso.style.display = 'none';
+                    // a paisagem mudou: refaz fitness/pbest/gbest do enxame
+                    // existente na nova funcao, sem resetar posicoes/velocidades
+                    if (pso) { reavaliarFitnessEnxame(); atualizarUiPSO(); reposicionarPassarosPSO(); }
                 });
             });
+        }
+
+        /* =====================================================================
+           MOTOR PSO — D=2, fitness = CATALOGO[fnAtual].f(x1,x2) no dominio
+           CLASSICO da funcao (nao a altura normalizada do terreno). Cada
+           particula e um passaro real na cena; a posicao 3D de exibicao e
+           obtida convertendo x1,x2 de volta para o mundo via fromX/fromY.
+           ===================================================================== */
+        const D = 2;                         // dimensoes do problema (x1, x2)
+        const PSO_PARAMS = { w: 0.72, c1: 1.49, c2: 1.49, vmaxFrac: 0.2 };
+        let pso = null;          // estado do enxame (null ate o usuario clicar "Iniciar enxame")
+        let initSpec = null;     // especificacao de inicializacao vinda da tabela: [{x:[v|null,...], v:[v|null,...]}, ...]
+
+        function fitnessAtual(x1, x2) {
+            return CATALOGO[fnAtual].f(x1, x2);
+        }
+
+        // cria o estado inicial do enxame a partir de initSpec (posicoes/
+        // velocidades explicitas OU null=aleatorio dentro do dominio atual)
+        function criarEnxame(spec) {
+            const N = spec.length;
+            const vmax = [dom.x1 - dom.x0, dom.y1 - dom.y0].map(r => r * PSO_PARAMS.vmaxFrac);
+            const rndEmDominio = d => (d === 0 ? [dom.x0, dom.x1] : [dom.y0, dom.y1]);
+            const parts = spec.map(s => {
+                const x = [0, 1].map(d => {
+                    const v = s.x[d];
+                    if (v === null || v === undefined) { const [a, b] = rndEmDominio(d); return a + Math.random() * (b - a); }
+                    return v;
+                });
+                const v = [0, 1].map(d => {
+                    const val = s.v[d];
+                    if (val === null || val === undefined) return (Math.random() * 2 - 1) * vmax[d];
+                    return val;
+                });
+                const fit = fitnessAtual(x[0], x[1]);
+                return { x, v, fit, pbestX: x.slice(), pbestFit: fit };
+            });
+            let gIdx = 0;
+            parts.forEach((p, i) => { if (p.pbestFit < parts[gIdx].pbestFit) gIdx = i; });
+            return { N, parts, gIdx, gbestX: parts[gIdx].pbestX.slice(), gbestFit: parts[gIdx].pbestFit, iter: 0, vmax };
+        }
+
+        // uma iteracao completa do PSO (equacoes classicas de velocidade/posicao,
+        // clamping de velocidade em vmax e de posicao dentro do dominio)
+        function iterarPSO() {
+            if (!pso) return;
+            const { w, c1, c2 } = PSO_PARAMS;
+            pso.parts.forEach(p => {
+                for (let d = 0; d < D; d++) {
+                    const r1 = Math.random(), r2 = Math.random();
+                    let vd = w * p.v[d] + c1 * r1 * (p.pbestX[d] - p.x[d]) + c2 * r2 * (pso.gbestX[d] - p.x[d]);
+                    vd = Math.max(-pso.vmax[d], Math.min(pso.vmax[d], vd));
+                    p.v[d] = vd;
+                    const lo = d === 0 ? dom.x0 : dom.y0, hi = d === 0 ? dom.x1 : dom.y1;
+                    p.x[d] = Math.max(lo, Math.min(hi, p.x[d] + vd));
+                }
+                p.fit = fitnessAtual(p.x[0], p.x[1]);
+                if (p.fit < p.pbestFit) { p.pbestFit = p.fit; p.pbestX = p.x.slice(); }
+            });
+            let gIdx = pso.gIdx;
+            pso.parts.forEach((p, i) => { if (p.pbestFit < pso.parts[gIdx].pbestFit) gIdx = i; });
+            pso.gIdx = gIdx;
+            pso.gbestX = pso.parts[gIdx].pbestX.slice();
+            pso.gbestFit = pso.parts[gIdx].pbestFit;
+            pso.iter++;
+        }
+
+        // recalcula fit/pbest/gbest de TODAS as particulas na funcao atual,
+        // sem alterar x/v — usado quando o usuario troca a funcao no combo
+        // com o enxame ja em execucao (a paisagem mudou debaixo do enxame)
+        function reavaliarFitnessEnxame() {
+            if (!pso) return;
+            pso.parts.forEach(p => {
+                p.fit = fitnessAtual(p.x[0], p.x[1]);
+                p.pbestFit = fitnessAtual(p.pbestX[0], p.pbestX[1]);
+            });
+            let gIdx = 0;
+            pso.parts.forEach((p, i) => { if (p.pbestFit < pso.parts[gIdx].pbestFit) gIdx = i; });
+            pso.gIdx = gIdx;
+            pso.gbestX = pso.parts[gIdx].pbestX.slice();
+            pso.gbestFit = pso.parts[gIdx].pbestFit;
+        }
+
+        /* =====================================================================
+           UI DO PSO — tabela de inicializacao (editavel, "rnd" por padrao),
+           tabela de estado ao vivo (somente leitura) e integracao visual
+           (cada particula vira um passaro clonado do modelo GLTF original).
+           ===================================================================== */
+        const birdTemplate = { scene: null };   // referencia ao GLTF original, p/ clonar
+        let birdSwarm = [];                     // um Object3D (clone do passaro) por particula
+        let birdMixers = [];                    // AnimationMixer por clone, para a asa continuar batendo
+
+        function gerarTabelaInit() {
+            const N = Math.max(1, Math.min(60, parseInt(document.getElementById('psoN').value, 10) || 1));
+            document.getElementById('psoN').value = N;
+            const tab = document.getElementById('psoTabInit');
+            const thead = tab.querySelector('thead tr');
+            const tbody = tab.querySelector('tbody');
+
+            thead.innerHTML = '<th class="psoRot">parâmetro</th>' +
+                Array.from({ length: N }, (_, i) => `<th>P${i + 1}</th>`).join('');
+
+            const linhas = [];
+            for (let d = 0; d < D; d++) linhas.push({ tipo: 'x', d, rot: `x${d + 1}` });
+            for (let d = 0; d < D; d++) linhas.push({ tipo: 'v', d, rot: `v${d + 1}` });
+
+            tbody.innerHTML = linhas.map(l =>
+                `<tr data-tipo="${l.tipo}" data-d="${l.d}"><td class="psoRot">${l.rot}</td>` +
+                Array.from({ length: N }, (_, i) =>
+                    `<td><input type="text" data-p="${i}" value="rnd"></td>`).join('') +
+                '</tr>'
+            ).join('');
+
+            document.getElementById('psoTabEstado').style.display = 'none';
+            document.getElementById('btnPsoUmaIter').disabled = true;
+            const gEl = document.getElementById('psoGbest');
+            if (gEl) gEl.textContent = 'tabela gerada — clique em "Iniciar enxame"';
+        }
+
+        // le a tabela de inicializacao, convertendo "rnd" (case-insensitive,
+        // com ou sem espacos) em null (= sorteado dentro do dominio) e
+        // qualquer outro texto em numero; celulas invalidas tambem viram rnd
+        function lerSpecDaTabela() {
+            const tab = document.getElementById('psoTabInit');
+            const N = tab.querySelectorAll('thead th').length - 1;
+            const linhas = {};
+            tab.querySelectorAll('tbody tr').forEach(tr => {
+                linhas[`${tr.dataset.tipo}${tr.dataset.d}`] =
+                    [...tr.querySelectorAll('input')].map(inp => {
+                        const raw = inp.value.trim();
+                        if (raw === '' || /^rnd$/i.test(raw)) return null;
+                        const v = parseFloat(raw.replace(',', '.'));
+                        return isFinite(v) ? v : null;
+                    });
+            });
+            const spec = [];
+            for (let i = 0; i < N; i++) {
+                spec.push({
+                    x: Array.from({ length: D }, (_, d) => (linhas[`x${d}`] ? linhas[`x${d}`][i] : null)),
+                    v: Array.from({ length: D }, (_, d) => (linhas[`v${d}`] ? linhas[`v${d}`][i] : null))
+                });
+            }
+            return spec;
+        }
+
+        function iniciarEnxame() {
+            const spec = lerSpecDaTabela();
+            pso = criarEnxame(spec);
+            // novo enxame: qualquer play/interpolacao pendente do anterior nao vale mais
+            psoTocando = false;
+            psoAnteriores = null;
+            psoTempoNoQuadro = 0;
+            rotularPlayPSO();
+            construirTabelaEstado(pso.N);
+            atualizarUiPSO();
+            construirPassarosPSO();
+            // o enxame assume a cena: remove o passaro decorativo original
+            if (bird) { scene.remove(bird); bird = null; mixer = null; }
+            document.getElementById('psoTabEstado').style.display = '';
+            document.getElementById('btnPsoUmaIter').disabled = false;
+        }
+
+        function construirTabelaEstado(N) {
+            const tab = document.getElementById('psoTabEstado');
+            const thead = tab.querySelector('thead tr');
+            const tbody = tab.querySelector('tbody');
+            thead.innerHTML = '<th class="psoRot">parâmetro</th>' +
+                Array.from({ length: N }, (_, i) => `<th>P${i + 1}</th>`).join('');
+
+            const linhas = [];
+            for (let d = 0; d < D; d++) linhas.push({ id: `x${d}`, rot: `x${d + 1} atual` });
+            for (let d = 0; d < D; d++) linhas.push({ id: `v${d}`, rot: `v${d + 1} atual` });
+            linhas.push({ id: 'fit', rot: 'fitness atual' });
+            linhas.push({ id: 'pbestx0', rot: 'pbest x1' });
+            linhas.push({ id: 'pbestx1', rot: 'pbest x2' });
+            linhas.push({ id: 'pbestfit', rot: 'fitness(pbest)' });
+            // posicao de exibicao no mundo 3D (o que de fato move o passaro
+            // na cena), derivada de x1,x2 via fromX/fromY + heightFn — distinta
+            // de x1/x2, que sao coordenadas no dominio classico da funcao
+            linhas.push({ id: 'wx', rot: 'posição x (mundo)' });
+            linhas.push({ id: 'wy', rot: 'posição y (mundo)' });
+            linhas.push({ id: 'wz', rot: 'posição z (mundo)' });
+
+            tbody.innerHTML = linhas.map(l =>
+                `<tr data-linha="${l.id}"><td class="psoRot">${l.rot}</td>` +
+                Array.from({ length: N }, (_, i) =>
+                    `<td class="psoSoLeitura" data-p="${i}">—</td>`).join('') +
+                '</tr>'
+            ).join('');
+        }
+
+        // Atualiza a tabela de estado, o resumo do gbest/iteracao e destaca
+        // (via classe .psoGbestRow, sobre a linha inteira nao existe — aqui
+        // marcamos so a COLUNA do gbest realçando cada celula) a particula gbest.
+        function atualizarUiPSO() {
+            if (!pso) return;
+            const nf = (v, d = 3) => v.toFixed(d);
+            // mesma formula de altura usada em reposicionarPassarosPSO, para a
+            // tabela mostrar exatamente a posicao 3D que esta na tela
+            const fits = pso.parts.map(p => p.fit);
+            const ex = (fromX && fromY && heightFn) ? extrasVoo(pso.iter, fits) : null;
+            const linhaVal = (id, i) => {
+                const p = pso.parts[i];
+                switch (id) {
+                    case 'x0': return nf(p.x[0]);
+                    case 'x1': return nf(p.x[1]);
+                    case 'v0': return nf(p.v[0]);
+                    case 'v1': return nf(p.v[1]);
+                    case 'fit': return nf(p.fit);
+                    case 'pbestx0': return nf(p.pbestX[0]);
+                    case 'pbestx1': return nf(p.pbestX[1]);
+                    case 'pbestfit': return nf(p.pbestFit);
+                    case 'wx': return (fromX ? nf(fromX(p.x[0]), 1) : '—');
+                    case 'wy': {
+                        if (!fromX || !fromY || !ex) return '—';
+                        const wx = fromX(p.x[0]), wz = fromY(p.x[1]);
+                        const extraRel = (p.fit - ex.fmin) / ex.span * ex.EXTRA_REL_MAX;
+                        return nf(heightFn(wx, wz) + 8 + ex.extraDecaimento + extraRel, 1);
+                    }
+                    case 'wz': return (fromY ? nf(fromY(p.x[1]), 1) : '—');
+                }
+            };
+            document.querySelectorAll('#psoTabEstado tbody tr').forEach(tr => {
+                const id = tr.dataset.linha;
+                tr.querySelectorAll('td[data-p]').forEach(td => {
+                    const i = +td.dataset.p;
+                    td.textContent = linhaVal(id, i);
+                    td.classList.toggle('psoGbestRow', i === pso.gIdx);
+                });
+            });
+            const gEl = document.getElementById('psoGbest');
+            if (gEl) gEl.innerHTML =
+                `gbest: <b>P${pso.gIdx + 1}</b> · x = (${nf(pso.gbestX[0])}, ${nf(pso.gbestX[1])}) ` +
+                `· fitness = <b>${nf(pso.gbestFit, 4)}</b> · iteração <b>${pso.iter}</b>`;
+        }
+
+        // clona o modelo do passaro N vezes (uma por particula) e as
+        // posiciona no mundo convertendo x1,x2 do dominio da funcao. Cada
+        // clone ganha seu proprio AnimationMixer para a asa continuar
+        // batendo independentemente das outras.
+        function construirPassarosPSO() {
+            descartarPassarosPSO();
+            if (!birdTemplate.scene || !pso) return;
+            const clip = birdTemplate.clip;
+            for (let i = 0; i < pso.N; i++) {
+                const clone = clonarComEsqueleto(birdTemplate.scene);
+                clone.scale.setScalar(birdScale);
+                scene.add(clone);
+                birdSwarm.push(clone);
+                if (clip) {
+                    const mixer = new THREE.AnimationMixer(clone);
+                    mixer.clipAction(clip).play();
+                    birdMixers.push(mixer);
+                } else {
+                    birdMixers.push(null);
+                }
+            }
+            reposicionarPassarosPSO();
+        }
+
+        function descartarPassarosPSO() {
+            birdSwarm.forEach(b => scene.remove(b));
+            birdSwarm = [];
+            birdMixers = [];
+        }
+
+        // aplica x1,x2 (dominio classico da funcao) -> posicao de mundo, com
+        // a altura tirada de heightFn (a versao normalizada/renderizada), so
+        // para o passaro pousar visualmente na superficie do relevo atual
+        // Altura de voo: alem de "pousar" na superficie do relevo (heightFn),
+        // soma dois extras:
+        //  1) um extra que DECAI com a iteracao (comeca bem alto, ~ALTURA_MAX*3,
+        //     e cai exponencialmente) — garante que a descida seja perceptivel
+        //     logo de cara, independente de quao dispersos estao os fitness;
+        //  2) um extra menor proporcional ao fitness relativo da particula
+        //     dentro da geracao atual — quem esta pior posicionado voa um
+        //     pouco mais alto que as demais, mesmo depois da descida inicial.
+        const VOO_INICIAL = ALTURA_MAX * 3;   // altura extra na iteracao 0 (bem alta, para a descida ficar obvia)
+        const VOO_MEIA_VIDA = 12;             // iteracoes para o extra inicial cair pela metade
+
+        // altura extra (decaimento por iteracao + dispersao de fitness) para
+        // um dado "iter efetivo" (pode ser fracionario durante interpolacao)
+        // e um conjunto de fitness — extraida para ser reaproveitada tanto no
+        // calculo por posicao real quanto na interpolacao entre quadros
+        function extrasVoo(iterEfetivo, fits) {
+            let fmin = Infinity, fmax = -Infinity;
+            fits.forEach(f => { if (f < fmin) fmin = f; if (f > fmax) fmax = f; });
+            const span = (fmax - fmin) || 1;
+            const EXTRA_REL_MAX = 15;
+            const extraDecaimento = VOO_INICIAL * Math.pow(0.5, Math.max(0, iterEfetivo) / VOO_MEIA_VIDA);
+            return { fmin, span, EXTRA_REL_MAX, extraDecaimento };
+        }
+
+        // Orienta o passaro para a direcao do vetor velocidade (no plano XZ
+        // do mundo). Com a convencao glTF mais comum (frente do modelo no
+        // eixo -Z local), rotation.y = atan2(vx, vz) faz a frente apontar
+        // para o vetor (vx, vz) no mundo. Se o modelo Stork estiver espelhado
+        // (bico apontando para o lado errado), ajustar somando Math.PI aqui.
+        // wvx/wvz sao a velocidade ja convertida para unidades de mundo; se
+        // a velocidade for ~0 (particula parada), mantem a orientacao
+        // anterior em vez de girar para um angulo indefinido.
+        const BIRD_YAW_OFFSET = 0;   // ajuste fino (radianos) se o bico ficar invertido
+        function orientarParaVelocidade(bird3, wvx, wvz) {
+            if (Math.hypot(wvx, wvz) < 1e-6) return;
+            bird3.rotation.y = Math.atan2(wvx, wvz) + BIRD_YAW_OFFSET;
+        }
+
+        // Posiciona os passaros na iteracao ATUAL do enxame (t=1, sem
+        // interpolacao) — usado apos "1 Iteracao" manual e ao iniciar/trocar
+        // de funcao. Quando tocando (play), quem desenha e desenharQuadroPSO.
+        function reposicionarPassarosPSO() {
+            if (!pso) return;
+            const fits = pso.parts.map(p => p.fit);
+            const ex = extrasVoo(pso.iter, fits);
+            pso.parts.forEach((p, i) => {
+                const bird3 = birdSwarm[i];
+                if (!bird3 || !fromX || !fromY) return;
+                const wx = fromX(p.x[0]), wz = fromY(p.x[1]);
+                const extraRel = (p.fit - ex.fmin) / ex.span * ex.EXTRA_REL_MAX;
+                const wy = heightFn(wx, wz) + 8 + ex.extraDecaimento + extraRel;
+                bird3.position.set(wx, wy, wz);
+                // direcao do vetor velocidade, convertida para unidades de mundo
+                const wvx = fromX(p.x[0] + p.v[0]) - wx;
+                const wvz = fromY(p.x[1] + p.v[1]) - wz;
+                orientarParaVelocidade(bird3, wvx, wvz);
+            });
+        }
+
+        function umaIteracaoPSO() {
+            if (!pso) return;
+            iterarPSO();
+            atualizarUiPSO();
+            reposicionarPassarosPSO();
+            psoAnteriores = null;   // proximo play recomeca o snapshot a partir daqui
+        }
+
+        /* =====================================================================
+           PLAY / PAUSE — quando tocando, o enxame avanca sozinho: a cada
+           PSO_DUR_ITER/velocidade segundos executa uma iteracao real do PSO,
+           mas o VISUAL interpola suavemente entre a posicao anterior e a
+           nova (senao os passaros "teleportariam" a cada passo do algoritmo).
+           ===================================================================== */
+        let psoTocando = false;
+        let psoVelocidade = 3;             // 1 (lento) a 10 (rapido)
+        const PSO_DUR_ITER = 1.4;          // segundos por iteracao em velocidade=1
+        let psoAnteriores = null;          // snapshot de x[] por particula ANTES do passo em curso
+        let psoTempoNoQuadro = 0;          // segundos decorridos dentro da iteracao em curso
+
+        function snapshotPosicoes() {
+            return pso.parts.map(p => ({ x: p.x.slice(), fit: p.fit }));
+        }
+
+        // avanca o PSO uma iteracao real, guardando o "antes" para interpolar
+        function avancarIteracaoTocando() {
+            psoAnteriores = snapshotPosicoes();
+            iterarPSO();
+            atualizarUiPSO();
+            psoTempoNoQuadro = 0;
+        }
+
+        // desenha o quadro interpolado entre psoAnteriores e o estado atual,
+        // conforme a fracao de tempo decorrida dentro da iteracao em curso
+        function desenharQuadroPSOInterpolado(fracao) {
+            if (!pso || !psoAnteriores) return;
+            const u = Math.max(0, Math.min(1, fracao));
+            const uSuave = u * u * (3 - 2 * u);   // easing (smoothstep)
+            const fits = pso.parts.map(p => p.fit);
+            const iterEfetivo = pso.iter - 1 + uSuave;   // interpola tambem a altura do decaimento
+            const ex = extrasVoo(iterEfetivo, fits);
+            pso.parts.forEach((p, i) => {
+                const bird3 = birdSwarm[i];
+                const ant = psoAnteriores[i];
+                if (!bird3 || !fromX || !fromY || !ant) return;
+                const dx0 = ant.x[0] + (p.x[0] - ant.x[0]) * uSuave;
+                const dx1 = ant.x[1] + (p.x[1] - ant.x[1]) * uSuave;
+                const fitInterp = ant.fit + (p.fit - ant.fit) * uSuave;
+                const wx = fromX(dx0), wz = fromY(dx1);
+                const extraRel = (fitInterp - ex.fmin) / ex.span * ex.EXTRA_REL_MAX;
+                const wy = heightFn(wx, wz) + 8 + ex.extraDecaimento + extraRel;
+                // direcao: para onde o passaro esta indo NESTE quadro (posicao
+                // atual interpolada -> posicao final da iteracao), mais estavel
+                // visualmente do que recalcular a cada frame contra o quadro anterior
+                const wvx = fromX(p.x[0]) - wx;
+                const wvz = fromY(p.x[1]) - wz;
+                orientarParaVelocidade(bird3, wvx, wvz);
+                bird3.position.set(wx, wy, wz);
+            });
+        }
+
+        // chamado a cada frame de animate() quando psoTocando — avanca o
+        // relogio da iteracao em curso e, ao completar, roda a proxima
+        function atualizarPlayPSO(delta) {
+            if (!psoTocando || !pso) return;
+            const duracao = PSO_DUR_ITER / psoVelocidade;
+            psoTempoNoQuadro += delta;
+            if (psoTempoNoQuadro >= duracao) {
+                avancarIteracaoTocando();
+                psoTempoNoQuadro = 0;
+            }
+            desenharQuadroPSOInterpolado(psoTempoNoQuadro / duracao);
+        }
+
+        function rotularPlayPSO() {
+            const b = document.getElementById('btnPsoPlay');
+            if (b) b.textContent = psoTocando ? '⏸ Pausar' : '▶ Play';
+        }
+        function playPSO() {
+            if (!pso) return;
+            if (!psoAnteriores) psoAnteriores = snapshotPosicoes();
+            psoTocando = true;
+            psoTempoNoQuadro = 0;
+            document.getElementById('btnPsoUmaIter').disabled = true;
+            rotularPlayPSO();
+        }
+        function pausarPSO() {
+            psoTocando = false;
+            document.getElementById('btnPsoUmaIter').disabled = false;
+            reposicionarPassarosPSO();   // ao pausar, encerra exatamente na posicao real (sem interpolacao pendente)
+            rotularPlayPSO();
+        }
+
+        function ligarPainelPSO() {
+            document.getElementById('btnPsoGerarTabela').addEventListener('click', gerarTabelaInit);
+            document.getElementById('btnPsoIniciar').addEventListener('click', () => {
+                iniciarEnxame();
+                document.getElementById('btnPsoPlay').disabled = false;
+            });
+            document.getElementById('btnPsoUmaIter').addEventListener('click', umaIteracaoPSO);
+            document.getElementById('btnPsoPlay').addEventListener('click', () => psoTocando ? pausarPSO() : playPSO());
+
+            const vel = document.getElementById('psoVel');
+            const velValor = document.getElementById('psoVelValor');
+            vel.addEventListener('input', () => {
+                psoVelocidade = parseInt(vel.value, 10);
+                if (velValor) velValor.textContent = vel.value;
+            });
+
+            const painel = document.getElementById('psoPanel');
+            ['click', 'pointerdown', 'keydown', 'wheel'].forEach(t => painel.addEventListener(t, ev => ev.stopPropagation()));
+            gerarTabelaInit();
         }
 
         function onWindowResize() {
@@ -500,17 +1067,33 @@
             const delta = clock.getDelta();
             const elapsed = clock.getElapsedTime();
 
-            if (mixer) mixer.update(delta);
-            if (bird) {
-                const radius = 250;
-                bird.position.x = Math.sin(elapsed * 0.2) * radius;
-                bird.position.z = Math.cos(elapsed * 0.2) * radius;
-                bird.position.y = 60 + Math.sin(elapsed * 0.5) * 15;
-                bird.rotation.y = elapsed * 0.2 + Math.PI;
+            // o passaro decorativo (voo senoidal) so existe ate o enxame PSO
+            // ser iniciado; a partir dai o enxame assume a cena
+            if (!pso) {
+                if (mixer) mixer.update(delta);
+                if (bird) {
+                    const radius = 250;
+                    bird.position.x = Math.sin(elapsed * 0.2) * radius;
+                    bird.position.z = Math.cos(elapsed * 0.2) * radius;
+                    bird.position.y = 60 + Math.sin(elapsed * 0.5) * 15;
+                    bird.rotation.y = elapsed * 0.2 + Math.PI;
+                }
+            } else {
+                birdMixers.forEach(m => { if (m) m.update(delta); });
+                atualizarPlayPSO(delta);
             }
             atualizarPainelCamera();
             renderer.render(scene, camera);
         }
+
+        // Chamado apos TODAS as declaracoes do modulo (D, birdTemplate, PSO_PARAMS
+        // etc): init() dispara ligarPainelPSO()/gerarTabelaInit() e o callback
+        // assincrono do GLTFLoader, que acessam essas const/let — se init() rodasse
+        // antes delas serem declaradas no arquivo, cairia na temporal dead zone
+        // (ReferenceError "Cannot access before initialization"), mesmo com
+        // function hoisting cobrindo a propria funcao init.
+        init();
+        animate();
     </script>
 </body>
 </html>
