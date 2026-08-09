@@ -1390,11 +1390,11 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
             const t = [];
             if (vista === 'superficie') {
                 t.push({ type: 'surface', x: xs, y: xs, z: zs, colorscale: ESCALA, showscale: false,
-                         opacity: 0.9, hoverinfo: 'skip' });
+                         opacity: 0.28, hoverinfo: 'skip' });
                 t.push({ type: 'scatter3d', mode: 'markers', name: 'partículas',
                          x: h.X.map(p => p[0]), y: h.X.map(p => p[1]),
                          z: h.X.map(p => f(p[0], p[1]) + 0.8),
-                         marker: { size: 5, color: '#17787d', line: { color: '#0b4a4d', width: 1 } },
+                         marker: { size: 5, color: '#e0453a', line: { color: '#7a1f14', width: 1 } },
                          hoverinfo: 'skip' });
                 t.push({ type: 'scatter3d', mode: 'markers', name: 'melhor global g',
                          x: [h.g[0]], y: [h.g[1]], z: [f(h.g[0], h.g[1]) + 1.2],
@@ -1405,7 +1405,7 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
                          ncontours: 24, contours: { coloring: 'heatmap' }, hoverinfo: 'skip' });
                 t.push({ type: 'scatter', mode: 'markers', name: 'partículas',
                          x: h.X.map(p => p[0]), y: h.X.map(p => p[1]),
-                         marker: { size: 9, color: '#17787d', line: { color: '#0b4a4d', width: 1 } },
+                         marker: { size: 9, color: '#e0453a', line: { color: '#7a1f14', width: 1 } },
                          hoverinfo: 'skip' });
                 t.push({ type: 'scatter', mode: 'markers', name: 'melhor global g',
                          x: [h.g[0]], y: [h.g[1]],
@@ -1988,8 +1988,30 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
             ];
         }
 
+        // vetor de deslocamento (etapa 4): uma seta completa (haste + ponta)
+        // que representa (x1novo - x1, x2novo - x2) — o deslocamento no PLANO
+        // das coordenadas, nao na superficie f(x,y). Por isso e desenhada no
+        // mesmo "chao" (z constante) das guias de projecao, plana, do jeito
+        // que se le um vetor num grafico de x1 por x2.
+        function vetorMover(mostrar) {
+            if (!mostrar) return {
+                linha: { x: [null], y: [null], z: [null] },
+                ponta: { x: [null], y: [null], z: [null], u: [0], v: [0], w: [0] }
+            };
+            const d = hist[Math.min(hist.length - 1, kParada)].det;
+            const [x0, y0] = d.x, [x1, y1] = d.xn;
+            const zc = F_MIN - 1.1;               // chao: mesmo plano das guias, um pouco acima delas
+            const dx = x1 - x0, dy = y1 - y0;
+            const CORTE = 0.7;      // fracao do caminho coberta pela haste; o resto e a ponta
+            const xm = x0 + dx * CORTE, ym = y0 + dy * CORTE;
+            return {
+                linha: { x: [x0, xm], y: [y0, ym], z: [zc, zc] },
+                ponta: { x: [xm], y: [ym], z: [zc], u: [x1 - xm], v: [y1 - ym], w: [0] }
+            };
+        }
+
         function tracos(q) {
-            const gu = guias(q);
+            const gu = guias(q), vm = vetorMover(etapa === 3);
             return [
                 { type: 'surface', x: gx, y: gx, z: gz, colorscale: ESCALA,
                   showscale: false, opacity: 0.85, hoverinfo: 'skip' },
@@ -2008,7 +2030,16 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
                 { type: 'scatter3d', mode: 'lines', name: 'coordenadas do 🦜',
                   x: gu.x, y: gu.y, z: gu.z,
                   line: { color: '#c0392b', width: 2, dash: 'dot' },
-                  opacity: 0.8, hoverinfo: 'skip' }
+                  opacity: 0.8, hoverinfo: 'skip' },
+                // seta 3D (etapa 4): haste da posicao atual ate a nova posicao...
+                { type: 'scatter3d', mode: 'lines', name: 'deslocamento vᵢ',
+                  x: vm.linha.x, y: vm.linha.y, z: vm.linha.z,
+                  line: { color: '#7a1f14', width: 9 }, hoverinfo: 'skip' },
+                // ...e a ponta, exatamente sobre a posicao nova
+                { type: 'cone', name: 'deslocamento vᵢ (ponta)', x: vm.ponta.x, y: vm.ponta.y, z: vm.ponta.z,
+                  u: vm.ponta.u, v: vm.ponta.v, w: vm.ponta.w, anchor: 'tail', sizemode: 'absolute',
+                  sizeref: 0.42, colorscale: [[0, '#7a1f14'], [1, '#7a1f14']],
+                  showscale: false, hoverinfo: 'skip' }
             ];
         }
 
@@ -2049,6 +2080,12 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
                   z: [q.z, [q.z[FOCO]], [f(q.g[0], q.g[1]) + 0.15], gu.z] },
                 { 'scene.annotations': anotacoes(q, !!realce).concat(rotulosGuia(q)) },
                 [1, 2, 3, 4]);
+            // seta do deslocamento: trocada por restyle isolado (a haste e a
+            // ponta tem atributos diferentes, nao compartilhados com os demais)
+            const vm = vetorMover(etapa === 3);
+            Plotly.restyle(host, { x: [vm.linha.x], y: [vm.linha.y], z: [vm.linha.z] }, [5]);
+            Plotly.restyle(host, { x: [vm.ponta.x], y: [vm.ponta.y], z: [vm.ponta.z],
+                                   u: [vm.ponta.u], v: [vm.ponta.v], w: [vm.ponta.w] }, [6]);
             atualizarTrilha();
         }
 
@@ -2198,7 +2235,7 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
             if (!raf) raf = requestAnimationFrame(passoAnim);
         }
         function pausa() { tocando = false; rotular(); if (!cine) parar(); }
-        function reiniciar() { irPara(0, 0); desenhaQuadro(true); play(); }
+        function reiniciar() { irPara(0, 0); desenhaQuadro(true); pausa(); }
         // controle manual: uma etapa por clique, atravessando as iteracoes
         function passo() {
             if (!plotado) return;
