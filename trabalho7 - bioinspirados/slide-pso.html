@@ -99,6 +99,16 @@
         .stage-box svg { width:100%; height:auto; display:block; margin:0 auto; }
         .stage-cap { font-size:0.58em; color:#7a8497; text-align:center; margin:2px 0 0; font-weight:700; }
 
+        /* Trilha de progresso: iteracao + as quatro etapas, com a atual marcada */
+        .trilha-etapas { display:flex; align-items:center; flex-wrap:wrap; gap:4px;
+            font-size:0.62em; font-weight:700; color:#8a97ab; margin:0 0 6px; }
+        .trilha-etapas .trilha-it { color:var(--ufpr-dark); }
+        .trilha-etapas .trilha-sep { color:#c3cfdd; }
+        .trilha-etapas .trilha-passo { padding:3px 9px; border-radius:12px; border:1px solid #dde5ee; }
+        .trilha-etapas .trilha-passo.atual { background:var(--pso-teal); border-color:var(--pso-teal);
+            color:#fff; box-shadow:0 2px 6px rgba(23,120,125,0.35); }
+        .trilha-etapas .trilha-passo.feita { color:#17787d; border-color:#bfe0e1; }
+
         /* Fotos com crédito */
         .foto { border-radius:10px; box-shadow:0 5px 18px rgba(0,0,0,0.20); max-width:100%; display:block; margin:0 auto; }
         .credito { font-size:0.5em; color:#9aa7b8; margin-top:4px; text-align:center; line-height:1.25; }
@@ -164,7 +174,7 @@
         /* realce da coluna que a fase corrente esta calculando */
         table.dados-tab .foco { background:#fff6d9 !important; box-shadow:inset 0 0 0 1px #f0c96b; }
         table.dados-tab th.foco { background:#a8710a !important; }
-        .dados-nota { margin:8px 0 0; font-size:11.5px; color:#8a93a8; }
+        .dados-nota { margin:8px 0 0; font-size:15px; color:#8a93a8; }
         @media print { .dados-modal { display:none !important; } }
 
         /* Tabela de iteracoes ao lado da animacao do ciclo */
@@ -484,6 +494,39 @@
                 </table>
             </div>
             <p class="stage-cap" style="margin-top:3px;">Uma linha por <b>partícula</b>. As colunas <b style="background:#fff6d9; padding:0 3px;">realçadas</b> são as que a fase corrente calcula. Linha <b style="color:#c0392b">vermelha</b>: partícula destacada no gráfico · <b style="color:#14603a">verde</b>: melhor da iteração. $v = $ inércia $+$ cognitivo $+$ social.</p>
+        </section>
+
+        <!-- 9b. A revoada com parada didática a cada 10 iterações -->
+        <section class="compact" id="slide-bando-passo">
+            <h2 style="margin-bottom:3px;">Acompanhando um Pássaro do Bando</h2>
+            <div class="plot-toolbar" style="margin:2px 0 4px;">
+                <button class="plot-btn go" id="btnFocoPlay">⏸ Pausar</button>
+                <button class="plot-btn" id="btnFocoVoltar" title="etapa anterior">⏮ Voltar</button>
+                <button class="plot-btn" id="btnFocoPasso" title="próxima etapa">⏭ Passo</button>
+                <button class="plot-btn" id="btnFocoRei">↻ Reiniciar</button>
+                <button class="plot-btn" id="btnFocoCine" title="a câmera orbita o gráfico">🎥 Cinema</button>
+            </div>
+            <div class="trilha-etapas" id="trilhaFoco">
+                <span class="trilha-it">Iteração <b id="trilhaIt">1</b></span>
+                <span class="trilha-sep">›</span>
+                <span class="trilha-passo" data-e="0">Passo 1 · Avaliar</span>
+                <span class="trilha-sep">›</span>
+                <span class="trilha-passo" data-e="1">Passo 2 · Comparar</span>
+                <span class="trilha-sep">›</span>
+                <span class="trilha-passo" data-e="2">Passo 3 · Decidir</span>
+                <span class="trilha-sep">›</span>
+                <span class="trilha-passo" data-e="3">Passo 4 · Mover</span>
+            </div>
+            <div id="focoEtapa" class="bio-box" style="margin:0 0 6px; min-height:64px; font-size:0.66em;"></div>
+            <div class="two-col" style="gap:10px; align-items:stretch;">
+                <div style="flex:2.6;">
+                    <div id="plot-foco" class="plot-host" style="height:400px;"></div>
+                </div>
+                <div style="flex:1;">
+                    <table class="dados-tab" id="focoTab" style="font-size:11.5px;"><tbody></tbody></table>
+                </div>
+            </div>
+            <p class="stage-cap" style="margin-top:3px;">Em <b>toda iteração</b>, o 🦜 destacado percorre as quatro etapas do PSO com seus números reais — use <b>⏭</b> e <b>⏮</b> para conduzir etapa a etapa.</p>
         </section>
 
         <!-- 10. Parâmetros -->
@@ -1821,6 +1864,403 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
 
 
     /* =====================================================================
+       Grafico Plotly: a MESMA revoada, mas acompanhando UM passaro (🦜).
+       A cada PARADA iteracoes o voo congela e as quatro etapas do PSO sao
+       exibidas uma a uma, com os numeros reais daquela iteracao.
+       ===================================================================== */
+    (function () {
+        // FOCO=7: escolhido por inspecao — esse passaro nao colapsa no vale logo
+        // nas primeiras iteracoes, entao suas etapas seguem com numeros legiveis
+        // (e ilustra bem a atracao entre um minimo local e o g do bando)
+        const LIM = 6, N = 40, MAXIT = 120, FOCO = 7;
+        const f = (x, y) => 0.06*(x*x + y*y)
+                          + 0.9*(2 - Math.cos(1.8*x) - Math.cos(1.8*y))
+                          - 2.4*Math.exp(-(x*x + y*y) / 3.0);
+        const W0 = 0.98, W1 = 0.4, C1 = 1.5, C2 = 0.5, VMAX = 0.5, ALT0 = 5.5;
+        const ESCALA = [[0, '#6b4a00'], [0.25, '#a87900'], [0.5, '#dfa607'],
+                        [0.75, '#f5cf5a'], [1, '#fdf4d2']];
+        const NG = 55, gx = [], gz = [];
+        for (let i = 0; i < NG; i++) gx.push(-LIM + 2*LIM * i / (NG - 1));
+        for (let j = 0; j < NG; j++) { const l = [];
+            for (let i = 0; i < NG; i++) l.push(f(gx[i], gx[j])); gz.push(l); }
+        let F_MIN = Infinity, F_MAX = -Infinity;
+        gz.forEach(r => r.forEach(v => { if (v < F_MIN) F_MIN = v; if (v > F_MAX) F_MAX = v; }));
+
+        const nf = (v, d = 2) => v.toFixed(d).replace('.', ',');
+
+        // Simulacao guardando, para o passaro focado, TODOS os termos do calculo
+        let hist = [];
+        function simular() {
+            const rand = rng(19951104);
+            let X = [], V = [], P = [], fPb = [];
+            for (let i = 0; i < N; i++) {
+                const a = rand() * 2 * Math.PI, r = 5.7 + 2.8 * rand();
+                X.push([Math.max(-LIM, Math.min(LIM, r * Math.cos(a))),
+                        Math.max(-LIM, Math.min(LIM, r * Math.sin(a)))]);
+                V.push([(rand()*2-1)*VMAX, (rand()*2-1)*VMAX]);
+                P.push(X[i].slice()); fPb.push(f(X[i][0], X[i][1]));
+            }
+            let g = P[0].slice(), fg = fPb[0];
+            P.forEach((p, i) => { if (fPb[i] < fg) { fg = fPb[i]; g = p.slice(); } });
+            hist = [];
+            for (let k = 0; k < MAXIT; k++) {
+                const alt = ALT0 * Math.max(0, 1 - k / (MAXIT * 0.75)) ** 1.6;
+                const w = W0 - (W0 - W1) * k / (MAXIT - 1);
+                // estado do passaro focado ANTES de mover, para narrar as etapas
+                const det = { w, x: X[FOCO].slice(), v: V[FOCO].slice(),
+                              p: P[FOCO].slice(), fp: fPb[FOCO], g: g.slice(), fg,
+                              fx: f(X[FOCO][0], X[FOCO][1]), r: [], iner: [], cog: [], soc: [], vn: [] };
+                hist.push({ pts: X.map(p => [p[0], p[1], f(p[0], p[1]) + 0.25 + alt]),
+                            g: g.slice(), det, alt });
+                for (let i = 0; i < N; i++) {
+                    for (let d = 0; d < 2; d++) {
+                        const r1 = rand(), r2 = rand();
+                        const iner = w*V[i][d], cog = C1*r1*(P[i][d] - X[i][d]), soc = C2*r2*(g[d] - X[i][d]);
+                        V[i][d] = Math.max(-VMAX, Math.min(VMAX, iner + cog + soc));
+                        X[i][d] = Math.max(-LIM, Math.min(LIM, X[i][d] + V[i][d]));
+                        if (i === FOCO) { det.r.push(r1, r2); det.iner.push(iner);
+                            det.cog.push(cog); det.soc.push(soc); det.vn.push(V[i][d]); }
+                    }
+                    const fx = f(X[i][0], X[i][1]);
+                    if (fx < fPb[i]) { fPb[i] = fx; P[i] = X[i].slice();
+                        if (fx < fg) { fg = fx; g = X[i].slice(); } }
+                }
+                det.xn = X[FOCO].slice();
+                det.fxn = f(X[FOCO][0], X[FOCO][1]);
+                det.melhorou = det.fxn < det.fp;
+            }
+        }
+
+        const easeB = u => u*u*(3 - 2*u);
+        function quadro(tt) {
+            const k = Math.max(0, Math.min(hist.length - 2, Math.floor(tt)));
+            const u = easeB(Math.max(0, Math.min(1, tt - k)));
+            const a = hist[k].pts, b = hist[k + 1].pts;
+            const x = [], y = [], z = [];
+            for (let i = 0; i < N; i++) {
+                x.push(a[i][0] + (b[i][0] - a[i][0]) * u);
+                y.push(a[i][1] + (b[i][1] - a[i][1]) * u);
+                z.push(a[i][2] + (b[i][2] - a[i][2]) * u);
+            }
+            return { x, y, z, g: hist[k].g, k };
+        }
+
+        // 🦜 destacado e maior; os demais sao 🐦 menores
+        function anotacoes(q, realce) {
+            return q.x.map((x, b) => b === FOCO
+                ? { x, y: q.y[b], z: q.z[b], text: '🦜', showarrow: false,
+                    font: { size: realce ? 30 : 22 }, xanchor: 'center', yanchor: 'middle' }
+                : { x, y: q.y[b], z: q.z[b], text: '🐦', showarrow: false,
+                    font: { size: 13 }, opacity: realce ? 0.35 : 0.85,
+                    xanchor: 'center', yanchor: 'middle' });
+        }
+
+        // Linhas de projecao do passaro em foco ate os planos/eixos: e o mesmo
+        // efeito das guias que o Plotly mostra no hover, mas fixas o tempo todo.
+        // Percurso: ponto -> chao (z minimo) -> parede y -> canto, e chao -> parede x.
+        function guias(q) {
+            const x = q.x[FOCO], y = q.y[FOCO], z = q.z[FOCO];
+            const z0 = F_MIN - 1.2, xw = -LIM - 0.4, yw = -LIM - 0.4;
+            return {
+                x: [x, x, null,  x, xw, null,  x, x,  null,  x, x],
+                y: [y, y, null,  y, y,  null,  y, yw, null,  y, y],
+                z: [z, z0, null, z0, z0, null, z0, z0, null, z, z]
+            };
+        }
+        // rotulos numericos das tres coordenadas, junto de cada projecao
+        function rotulosGuia(q) {
+            const x = q.x[FOCO], y = q.y[FOCO], z = q.z[FOCO];
+            const z0 = F_MIN - 1.2, xw = -LIM - 0.4, yw = -LIM - 0.4;
+            const cor = '#8e2f22';
+            return [
+                { x: xw, y, z: z0, text: `x₁ = ${nf(x)}`, showarrow: false,
+                  font: { size: 11, color: cor }, bgcolor: 'rgba(255,255,255,0.75)',
+                  xanchor: 'right', yanchor: 'top' },
+                { x, y: yw, z: z0, text: `x₂ = ${nf(y)}`, showarrow: false,
+                  font: { size: 11, color: cor }, bgcolor: 'rgba(255,255,255,0.75)',
+                  xanchor: 'left', yanchor: 'top' },
+                { x, y, z: z0, text: '▽', showarrow: false,
+                  font: { size: 11, color: cor }, xanchor: 'center', yanchor: 'middle' },
+                // altura: o valor da funcao na posicao atual do passaro
+                { x, y, z: (z + z0) / 2, text: `f = ${nf(f(x, y), 2)}`, showarrow: false,
+                  font: { size: 11, color: cor }, bgcolor: 'rgba(255,255,255,0.75)',
+                  xanchor: 'left', yanchor: 'middle' }
+            ];
+        }
+
+        function tracos(q) {
+            const gu = guias(q);
+            return [
+                { type: 'surface', x: gx, y: gx, z: gz, colorscale: ESCALA,
+                  showscale: false, opacity: 0.85, hoverinfo: 'skip' },
+                { type: 'scatter3d', mode: 'markers', name: 'bando',
+                  x: q.x, y: q.y, z: q.z,
+                  marker: { size: 3, color: '#0e5d62', opacity: 0.5 }, hoverinfo: 'skip' },
+                // halo do passaro focado: e o "clique" visual sobre a particula
+                { type: 'scatter3d', mode: 'markers', name: 'pássaro em foco',
+                  x: [q.x[FOCO]], y: [q.y[FOCO]], z: [q.z[FOCO]],
+                  marker: { size: 20, color: 'rgba(192,57,43,0.30)',
+                            line: { color: '#c0392b', width: 2 } }, hoverinfo: 'skip' },
+                { type: 'scatter3d', mode: 'markers', name: 'melhor global g',
+                  x: [q.g[0]], y: [q.g[1]], z: [f(q.g[0], q.g[1]) + 0.15],
+                  marker: { size: 7, color: '#c0392b', symbol: 'diamond',
+                            line: { color: '#fff', width: 1.5 } }, hoverinfo: 'skip' },
+                { type: 'scatter3d', mode: 'lines', name: 'coordenadas do 🦜',
+                  x: gu.x, y: gu.y, z: gu.z,
+                  line: { color: '#c0392b', width: 2, dash: 'dot' },
+                  opacity: 0.8, hoverinfo: 'skip' }
+            ];
+        }
+
+        function leiaute(q) {
+            const eixo = t => ({ title: t, range: [-LIM - 0.4, LIM + 0.4],
+                                 gridcolor: '#dde5ee', zerolinecolor: '#c3cfdd',
+                                 tickmode: 'linear', dtick: 2, tickfont: { size: 9 } });
+            return {
+                margin: { l: 0, r: 0, t: 0, b: 0 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { family: 'Arial, sans-serif', size: 10, color: '#48566b' },
+                showlegend: false,
+                scene: { xaxis: eixo('x₁'), yaxis: eixo('x₂'),
+                         zaxis: { title: 'f(x₁,x₂)', range: [F_MIN - 1.2, F_MAX + ALT0 + 1.3],
+                                  gridcolor: '#dde5ee', tickmode: 'linear', dtick: 2,
+                                  tickfont: { size: 9 } },
+                         camera: { eye: { x: 1.12, y: 0.95, z: 0.48 } },
+                         aspectratio: { x: 1, y: 1, z: 0.85 },
+                         annotations: anotacoes(q, false).concat(rotulosGuia(q)) }
+            };
+        }
+
+        let plotado = false, raf = null, tt = 0, ultimo = 0, tocando = false;
+        let cine = false, ang = Math.atan2(0.95, 1.12);
+        const ORB_R = Math.hypot(1.12, 0.95), ORB_Z = 0.48;
+        const CINE_D = Math.hypot(ORB_R, ORB_Z);
+        // maquina de estados da parada didatica
+        let etapa = 0, tEtapa = 0, kParada = 0;
+        const DUR_ETAPA = 2.2;            // segundos por etapa (4 por iteracao)
+
+        function desenhaQuadro(realce) {
+            const host = document.getElementById('plot-foco');
+            if (!host || !plotado) return;
+            const q = quadro(tt), gu = guias(q);
+            Plotly.update(host,
+                { x: [q.x, [q.x[FOCO]], [q.g[0]], gu.x],
+                  y: [q.y, [q.y[FOCO]], [q.g[1]], gu.y],
+                  z: [q.z, [q.z[FOCO]], [f(q.g[0], q.g[1]) + 0.15], gu.z] },
+                { 'scene.annotations': anotacoes(q, !!realce).concat(rotulosGuia(q)) },
+                [1, 2, 3, 4]);
+            atualizarTrilha();
+        }
+
+        // trilha de progresso: iteracao atual + os quatro passos, com o
+        // corrente marcado e os anteriores da MESMA iteracao dados como feitos
+        function atualizarTrilha() {
+            const itEl = document.getElementById('trilhaIt');
+            if (itEl) itEl.textContent = Math.min(hist.length, kParada + 1);
+            document.querySelectorAll('#trilhaFoco .trilha-passo').forEach(el => {
+                const e = +el.dataset.e;
+                el.classList.toggle('atual', e === etapa);
+                el.classList.toggle('feita', e < etapa);
+            });
+        }
+
+        // ---- painel das quatro etapas ------------------------------------
+        const TITULOS = [
+            '1 · Avaliar: quão boa é a posição atual?',
+            '2 · Comparar: melhorou o próprio recorde?',
+            '3 · Decidir: compor a nova velocidade',
+            '4 · Mover: aplicar o deslocamento'
+        ];
+        function painel(d, e) {
+            const cx = nf(d.x[0]), cy = nf(d.x[1]);
+            if (e === 0) return `<b>${TITULOS[0]}</b><br>
+                O 🦜 está em $x_i = (${cx};\\, ${cy})$. Substituindo na função objetivo:
+                <div style="margin-top:5px; font-family:monospace; font-size:1.05em; color:#14603a;">
+                f(${cx}; ${cy}) = <b>${nf(d.fx, 3)}</b></div>`;
+            if (e === 1) return `<b>${TITULOS[1]}</b><br>
+                Recorde próprio: $f(p_i) = ${nf(d.fp, 3)}$ em $(${nf(d.p[0])};\\, ${nf(d.p[1])})$.<br>
+                Valor de agora: $f(x_i) = ${nf(d.fx, 3)}$.
+                <div style="margin-top:5px; font-family:monospace; font-size:1.02em;">
+                ${nf(d.fx, 3)} ${d.fx < d.fp ? '&lt;' : '≥'} ${nf(d.fp, 3)} →
+                <b style="color:${d.fx < d.fp ? '#14603a' : '#8f2d22'}">
+                ${d.fx < d.fp ? 'atualiza pᵢ' : 'mantém pᵢ'}</b></div>
+                Melhor do bando: $f(g) = ${nf(d.fg, 3)}$ em $(${nf(d.g[0])};\\, ${nf(d.g[1])})$.`;
+            if (e === 2) {
+                let sat = false;
+                const l = (j, nome) => {
+                    const soma = d.iner[j] + d.cog[j] + d.soc[j];
+                    const cortou = Math.abs(soma - d.vn[j]) > 1e-9;
+                    if (cortou) sat = true;
+                    return `<tr><td style="text-align:left">${nome}</td>` +
+                        `<td class="c-iner">${nf(d.iner[j], 3)}</td>` +
+                        `<td class="c-cog">${nf(d.cog[j], 3)}</td>` +
+                        `<td class="c-soc">${nf(d.soc[j], 3)}</td>` +
+                        `<td class="c-res">${nf(d.vn[j], 3)}${cortou ? ' *' : ''}</td></tr>`;
+                };
+                const linhas = l(0, 'x₁') + l(1, 'x₂');
+                return `<b>${TITULOS[2]}</b> &nbsp;<span style="font-size:.9em">$w = ${nf(d.w)}$,
+                    $c_1 = ${nf(C1)}$, $c_2 = ${nf(C2)}$</span>
+                <table class="dados-tab" style="font-size:11px; margin-top:4px;">
+                <thead><tr><th style="text-align:left">dim.</th><th>inércia<br>$w\\,v$</th>
+                <th>cognitivo<br>$c_1r_1(p{-}x)$</th><th>social<br>$c_2r_2(g{-}x)$</th>
+                <th>$v$ novo</th></tr></thead><tbody>${linhas}</tbody></table>` +
+                (sat ? `<div style="font-size:.9em; color:#8f2d22; margin-top:3px;">
+                    * a soma passou de $v_{máx} = ${nf(VMAX)}$ e foi <b>saturada</b></div>` : '');
+            }
+            return `<b>${TITULOS[3]}</b><br>
+                <div style="font-family:monospace; font-size:1.02em; line-height:1.5;">
+                x₁: ${nf(d.x[0], 3)} + (${nf(d.vn[0], 3)}) = <b>${nf(d.xn[0], 3)}</b><br>
+                x₂: ${nf(d.x[1], 3)} + (${nf(d.vn[1], 3)}) = <b>${nf(d.xn[1], 3)}</b></div>
+                Novo valor: $f = ${nf(d.fxn, 3)}$ —
+                <b style="color:${d.melhorou ? '#14603a' : '#8f2d22'}">
+                ${d.melhorou ? 'desceu na paisagem' : 'subiu: faz parte da exploração'}</b>`;
+        }
+
+        function tabela(d, e) {
+            const tb = document.querySelector('#focoTab tbody');
+            if (!tb) return;
+            const foco = [['fx'], ['p', 'fp', 'g'], ['v'], ['x']][e] || [];
+            const lin = (ch, rot, val) => `<tr${foco.includes(ch) ? ' class="alvo"' : ''}>` +
+                `<td style="text-align:left; font-weight:700">${rot}</td><td>${val}</td></tr>`;
+            tb.innerHTML =
+                lin('x',  'posição $x_i$',            `(${nf(d.x[0])}; ${nf(d.x[1])})`) +
+                lin('fx', 'valor $f(x_i)$',           nf(d.fx, 3)) +
+                lin('p',  'melhor própria $p_i$',     `(${nf(d.p[0])}; ${nf(d.p[1])})`) +
+                lin('fp', 'valor $f(p_i)$',           nf(d.fp, 3)) +
+                lin('g',  'melhor do bando $g$',      `(${nf(d.g[0])}; ${nf(d.g[1])})`) +
+                lin('v',  'velocidade $v_i$',         `(${nf(d.vn[0], 3)}; ${nf(d.vn[1], 3)})`) +
+                lin('x',  'próxima posição',          `(${nf(d.xn[0])}; ${nf(d.xn[1])})`);
+        }
+
+        function mostrarEtapa() {
+            const d = hist[Math.min(hist.length - 1, kParada)].det;
+            const box = document.getElementById('focoEtapa');
+            if (box) {
+                box.innerHTML = painel(d, etapa);
+                if (typeof renderMathInElement === 'function')
+                    try { renderMathInElement(box, {
+                        delimiters: [{ left: '$', right: '$', display: false }] }); } catch (_) {}
+            }
+            tabela(d, etapa);
+        }
+        // posiciona o voo na iteracao k, mostrando a etapa e (0..3)
+        function irPara(k, e) {
+            const ult = hist.length - 1;
+            kParada = ((k % ult) + ult) % ult;    // circular: o voo nunca termina
+            tt = kParada;
+            etapa = Math.max(0, Math.min(3, e));
+            tEtapa = 0;
+            mostrarEtapa(); rotular();
+        }
+        // proxima etapa; depois da quarta, avanca para a iteracao seguinte
+        function proximaEtapa() {
+            if (etapa >= 3) irPara(kParada + 1, 0);
+            else { etapa++; tEtapa = 0; mostrarEtapa(); rotular(); }
+        }
+        // etapa anterior; antes da primeira, volta para a quarta da iteracao anterior
+        function etapaAnterior() {
+            if (etapa <= 0) irPara(kParada - 1, 3);
+            else { etapa--; tEtapa = 0; mostrarEtapa(); rotular(); }
+        }
+
+        function passoAnim(ts) {
+            raf = null;
+            if (!plotado || (!tocando && !cine)) return;
+            const dt = Math.min(0.1, (ts - ultimo) / 1000); ultimo = ts;
+            if (tocando) {
+                // toda iteracao e narrada: as quatro etapas se sucedem e, ao fim
+                // da quarta, o bando avanca para a iteracao seguinte
+                tEtapa += dt;
+                if (tEtapa >= DUR_ETAPA) proximaEtapa();
+                desenhaQuadro(true);
+            }
+            if (cine) {
+                ang += dt * 0.28;
+                const u = 0.5 - 0.5 * Math.cos(ang * 0.45);
+                const ez = ORB_Z + u * (CINE_D * 0.88 - ORB_Z);
+                const rh = Math.sqrt(Math.max(0.05, CINE_D*CINE_D - ez*ez));
+                const host = document.getElementById('plot-foco');
+                if (host) Plotly.relayout(host,
+                    { 'scene.camera.eye': { x: rh*Math.cos(ang), y: rh*Math.sin(ang), z: ez } });
+            }
+            if (tocando || cine) raf = requestAnimationFrame(passoAnim);
+        }
+
+        function parar() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+        function rotular() {
+            const b = document.getElementById('btnFocoPlay');
+            if (b) b.textContent = tocando ? '⏸ Pausar' : '▶ Play';
+        }
+        function play() {
+            if (!plotado) return;
+            tocando = true; rotular();
+            ultimo = performance.now();
+            if (!raf) raf = requestAnimationFrame(passoAnim);
+        }
+        function pausa() { tocando = false; rotular(); if (!cine) parar(); }
+        function reiniciar() { irPara(0, 0); desenhaQuadro(true); play(); }
+        // controle manual: uma etapa por clique, atravessando as iteracoes
+        function passo() {
+            if (!plotado) return;
+            pausa(); proximaEtapa(); desenhaQuadro(true);
+        }
+        function voltar() {
+            if (!plotado) return;
+            pausa(); etapaAnterior(); desenhaQuadro(true);
+        }
+        function alternaCine() {
+            cine = !cine;
+            const b = document.getElementById('btnFocoCine');
+            if (b) b.classList.toggle('active', cine);
+            if (cine) { ultimo = performance.now(); if (!raf) raf = requestAnimationFrame(passoAnim); }
+        }
+
+        window.__focoPlot = {
+            mostrar() {
+                if (!hist.length) simular();
+                const host = document.getElementById('plot-foco');
+                if (!host) return;
+                if (typeof Plotly === 'undefined') {
+                    if (!host.dataset.erro) {
+                        host.dataset.erro = '1';
+                        host.innerHTML = '<p style="padding:18px;font-size:13px;color:#8f2d22">' +
+                            'A biblioteca Plotly.js não pôde ser carregada (sem conexão?).</p>';
+                    }
+                    return;
+                }
+                pausa();
+                tt = 0; etapa = 0; tEtapa = 0; kParada = 0;
+                const q0 = quadro(0);
+                Plotly.newPlot(host, tracos(q0), leiaute(q0),
+                    { displayModeBar: false, responsive: true, scrollZoom: true });
+                plotado = true;
+                Plotly.Plots.resize(host);
+                host.onpointerdown = ev => ev.stopPropagation();
+                mostrarEtapa();
+                desenhaQuadro(true);
+                // entra PAUSADO, com a camera ja orbitando: da para apresentar
+                // a paisagem e o passaro em foco antes de soltar as etapas
+                rotular();
+                if (!cine) alternaCine();
+            },
+            ocultar() { if (cine) alternaCine(); pausa(); }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const liga = (id, fn) => {
+                const b = document.getElementById(id);
+                if (b) b.addEventListener('click', ev => { ev.stopPropagation(); fn(); });
+            };
+            liga('btnFocoPlay', () => tocando ? pausa() : play());
+            liga('btnFocoVoltar', voltar);
+            liga('btnFocoPasso', passo);
+            liga('btnFocoRei', reiniciar);
+            liga('btnFocoCine', alternaCine);
+        });
+    })();
+
+
+    /* =====================================================================
        MOTOR: constroi as figuras SVG e roda a do slide corrente
        ===================================================================== */
     (function () {
@@ -1921,6 +2361,10 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
             if (window.__bandoPlot) {
                 if (slide.querySelector('#plot-bando')) window.__bandoPlot.mostrar();
                 else window.__bandoPlot.ocultar();
+            }
+            if (window.__focoPlot) {
+                if (slide.querySelector('#plot-foco')) window.__focoPlot.mostrar();
+                else window.__focoPlot.ocultar();
             }
             // O slide do ciclo do PSO entra PAUSADO no primeiro quadro, para a fase 1
             // poder ser explicada antes de avancar. Os demais slides tocam sozinhos.
