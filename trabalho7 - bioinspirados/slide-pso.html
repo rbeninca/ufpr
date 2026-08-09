@@ -396,8 +396,9 @@
             <h2>De um Modelo de Revoada a um Otimizador</h2>
             <div class="two-col">
                 <div class="col-text">
-                    <p>Em 1995 Kennedy (psicólogo social) e Eberhart (engenheiro elétrico) tentavam <b>simular</b> o voo coordenado de bandos de pássaros. O modelo seguia três regras de vizinhança já conhecidas da computação gráfica.</p>
-                    <p>Ao remover as regras de colisão e deixar apenas a <b>atração pelo melhor ponto conhecido</b>, perceberam que o bando não apenas voava junto — ele <em>encontrava</em> o melhor ponto da paisagem. A simulação virou um otimizador.</p>
+                    <p>Em 1995, James Kennedy, psicólogo social, e Russell Eberhart, engenheiro elétrico, investigavam modelos computacionais inspirados no comportamento coletivo de bandos de pássaros e cardumes. A ideia era representar indivíduos que ajustavam seus movimentos a partir de informações próprias e do grupo, seguindo princípios de interação local já explorados em modelos de comportamento coletivo.</p>
+                    <p>Ao simplificar esses mecanismos e introduzir a influência das melhores posições encontradas pelos próprios indivíduos e pelo grupo, Kennedy e Eberhart perceberam algo interessante: o enxame não apenas apresentava um movimento coordenado — ele também era capaz de buscar regiões cada vez melhores de uma determinada paisagem.</p>
+                    <p>A partir dessa observação, o modelo de comportamento coletivo foi reinterpretado como um método de busca: os indivíduos tornaram-se <b>partículas</b>, a paisagem tornou-se o <b>espaço de soluções</b> e a procura por uma boa região transformou-se em um problema de <b>otimização</b>. Nascia o <em>Particle Swarm Optimization</em> (PSO).</p>
                     <div class="bio-box" style="margin:8px 0;"><b>A intuição social:</b> um indivíduo decide combinando duas fontes — a <em>própria experiência</em> ("o melhor lugar onde já estive") e a <em>experiência do grupo</em> ("o melhor lugar que alguém encontrou"). É literalmente o modelo de aprendizagem social que Kennedy estudava.</div>
                     <div class="tip-box" style="margin:8px 0; font-size:0.82em;"><b>A tradução para otimização:</b><br>pássaro = <b>partícula</b> — uma solução candidata $x_i$<br>posição = <b>vetor de projeto</b><br>comida = <b>mínimo</b> da função objetivo<br>bando = <b>enxame</b> de $N$ partículas</div>
                 </div>
@@ -407,6 +408,19 @@
                     <div class="warn-box" style="margin-top:8px; font-size:0.78em; text-align:left;"><b>Diferença marcante para o AG:</b> não há seleção, cruzamento nem mutação. Nenhuma partícula é eliminada — todas sobrevivem do início ao fim, apenas <em>mudando de posição</em>.</div>
                 </div>
             </div>
+        </section>
+
+        <!-- 7b. A revoada em 3D -->
+        <section class="compact" id="slide-bando">
+            <h2 style="margin-bottom:4px;">A Revoada Buscando o Vale</h2>
+            <div class="plot-toolbar" style="margin:2px 0 4px;">
+                <button class="plot-btn go" id="btnBandoPlay">⏸ Pausar</button>
+                <button class="plot-btn" id="btnBandoRei">↻ Reiniciar</button>
+                <button class="plot-btn" id="btnBandoCine" title="a câmera orbita o gráfico">🎥 Modo cinematográfico</button>
+                <span id="capBando" style="font-size:.6em; font-weight:800; color:#48566b; margin-left:8px;"></span>
+            </div>
+            <div id="plot-bando" class="plot-host" style="height:560px;"></div>
+            <p class="stage-cap" style="margin-top:4px;">Cada pássaro é uma partícula: o bando desce a paisagem $f(x_1,x_2)$ guiado pelas memórias $p_i$ e $g$ — arraste para girar; tecle <b>R</b> para repetir o voo.</p>
         </section>
 
         <!-- 8. As equações -->
@@ -1460,6 +1474,245 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
         document.addEventListener('DOMContentLoaded', ligar);
     })();
 
+    /* =====================================================================
+       Grafico Plotly: a revoada em 3D — um PSO real sobre uma paisagem
+       suave, com as posicoes interpoladas entre iteracoes para o voo do
+       bando ficar continuo. Os passaros sao cones orientados pela direcao
+       de voo; a paisagem em si nao e desenhada, apenas os eixos graduados.
+       ===================================================================== */
+    (function () {
+        const LIM = 6, N = 40, MAXIT = 110;
+        // paisagem multimodal: um vale profundo no centro cercado de "montanhas"
+        // periodicas (estilo Rastrigin suavizado) — varios minimos locais no caminho
+        const f = (x, y) => 0.06*(x*x + y*y)
+                          + 0.9*(2 - Math.cos(1.8*x) - Math.cos(1.8*y))
+                          - 2.4*Math.exp(-(x*x + y*y) / 3.0);
+        // inercia alta, social fraco e velocidade maxima baixa: o bando vagueia
+        // pelas bordas e vai fechando a revoada aos poucos, ao longo do voo todo
+        // (parametros escolhidos por varredura: a distancia media ao otimo cai
+        //  6,6 -> 1,7 -> 1,2 -> 1,0 -> 0,8 em 0/25/50/75/100% das iteracoes)
+        const W0 = 0.98, W1 = 0.4, C1 = 1.5, C2 = 0.5, VMAX = 0.5;
+        const ALT0 = 5.5;                     // altura de voo inicial acima da paisagem
+
+        let hist = [];
+        function simular() {
+            const rand = rng(19951104);
+            let X = [], V = [], P = [], fPb = [];
+            for (let i = 0; i < N; i++) {
+                // o bando nasce o mais LONGE possivel do otimo: um anel largo que,
+                // recortado pelo dominio, encosta os passaros nas bordas e cantos
+                const a = rand() * 2 * Math.PI, r = 5.7 + 2.8 * rand();
+                X.push([Math.max(-LIM, Math.min(LIM, r * Math.cos(a))),
+                        Math.max(-LIM, Math.min(LIM, r * Math.sin(a)))]);
+                V.push([(rand()*2-1)*VMAX, (rand()*2-1)*VMAX]);
+                P.push(X[i].slice()); fPb.push(f(X[i][0], X[i][1]));
+            }
+            let g = P[0].slice(), fg = fPb[0];
+            P.forEach((p, i) => { if (fPb[i] < fg) { fg = fPb[i]; g = p.slice(); } });
+            hist = [];
+            for (let k = 0; k < MAXIT; k++) {
+                // altura extra decai: o bando plana e vai pousando sobre a paisagem
+                const alt = ALT0 * Math.max(0, 1 - k / (MAXIT * 0.75)) ** 1.6;
+                hist.push({ pts: X.map((p, i) => [p[0], p[1], f(p[0], p[1]) + 0.25 + alt]), g: g.slice() });
+                const w = W0 - (W0 - W1) * k / (MAXIT - 1);
+                for (let i = 0; i < N; i++) {
+                    for (let d = 0; d < 2; d++) {
+                        V[i][d] = w*V[i][d] + C1*rand()*(P[i][d] - X[i][d]) + C2*rand()*(g[d] - X[i][d]);
+                        V[i][d] = Math.max(-VMAX, Math.min(VMAX, V[i][d]));
+                        X[i][d] = Math.max(-LIM, Math.min(LIM, X[i][d] + V[i][d]));
+                    }
+                    const fx = f(X[i][0], X[i][1]);
+                    if (fx < fPb[i]) { fPb[i] = fx; P[i] = X[i].slice();
+                        if (fx < fg) { fg = fx; g = X[i].slice(); } }
+                }
+            }
+        }
+
+        const easeB = u => u*u*(3 - 2*u);      // suaviza o passo entre iteracoes
+
+        // posicao interpolada do bando no "tempo" continuo tt em [0, MAXIT-1]
+        function quadro(tt) {
+            const k = Math.max(0, Math.min(hist.length - 2, Math.floor(tt)));
+            const u = easeB(Math.max(0, Math.min(1, tt - k)));
+            const a = hist[k].pts, b = hist[k + 1].pts;
+            const x = [], y = [], z = [], du = [], dv = [], dw = [];
+            for (let i = 0; i < N; i++) {
+                x.push(a[i][0] + (b[i][0] - a[i][0]) * u);
+                y.push(a[i][1] + (b[i][1] - a[i][1]) * u);
+                z.push(a[i][2] + (b[i][2] - a[i][2]) * u);
+                // direcao de voo (para orientar o "passaro"); nunca deixa norma zero
+                let ux = b[i][0] - a[i][0], uy = b[i][1] - a[i][1], uz = b[i][2] - a[i][2];
+                const n = Math.hypot(ux, uy, uz) || 1;
+                du.push(ux / n + 1e-3); dv.push(uy / n); dw.push(uz / n);
+            }
+            return { x, y, z, du, dv, dw, g: hist[k].g };
+        }
+
+        let plotado = false, raf = null, tt = 0, ultimo = 0, tocando = false;
+        // modo cinematografico: a camera orbita o grafico enquanto o bando voa
+        let cine = false, ang = Math.atan2(0.95, 1.12);
+        const ORB_R = Math.hypot(1.12, 0.95), ORB_Z = 0.48;
+        const CINE_D = Math.hypot(ORB_R, ORB_Z);   // distancia constante da camera
+
+        // malha da superficie (a paisagem e desenhada desde o inicio)
+        const NG = 60, gx = [], gz = [];
+        for (let i = 0; i < NG; i++) gx.push(-LIM + 2*LIM * i / (NG - 1));
+        for (let j = 0; j < NG; j++) { const l = []; for (let i = 0; i < NG; i++) l.push(f(gx[i], gx[j])); gz.push(l); }
+        // paisagem em tons de amarelo: contrasta com os passaros (azuis/teal)
+        const ESCALA = [[0, '#6b4a00'], [0.25, '#a87900'], [0.5, '#dfa607'],
+                        [0.75, '#f5cf5a'], [1, '#fdf4d2']];
+
+        // Os passaros sao emojis: os traces WebGL nao renderizam emoji, mas as
+        // ANNOTATIONS da cena (camada SVG projetada sobre o 3D) renderizam. Cada
+        // particula ganha um 🐦 na sua coordenada, mais um pontinho no trace
+        // scatter3d que da a legenda e a nocao de profundidade.
+        function anotacoes(q) {
+            return q.x.map((x, b) => ({
+                x, y: q.y[b], z: q.z[b], text: '🐦', showarrow: false,
+                font: { size: 15 }, xanchor: 'center', yanchor: 'middle'
+            }));
+        }
+
+        function tracos(q) {
+            return [
+                { type: 'surface', x: gx, y: gx, z: gz, colorscale: ESCALA, showscale: false,
+                  opacity: 0.85, hoverinfo: 'skip' },
+                { type: 'scatter3d', mode: 'markers', name: 'pássaros (partículas)',
+                  x: q.x, y: q.y, z: q.z,
+                  marker: { size: 3, color: '#0e5d62', opacity: 0.55 },
+                  showlegend: true, hoverinfo: 'skip' },
+                { type: 'scatter3d', mode: 'markers', name: 'melhor global g',
+                  x: [q.g[0]], y: [q.g[1]], z: [f(q.g[0], q.g[1]) + 0.15],
+                  marker: { size: 7, color: '#c0392b', symbol: 'diamond',
+                            line: { color: '#fff', width: 1.5 } }, hoverinfo: 'skip' }
+            ];
+        }
+
+        function leiaute(q) {
+            const eixo = t => ({ title: t, range: [-LIM - 0.4, LIM + 0.4],
+                                 gridcolor: '#dde5ee', zerolinecolor: '#c3cfdd',
+                                 tickmode: 'linear', dtick: 2, tickfont: { size: 9 } });
+            return {
+                margin: { l: 0, r: 0, t: 0, b: 0 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { family: 'Arial, sans-serif', size: 10, color: '#48566b' },
+                showlegend: true,
+                legend: { orientation: 'h', y: 0.995, x: 0.5, xanchor: 'center',
+                          font: { size: 10 }, bgcolor: 'rgba(255,255,255,0.6)' },
+                scene: {
+                    xaxis: eixo('x₁'), yaxis: eixo('x₂'),
+                    zaxis: { title: 'f(x₁,x₂)', range: [-3.4, ALT0 + 8.0],
+                             gridcolor: '#dde5ee', tickmode: 'linear', dtick: 2,
+                             tickfont: { size: 9 } },
+                    camera: { eye: { x: 1.12, y: 0.95, z: 0.48 } },
+                    aspectratio: { x: 1, y: 1, z: 0.85 },
+                    annotations: anotacoes(q)
+                }
+            };
+        }
+
+        function desenhaQuadro() {
+            const host = document.getElementById('plot-bando');
+            if (!host || !plotado) return;
+            const q = quadro(tt);
+            // update move os pontos E as annotations dos emojis num so passo,
+            // sem tocar na camera: da para girar com o bando voando
+            Plotly.update(host,
+                { x: [q.x, [q.g[0]]], y: [q.y, [q.g[1]]],
+                  z: [q.z, [f(q.g[0], q.g[1]) + 0.15]] },
+                { 'scene.annotations': anotacoes(q) }, [1, 2]);
+            const cap = document.getElementById('capBando');
+            if (cap) cap.textContent = `Iteração ${Math.min(hist.length, Math.floor(tt + 1e-4) + 1)} de ${hist.length}`;
+        }
+
+        function passoAnim(ts) {
+            raf = null;
+            if (!plotado || (!tocando && !cine)) return;
+            const dt = Math.min(0.1, (ts - ultimo) / 1000); ultimo = ts;
+            if (tocando) {
+                tt += dt * 1.0 * (typeof globalAnimSpeed !== 'undefined' ? globalAnimSpeed : 1);
+                if (tt >= hist.length - 1) { tt = hist.length - 1 - 1e-6; tocando = false; rotular(); }
+                desenhaQuadro();
+            }
+            if (cine) {
+                ang += dt * 0.28;
+                // alem de orbitar, a elevacao varia: a camera sobe ate quase a vista
+                // de topo e volta, mantendo a mesma distancia do centro
+                const u = 0.5 - 0.5 * Math.cos(ang * 0.45);
+                const ez = ORB_Z + u * (CINE_D * 0.88 - ORB_Z);
+                const rh = Math.sqrt(Math.max(0.05, CINE_D*CINE_D - ez*ez));
+                const host = document.getElementById('plot-bando');
+                if (host) Plotly.relayout(host,
+                    { 'scene.camera.eye': { x: rh*Math.cos(ang), y: rh*Math.sin(ang), z: ez } });
+            }
+            if (tocando || cine) raf = requestAnimationFrame(passoAnim);
+        }
+
+        function parar() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+        function rotular() {
+            const b = document.getElementById('btnBandoPlay');
+            if (b) b.textContent = tocando ? '⏸ Pausar' : '▶ Play';
+        }
+        function play() {
+            if (!plotado) return;
+            if (tt >= hist.length - 1.01) tt = 0;      // no fim, play recomeca o voo
+            tocando = true; rotular();
+            ultimo = performance.now();
+            if (!raf) raf = requestAnimationFrame(passoAnim);
+        }
+        function pausa() { tocando = false; rotular(); if (!cine) parar(); }
+        function reiniciar() { tt = 0; desenhaQuadro(); play(); }
+        function alternaCine() {
+            cine = !cine;
+            const b = document.getElementById('btnBandoCine');
+            if (b) b.classList.toggle('active', cine);
+            if (cine) { ultimo = performance.now(); if (!raf) raf = requestAnimationFrame(passoAnim); }
+        }
+
+        window.__bandoPlot = {
+            mostrar() {
+                if (!hist.length) simular();
+                const host = document.getElementById('plot-bando');
+                if (!host) return;
+                if (typeof Plotly === 'undefined') {
+                    if (!host.dataset.erro) {
+                        host.dataset.erro = '1';
+                        host.innerHTML = '<p style="padding:18px;font-size:13px;color:#8f2d22">' +
+                            'A biblioteca Plotly.js não pôde ser carregada (sem conexão?).</p>';
+                    }
+                    return;
+                }
+                pausa();
+                tt = 0;
+                const q0 = quadro(0);
+                Plotly.newPlot(host, tracos(q0), leiaute(q0),
+                    { displayModeBar: false, responsive: true, scrollZoom: true });
+                plotado = true;
+                Plotly.Plots.resize(host);
+                host.onpointerdown = ev => ev.stopPropagation();
+                // entra PAUSADO no primeiro quadro, com a camera ja orbitando:
+                // da para apresentar a paisagem antes de soltar o bando
+                desenhaQuadro();
+                rotular();
+                if (!cine) alternaCine();
+            },
+            ocultar() {
+                if (cine) alternaCine();
+                pausa();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const liga = (id, fn) => {
+                const b = document.getElementById(id);
+                if (b) b.addEventListener('click', ev => { ev.stopPropagation(); fn(); });
+            };
+            liga('btnBandoPlay', () => tocando ? pausa() : play());
+            liga('btnBandoRei', reiniciar);
+            liga('btnBandoCine', alternaCine);
+        });
+    })();
+
 
     /* =====================================================================
        MOTOR: constroi as figuras SVG e roda a do slide corrente
@@ -1558,6 +1811,10 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
             if (window.__psoPlot) {
                 if (slide.querySelector('#plot-pso')) window.__psoPlot.mostrar();
                 else window.__psoPlot.ocultar();
+            }
+            if (window.__bandoPlot) {
+                if (slide.querySelector('#plot-bando')) window.__bandoPlot.mostrar();
+                else window.__bandoPlot.ocultar();
             }
             // O slide do ciclo do PSO entra PAUSADO no primeiro quadro, para a fase 1
             // poder ser explicada antes de avancar. Os demais slides tocam sozinhos.
