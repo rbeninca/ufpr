@@ -425,7 +425,7 @@
             <h2 style="margin-bottom:4px;">A Revoada Buscando o Vale</h2>
             <div class="plot-toolbar" style="margin:2px 0 4px;">
                 <button class="plot-btn go" id="btnBandoPlay">⏸ Pausar</button>
-                <button class="plot-btn" id="btnBandoRei">↻ Reiniciar</button>
+                <button class="plot-btn" id="btnBandoRei">↻ </button>
                 <button class="plot-btn" id="btnBandoCine" title="a câmera orbita o gráfico">🎥 Modo cinematográfico</button>
                 <select id="selBandoIt" class="plot-btn" title="máximo de iterações do PSO">
                     <option value="110">110 iterações</option>
@@ -469,6 +469,30 @@
                 <tr><td><b style="color:#c0392b">Cognitivo</b> $c_1 r_1 (p_i - x_i)$</td><td>Puxa para a melhor posição própria</td><td>Cada partícula busca isolada, sem cooperação — vira $N$ buscas locais independentes.</td></tr>
                 <tr><td><b style="color:#17787d">Social</b> $c_2 r_2 (g - x_i)$</td><td>Puxa para a melhor posição do enxame</td><td>Todas colapsam sobre $g$ — convergência prematura em um mínimo local.</td></tr>
             </table>
+        </section>
+
+        <!-- 8b. A paisagem 1D usada na ilustracao do ciclo -->
+        <section class="compact" id="slide-pso-paisagem">
+            <h2 style="margin-bottom:3px;">A Paisagem da Ilustração</h2>
+            <p style="margin:2px 0 4px;">Para acompanhar as quatro etapas do PSO passo a passo, o slide a seguir usa um problema <b>1D</b> — mais simples de desenhar do que o espaço $(x_1,x_2)$, mas com a mesma estrutura: um <b>vale global</b> e um <b>vale raso</b> para as partículas poderem ficar presas.</p>
+            <div class="stage-box" style="padding:6px 12px;"><div id="fig-pso-paisagem"></div></div>
+            <div class="two-col" style="gap:14px; margin-top:4px;">
+                <div class="col-text">
+                    <div class="formula-box" style="font-size:0.8em; margin:0;">
+                        $$f(x) = \underbrace{0{,}9\operatorname{sen}(1{,}6x)}_{\text{onda larga}} + \underbrace{0{,}5\operatorname{sen}(3{,}1x+1)}_{\text{onda estreita}} + \underbrace{0{,}05\,x^2}_{\text{tigela}}$$
+                    </div>
+                </div>
+                <div class="col-text">
+                    <p style="margin:0; font-size:0.8em;">Domínio plotado: $x \in [-2{,}8;\ 4{,}1]$ — a faixa onde as 9 partículas de fato circulam.</p>
+                </div>
+            </div>
+            <table class="tbl" style="font-size:0.56em; margin-top:4px;">
+                <tr><th style="width:20%">Termo</th><th style="width:34%">Papel na curva</th><th>Efeito visual</th></tr>
+                <tr><td>$0{,}9\operatorname{sen}(1{,}6x)$</td><td>Onda de período longo</td><td>Define os vales <b>largos</b> — inclusive o global, perto de $x \approx -0{,}87$.</td></tr>
+                <tr><td>$0{,}5\operatorname{sen}(3{,}1x+1)$</td><td>Onda de período curto, somada à primeira</td><td>Cria ondulações menores sobre os vales largos — origem do <b>vale raso</b> perto de $x \approx 2{,}6$.</td></tr>
+                <tr><td>$0{,}05\,x^2$</td><td>Termo quadrático fraco</td><td>Abre a curva como uma tigela, sem apagar os vales — evita mínimos repetidos nas bordas.</td></tr>
+            </table>
+            <p class="stage-cap" style="margin-top:3px;">O mesmo papel dos termos <b>inércia + cognitivo + social</b> na equação do PSO: cada um contribui com uma característica, e a soma é que cria o comportamento final.</p>
         </section>
 
         <!-- 9. O ciclo animado -->
@@ -1058,6 +1082,52 @@ fprintf('Hibrido   : f = %10.3e\n', f2);</code></pre>
                                          : 'A colônia converge para o caminho mais curto';
             }
         };
+    })();
+
+    /* =====================================================================
+       FIGURA 1b - grafico ESTATICO da paisagem 1D usada no ciclo do PSO,
+       com o vale global e o vale raso marcados. Mesma funcao/dominio/escala
+       da FIGURA 2, mas sem animacao — e so para apresentar a curva.
+       ===================================================================== */
+    (function () {
+        const W = 700, H = 190;
+        const fP = x => 0.9*Math.sin(x*1.6) + 0.5*Math.sin(x*3.1 + 1) + 0.05*x*x;
+        const XA = -2.8, XB = 4.1, X0 = 30, X1 = 670, Y0 = 20, Y1 = 158;
+        const F_LO = -1.59, F_HI = 1.79;
+        const sx = x => X0 + (x - XA) / (XB - XA) * (X1 - X0);
+        const sy = f => Y1 - (f - F_LO) / (F_HI - F_LO) * (Y1 - Y0);
+
+        function desenhar() {
+            const host = document.getElementById('fig-pso-paisagem');
+            if (!host) return;
+            const svg = mkSvg('fig-pso-paisagem', W, H);
+            // eixo x = 0 de referencia
+            svg.appendChild(svgEl('line', { x1: sx(XA), y1: sy(0), x2: sx(XB), y2: sy(0),
+                stroke: '#e2e8f0', 'stroke-width': 1 }));
+            // curva
+            let d = '';
+            for (let i = 0; i <= 320; i++) { const x = XA + (XB - XA) * i / 320;
+                d += (i ? 'L' : 'M') + sx(x).toFixed(1) + ' ' + sy(fP(x)).toFixed(1) + ' '; }
+            svg.appendChild(svgEl('path', { d, fill: 'none', stroke: '#17787d', 'stroke-width': 3 }));
+
+            // vale global (minimo do dominio) e vale raso secundario, marcados por inspecao
+            const vales = [
+                { x: -0.866, rotulo: 'vale global', cor: '#c0392b', dy: -12 },
+                { x: 2.62,   rotulo: 'vale raso',    cor: '#a8710a', dy: -12 }
+            ];
+            vales.forEach(v => {
+                const cx = sx(v.x), cy = sy(fP(v.x));
+                svg.appendChild(svgEl('circle', { cx, cy, r: 5, fill: v.cor, stroke: '#fff', 'stroke-width': 1.4 }));
+                const t = svgEl('text', { x: cx, y: cy + v.dy, 'text-anchor': 'middle',
+                    class: 'svg-label', fill: v.cor });
+                t.textContent = v.rotulo;
+                svg.appendChild(t);
+            });
+            const tx = svgEl('text', { x: X1, y: sy(0) - 6, 'text-anchor': 'end', class: 'svg-label' });
+            tx.textContent = 'f(x)';
+            svg.appendChild(tx);
+        }
+        document.addEventListener('DOMContentLoaded', desenhar);
     })();
 
     /* =====================================================================
