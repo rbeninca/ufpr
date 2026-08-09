@@ -17,16 +17,17 @@
         #fnCarregando { font-size: 11px; color: #ffd27a; margin-top: 6px; display: none; }
 
         #waterPicker { position: absolute; top: 175px; right: 15px; color: white; font-family: sans-serif;
-              background: rgba(0,0,0,0.55); padding: 8px 6px; border-radius: 8px; width: 130px;
-              box-sizing: border-box; display: flex; flex-direction: row; justify-content: center; gap: 12px; }
+              background: rgba(0,0,0,0.55); padding: 8px 6px; border-radius: 8px; width: 178px;
+              box-sizing: border-box; display: flex; flex-direction: row; justify-content: center; gap: 8px; }
         #waterPicker .seek-col { display: flex; flex-direction: column; align-items: center; }
         #waterPicker label { font-size: 9px; font-weight: 700; margin-bottom: 4px;
               text-transform: uppercase; letter-spacing: .03em; color: #cfe3ff; text-align: center; line-height: 1.15; }
-        #waterSlider, #birdSlider { writing-mode: vertical-lr; direction: rtl; width: 18px; height: 130px;
+        #waterSlider, #birdSlider, #vooSlider { writing-mode: vertical-lr; direction: rtl; width: 18px; height: 130px;
               cursor: pointer; }
         #waterSlider { accent-color: #2a7fd6; }
         #birdSlider { accent-color: #e07a3f; }
-        #waterValor, #birdValor { font-size: 10px; margin-top: 4px; color: #fff; font-variant-numeric: tabular-nums; }
+        #vooSlider { accent-color: #66e0ff; }
+        #waterValor, #birdValor, #vooValor { font-size: 10px; margin-top: 4px; color: #fff; font-variant-numeric: tabular-nums; }
 
         /* --- PAINEL PSO --- */
         #psoPanel { position: absolute; left: 15px; right: 15px; bottom: 15px; max-height: 46vh;
@@ -97,6 +98,12 @@
             <label for="birdSlider">Tamanho<br>do pássaro</label>
             <input type="range" id="birdSlider" min="5" max="200" value="50" step="1">
             <span id="birdValor">—</span>
+        </div>
+        <div class="seek-col">
+            <label for="vooSlider" title="amplifica o desvio de f(x,y) em relação ao mínimo, só para a trajetória do enxame ficar legível">Ampliação<br>do voo</label>
+            <input type="range" id="vooSlider" min="1" max="30" value="8" step="1">
+            <span id="vooValor">—</span>
+            <button class="psoBtn" id="btnVooVisivel" style="margin-top:6px; font-size:9px; padding:4px 6px;" title="mostrar/ocultar a malha da superfície de voo">👁 Malha de voo</button>
         </div>
     </div>
 
@@ -248,6 +255,8 @@
 
         let fnAtual = 'rastrigin';
         let heightFn = null;        // (worldX, worldZ) -> altura normalizada [0, ALTURA_MAX]
+        let heightFnVoo = null;     // (worldX, worldZ) -> heightFn(x,z) * vooEscala; usada so pelo enxame PSO
+        let vooEscala = 8;          // fator de amplificacao vertical da superficie de voo (ajustavel por slider)
         let lakeLevel = 0;
         // dominio classico ativo + conversoes mundo<->dominio, expostas para
         // o motor do PSO (que trabalha no dominio classico da funcao, nao no
@@ -286,6 +295,17 @@
             const span = (mx - mn) || 1;
             heightFn = (wx, wz) => (def.f(toX(wx), toY(wz)) - mn) / span * ALTURA_MAX;
             lakeLevel = ALTURA_MAX * LAKE_FRAC;
+
+            // heightFn ja e normalizada para [0, ALTURA_MAX] com minimo em 0
+            // (quando f = mn) — entao "amplificar o desvio a partir do
+            // minimo" e simplesmente multiplicar por um fator > 1. Usada so
+            // pelo enxame PSO (heightFnVoo), NAO pelo terreno visual: os
+            // passaros pousam nessa segunda superficie, proporcional ao
+            // relevo real mas com o relevo "esticado" verticalmente, entao
+            // a trajetoria real da otimizacao fica legivel (nao grudada no
+            // chao raso perto do minimo) sem inventar altura que nao venha
+            // de f(x,y).
+            heightFnVoo = (wx, wz) => heightFn(wx, wz) * vooEscala;
         }
 
         let scene, camera, renderer, mixer, clock, bird, controls;
@@ -508,6 +528,66 @@
             terrainGroup.add(iRocks);
 
             scene.add(terrainGroup);
+
+            construirSuperficieVoo();
+        }
+
+        /* =====================================================================
+           SUPERFICIE DE VOO — uma segunda malha, so para o enxame PSO pousar
+           nela: mesma f(x,y) do terreno, mas com o desvio em relacao ao
+           minimo AMPLIFICADO por vooEscala (heightFnVoo = heightFn * escala).
+           O terreno visual (montanhas, arvores, agua, rochas) continua
+           exatamente como esta — essa malha e so um guia semi-transparente/
+           wireframe para a trajetoria real da otimizacao ficar legivel,
+           mesmo perto do minimo (onde o relevo real e raso e os passaros
+           ficariam praticamente colados ao chao).
+           ===================================================================== */
+        let vooSurfaceMesh = null;
+        let vooSuperficieVisivel = true;   // intencao persistente (a malha e recriada do zero a cada ajuste)
+
+        function construirSuperficieVoo() {
+            if (vooSurfaceMesh) {
+                scene.remove(vooSurfaceMesh);
+                vooSurfaceMesh.geometry.dispose();
+                vooSurfaceMesh.material.dispose();
+                vooSurfaceMesh = null;
+            }
+            if (!heightFnVoo) return;
+            // resolucao mais baixa que o terreno (400x400): um wireframe
+            // denso vira uma mancha visual solida; 80x80 basta para dar a
+            // leitura de forma da superficie amplificada
+            const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 80, 80);
+            const pos = geo.attributes.position;
+            for (let i = 0; i < pos.count; i++) {
+                pos.setZ(i, heightFnVoo(pos.getX(i), pos.getY(i)));
+            }
+            geo.computeVertexNormals();
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0x66e0ff, wireframe: true, transparent: true, opacity: 0.35
+            });
+            vooSurfaceMesh = new THREE.Mesh(geo, mat);
+            vooSurfaceMesh.rotation.x = -Math.PI / 2;
+            vooSurfaceMesh.visible = vooSuperficieVisivel;
+            scene.add(vooSurfaceMesh);
+        }
+
+        function alternarSuperficieVoo() {
+            vooSuperficieVisivel = !vooSuperficieVisivel;
+            if (vooSurfaceMesh) vooSurfaceMesh.visible = vooSuperficieVisivel;
+            const btn = document.getElementById('btnVooVisivel');
+            if (btn) {
+                btn.textContent = vooSuperficieVisivel ? '👁 Malha de voo' : '🚫 Malha de voo';
+                btn.classList.toggle('psoHistAtivo', vooSuperficieVisivel);
+            }
+        }
+
+        function ligarBotaoVooVisivel() {
+            const btn = document.getElementById('btnVooVisivel');
+            if (!btn) return;
+            btn.textContent = vooSuperficieVisivel ? '👁 Malha de voo' : '🚫 Malha de voo';
+            btn.classList.toggle('psoHistAtivo', vooSuperficieVisivel);
+            ['click', 'pointerdown', 'keydown'].forEach(t => btn.addEventListener(t, ev => ev.stopPropagation()));
+            btn.addEventListener('click', alternarSuperficieVoo);
         }
 
         // Preenche o combo box com o catalogo e liga a troca de funcao
@@ -574,7 +654,36 @@
                 if (bird) bird.scale.setScalar(birdScale);
                 birdSwarm.forEach(b => b.scale.setScalar(birdScale));
             });
+
+            ligarSeekbarVoo();
         }
+
+        // Seekbar da amplificacao vertical da superficie de voo (1x-30x).
+        // A malha de voo e leve (80x80), entao reconstruir a cada arraste e
+        // barato e fica fluido; reposiciona o enxame na mesma tacada para o
+        // efeito ficar visivel em tempo real.
+        function ligarSeekbarVoo() {
+            const slider = document.getElementById('vooSlider');
+            const valorEl = document.getElementById('vooValor');
+            if (!slider) return;
+            ['click', 'pointerdown', 'keydown'].forEach(t => slider.addEventListener(t, ev => ev.stopPropagation()));
+
+            slider.value = vooEscala;
+            if (valorEl) valorEl.textContent = vooEscala + '×';
+
+            slider.addEventListener('input', () => {
+                vooEscala = parseFloat(slider.value);
+                if (valorEl) valorEl.textContent = vooEscala + '×';
+                if (prepararFuncaoAtualDisponivel()) {
+                    heightFnVoo = (wx, wz) => heightFn(wx, wz) * vooEscala;
+                    construirSuperficieVoo();
+                    reposicionarPassarosPSO();
+                }
+            });
+
+            ligarBotaoVooVisivel();
+        }
+        function prepararFuncaoAtualDisponivel() { return !!heightFn; }
 
         /* =====================================================================
            EIXOS CARTESIANOS E GRADES — AxesHelper (X vermelho, Y verde,
@@ -1042,7 +1151,7 @@
                         if (!fromX || !fromY || !ex) return '—';
                         const wx = fromX(p.x[0]), wz = fromY(p.x[1]);
                         const extraRel = (p.fit - ex.fmin) / ex.span * ex.EXTRA_REL_MAX;
-                        return nf(heightFn(wx, wz) + 8 + ex.extraDecaimento + extraRel, 1);
+                        return nf(heightFnVoo(wx, wz) + 8 + ex.extraDecaimento + extraRel, 1);
                     }
                     case 'wz': return (fromY ? nf(fromY(p.x[1]), 1) : '—');
                 }
@@ -1094,28 +1203,20 @@
         // aplica x1,x2 (dominio classico da funcao) -> posicao de mundo, com
         // a altura tirada de heightFn (a versao normalizada/renderizada), so
         // para o passaro pousar visualmente na superficie do relevo atual
-        // Altura de voo: alem de "pousar" na superficie do relevo (heightFn),
-        // soma dois extras:
-        //  1) um extra que DECAI com a iteracao (comeca bem alto, ~ALTURA_MAX*3,
-        //     e cai exponencialmente) — garante que a descida seja perceptivel
-        //     logo de cara, independente de quao dispersos estao os fitness;
-        //  2) um extra menor proporcional ao fitness relativo da particula
-        //     dentro da geracao atual — quem esta pior posicionado voa um
-        //     pouco mais alto que as demais, mesmo depois da descida inicial.
-        const VOO_INICIAL = ALTURA_MAX * 3;   // altura extra na iteracao 0 (bem alta, para a descida ficar obvia)
-        const VOO_MEIA_VIDA = 12;             // iteracoes para o extra inicial cair pela metade
-
-        // altura extra (decaimento por iteracao + dispersao de fitness) para
-        // um dado "iter efetivo" (pode ser fracionario durante interpolacao)
-        // e um conjunto de fitness — extraida para ser reaproveitada tanto no
-        // calculo por posicao real quanto na interpolacao entre quadros
-        function extrasVoo(iterEfetivo, fits) {
-            let fmin = Infinity, fmax = -Infinity;
-            fits.forEach(f => { if (f < fmin) fmin = f; if (f > fmax) fmax = f; });
-            const span = (fmax - fmin) || 1;
-            const EXTRA_REL_MAX = 15;
-            const extraDecaimento = VOO_INICIAL * Math.pow(0.5, Math.max(0, iterEfetivo) / VOO_MEIA_VIDA);
-            return { fmin, span, EXTRA_REL_MAX, extraDecaimento };
+        //
+        // IMPORTANTE (fidelidade a otimizacao): a altura exibida e SEMPRE
+        // heightFn(x,z) + 8 — o "+8" e so um deslocamento fixo para o
+        // pivo/base do modelo 3D do passaro nao ficar cravado no chao, NAO
+        // tem relacao com o valor da funcao objetivo. Nao ha nenhum efeito
+        // de "voo alto decaindo" nem variacao de altura por fitness: cada
+        // passaro fica sempre exatamente na cota real de f(x,y) no ponto
+        // (x,z) que ele esta avaliando, subindo/descendo so conforme o
+        // relevo — e isso que de fato acontece no algoritmo de otimizacao.
+        // (Uma versao anterior somava dois extras puramente decorativos —
+        // um "pouso" inicial e uma variacao por fitness relativo — que
+        // NAO correspondiam ao valor real da funcao; foram removidos.)
+        function extrasVoo() {
+            return { fmin: 0, span: 1, EXTRA_REL_MAX: 0, extraDecaimento: 0 };
         }
 
         // Orienta o passaro para a direcao do vetor velocidade (no plano XZ
@@ -1144,7 +1245,7 @@
                 if (!bird3 || !fromX || !fromY) return;
                 const wx = fromX(p.x[0]), wz = fromY(p.x[1]);
                 const extraRel = (p.fit - ex.fmin) / ex.span * ex.EXTRA_REL_MAX;
-                const wy = heightFn(wx, wz) + 8 + ex.extraDecaimento + extraRel;
+                const wy = heightFnVoo(wx, wz) + 8 + ex.extraDecaimento + extraRel;
                 bird3.position.set(wx, wy, wz);
                 // direcao do vetor velocidade, convertida para unidades de mundo
                 const wvx = fromX(p.x[0] + p.v[0]) - wx;
@@ -1171,7 +1272,7 @@
             const wx = fromX(ponto.x[0]), wz = fromY(ponto.x[1]);
             const ex = extrasVoo(iterK, todosFitsDaIteracaoK);
             const extraRel = (ponto.fit - ex.fmin) / ex.span * ex.EXTRA_REL_MAX;
-            const wy = heightFn(wx, wz) + 8 + ex.extraDecaimento + extraRel;
+            const wy = heightFnVoo(wx, wz) + 8 + ex.extraDecaimento + extraRel;
             return new THREE.Vector3(wx, wy, wz);
         }
 
@@ -1336,7 +1437,7 @@
                 const fitInterp = ant.fit + (p.fit - ant.fit) * uSuave;
                 const wx = fromX(dx0), wz = fromY(dx1);
                 const extraRel = (fitInterp - ex.fmin) / ex.span * ex.EXTRA_REL_MAX;
-                const wy = heightFn(wx, wz) + 8 + ex.extraDecaimento + extraRel;
+                const wy = heightFnVoo(wx, wz) + 8 + ex.extraDecaimento + extraRel;
                 // direcao: para onde o passaro esta indo NESTE quadro (posicao
                 // atual interpolada -> posicao final da iteracao), mais estavel
                 // visualmente do que recalcular a cada frame contra o quadro anterior
@@ -1466,6 +1567,7 @@
            ===================================================================== */
         const URL_PARAMS = {
             fn: 'fn', agua: 'agua', passaro: 'passaro', n: 'n', vel: 'vel', eixos: 'eixos',
+            voo: 'voo', vooVis: 'vooVis',
             hist: 'hist', cinema: 'cinema', play: 'play',
             cx: 'cx', cy: 'cy', cz: 'cz', tx: 'tx', ty: 'ty', tz: 'tz'
         };
@@ -1502,6 +1604,11 @@
                 const v = parseInt(p.get(URL_PARAMS.vel), 10);
                 if (isFinite(v)) psoVelocidade = Math.max(1, Math.min(10, v));
             }
+            if (p.has(URL_PARAMS.voo)) {
+                const v = parseFloat(p.get(URL_PARAMS.voo));
+                if (isFinite(v)) vooEscala = Math.max(1, Math.min(30, v));
+            }
+            if (p.has(URL_PARAMS.vooVis)) vooSuperficieVisivel = p.get(URL_PARAMS.vooVis) === '1';
             return urlPedeEnxame(p);
         }
 
@@ -1547,6 +1654,8 @@
             p.set(URL_PARAMS.n, document.getElementById('psoN').value);
             p.set(URL_PARAMS.vel, psoVelocidade);
             p.set(URL_PARAMS.eixos, eixosVisiveis ? '1' : '0');
+            p.set(URL_PARAMS.voo, vooEscala);
+            p.set(URL_PARAMS.vooVis, vooSuperficieVisivel ? '1' : '0');
             // historico "todas": usa a INTENCAO (histTodosLigado), nao so o
             // resultado visual do momento — assim a URL preserva "hist
             // ligado" mesmo se compartilhada logo apos iniciar o enxame,
