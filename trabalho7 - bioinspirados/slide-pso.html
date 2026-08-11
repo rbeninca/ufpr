@@ -495,6 +495,39 @@
             <p class="stage-cap" style="margin-top:3px;">O mesmo papel dos termos <b>inércia + cognitivo + social</b> na equação do PSO: cada um contribui com uma característica, e a soma é que cria o comportamento final.</p>
         </section>
 
+        <!-- 8c. Como os termos sao calculados, com numeros reais -->
+        <section class="compact" id="slide-pso-calculo">
+            <h2 style="margin-bottom:3px;">Calculando $v$ na Prática: um Exemplo Real</h2>
+            <p style="margin:2px 0 6px;">Mesma simulação da próxima animação — <b>partícula 4</b> (das 9), na <b>1ª iteração</b> ($k=0$, $w=0{,}90$, $c_1=c_2=1{,}49$). Os valores são os que o algoritmo de fato calculou, não um exemplo arredondado.</p>
+            <div class="tip-box" style="margin:0 0 6px; font-size:0.8em;">
+                Estado no início da iteração: $x_i = 2{,}1855$ &nbsp;·&nbsp; $v_i^{\,\text{ant}} = 0{,}2765$ &nbsp;·&nbsp;
+                $p_i = 2{,}1855$ &nbsp;·&nbsp; $g = -0{,}6139$ &nbsp;·&nbsp; $r_1 = 0{,}0136$ &nbsp;·&nbsp; $r_2 = 0{,}4281$
+            </div>
+            <table class="tbl" style="font-size:0.58em;">
+                <tr><th style="width:15%">Termo</th><th style="width:40%">Substituindo os números</th><th style="width:15%">Resultado</th><th>Leitura</th></tr>
+                <tr><td><b style="color:#5b6a7d">Inércia</b><br>$w\,v_i^{\text{ant}}$</td>
+                    <td>$0{,}90 \times 0{,}2765$</td>
+                    <td class="num" style="color:#5b6a7d">$+0{,}2489$</td>
+                    <td>Mantém a velocidade anterior, no mesmo sentido (positivo).</td></tr>
+                <tr><td><b style="color:#c0392b">Cognitivo</b><br>$c_1 r_1 (p_i - x_i)$</td>
+                    <td>$1{,}49 \times 0{,}0136 \times (2{,}1855 - 2{,}1855)$</td>
+                    <td class="num" style="color:#c0392b">$0{,}0000$</td>
+                    <td><b>Sempre zero na 1ª iteração</b>: ninguém ainda se moveu, então $p_i = x_i$ para toda partícula — não há "recorde próprio" ainda a perseguir.</td></tr>
+                <tr><td><b style="color:#17787d">Social</b><br>$c_2 r_2 (g - x_i)$</td>
+                    <td>$1{,}49 \times 0{,}4281 \times (-0{,}6139 - 2{,}1855)$</td>
+                    <td class="num" style="color:#17787d">$-1{,}7855$</td>
+                    <td>$g < x_i$: puxa fortemente para a esquerda, rumo ao melhor ponto já visto no enxame.</td></tr>
+            </table>
+            <div class="formula-box" style="font-size:0.82em; margin-top:6px;">
+                $v_i = 0{,}2489 + 0{,}0000 - 1{,}7855 = -1{,}5366$ &nbsp;→&nbsp;
+                excede $v_{\text{máx}} = 1{,}1$ &nbsp;→&nbsp;
+                <b>$v_i$ saturado $= -1{,}1000$</b>
+                <br><span style="font-size:0.82em; color:#48566b;">
+                $x_i^{\text{novo}} = x_i + v_i = 2{,}1855 + (-1{,}1000) = \mathbf{1{,}0855}$</span>
+            </div>
+            <p class="stage-cap" style="margin-top:4px;">Na 1ª iteração só <b>inércia</b> e <b>social</b> agem de fato — o <b>cognitivo</b> "acorda" a partir da 2ª, quando alguma partícula já tiver batido seu próprio recorde. Mesmo assim, a soma passou do limite de velocidade e foi <b>saturada (cortada)</b> em $v_\text{máx}$ antes de mover a partícula: sem o corte, $x_i^{\text{novo}}$ seria $0{,}6489$.</p>
+        </section>
+
         <!-- 9. O ciclo animado -->
         <section class="compact" id="slide-pso-ciclo">
             <h2>O Ciclo do PSO</h2>

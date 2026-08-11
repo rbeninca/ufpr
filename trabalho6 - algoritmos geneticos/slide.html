@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trabalho 6 — Algoritmos Genéticos</title>
+    <title>Trabalho 6 — Algoritmos Genéticos e uso no MATLAB</title>
 
     <!-- Reveal.js -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
@@ -46,6 +46,8 @@
 
         .formula-box { background:#f2f7fc; padding:12px 16px; border-left:6px solid var(--ufpr-blue);
             border-radius:4px; margin:10px 0; font-size:0.88em; box-shadow:2px 2px 10px rgba(0,0,0,0.05); }
+        .formula-box.formula-tight { padding:3px 12px; margin:3px 0; line-height:1.05; }
+        .formula-box.formula-tight .katex-display { margin:0.12em 0; }
         .warn-box { background:#fdf3f2; border-left:6px solid var(--accent-red); padding:12px 16px; border-radius:4px; margin:10px 0; font-size:0.85em; }
         .tip-box  { background:#fff8e8; border-left:6px solid var(--accent-gold); padding:12px 16px; border-radius:4px; margin:10px 0; font-size:0.85em; }
         .bio-box  { background:#f3f8f4; border-left:6px solid var(--accent-green); padding:12px 16px; border-radius:4px; margin:10px 0; font-size:0.85em; }
@@ -218,11 +220,13 @@
         <!-- ===================== 1. CAPA ===================== -->
         <section style="text-align:center;">
             <h1 style="font-size:2.0em;">Algoritmos Genéticos</h1>
-            <h2 style="border:none; color:#555; text-transform:none; font-size:1.05em;">Otimização inspirada na evolução natural</h2>
+            <h2 style="border:none; color:#555; text-transform:none; font-size:1.05em;">Fundamentos e uso no MATLAB</h2>
             <p style="font-size:1.0em; margin-top:18px;">Quando a função é <span class="highlight">não diferenciável</span>, <span class="highlight">descontínua</span> ou cheia de <span class="highlight">mínimos locais</span></p>
             <div style="margin-top:46px;">
                 <p><span class="pill">UFPR</span> <span class="pill ga">Trabalho 6</span> <span class="pill">MATLAB — Global Optimization Toolbox</span></p>
-                <p style="margin-top:22px;"><strong>Alunos:</strong> Leonardo Ronald Perin Rauta</p>
+                <p style="margin-top:22px;"><strong>Alunos:
+
+                </strong> Leonardo Ronald Perin Rauta</p>
                 <p style="margin-left:5.2em;">Maurício da Silva Justino</p>
                 <p style="margin-left:5.2em;">Romulo de Aguiar Beninca</p>
                 <p style="margin-top:18px;"><strong>Professor:</strong> Prof. Dr. Carlos Alberto Bavastri</p>
@@ -238,8 +242,8 @@
                 <div class="stage"><div class="dot"></div><h4>Parte 2</h4><p>O ciclo do AG e seus operadores, um a um.</p></div>
                 <div class="stage"><div class="dot"></div><h4>Parte 3</h4><p>Prática em MATLAB: <code>ga</code> e implementação própria.</p></div>
             </div>
-            <p style="text-align:center; margin-top:20px;">Ao final você deve saber <span class="highlight">quando um AG é a ferramenta certa</span>, o que cada parâmetro controla e como chamar o <code>ga</code> do MATLAB com segurança.</p>
-            <div class="tip-box"><strong>Como vamos trabalhar:</strong> o mesmo ciclo de 5 etapas (População → Avaliação → Seleção → Cruzamento → Mutação) aparece do começo ao fim, mudando apenas de estado a cada operador estudado. Há questões de fixação ao término de cada parte.</div>
+            <p style="text-align:center; margin-top:20px;"><span class="highlight">Quando um AG é a ferramenta apropriada</span>, o que cada parâmetro controla e como chamar o <code>ga</code> do MATLAB com segurança.</p>
+            
         </section>
 
         <!-- =================================================================== -->
@@ -257,21 +261,21 @@
             <p>A leitura corrente de Darwin inverte a tese. Não é a força que decide a linhagem que prevalece, e sim a <span class="ga-highlight">aptidão ao ambiente</span> — e o ambiente muda.</p>
             <div class="stage-box"><div id="anim-adapta"></div></div>
             <div class="two-col" style="gap:20px;">
-                <div class="col-text">
-                    <div class="warn-box" style="margin:4px 0;"><b>O especialista.</b> Domina o ambiente atual e ocupa toda a população. Quando as condições viram, ele não tem para onde ir: sua vantagem era <em>daquele</em> ambiente.</div>
+                <div class="col-text" id="texto-especialista" style="opacity:0; transform:translateY(10px); transition:opacity .5s ease, transform .5s ease;">
+                    <div class="warn-box" style="margin:4px 0;"><b>A linhagem especialista.</b> Domina o ambiente atual e ocupa toda a população. Quando as condições viram, ela não tem para onde ir: sua vantagem era <em>daquele</em> ambiente.</div>
                 </div>
-                <div class="col-text">
-                    <div class="bio-box" style="margin:4px 0;"><b>A diversidade.</b> Traços que pareciam inúteis viram vantagem quando o ambiente muda. É a <em>variedade</em> preservada na população que garante a continuidade da linhagem.</div>
+                <div class="col-text" id="texto-adaptada" style="opacity:0; transform:translateY(10px); transition:opacity .5s ease, transform .5s ease;">
+                    <div class="bio-box" style="margin:4px 0;"><b>A linhagem adaptada.</b> Traços que pareciam inúteis viram vantagem quando o ambiente muda. É a <em>variedade</em> preservada na população que garante a continuidade da linhagem.</div>
                 </div>
             </div>
-            <div class="formula-box" style="margin-top:4px;"><strong>Por que isto funda o AG:</strong> a aptidão $F$ não é um atributo do indivíduo, é a relação entre ele e a função objetivo — o ambiente. Por isso o algoritmo <b>não elimina</b> os piores nem preserva só o campeão: manter diversidade é o que permite escapar de um vale ruim mais adiante. Um AG que vira cópia do melhor indivíduo é um AG que parou de buscar.</div>
+            <div class="formula-box" id="conclusao-adaptacao" style="margin-top:4px; opacity:0; transform:translateY(10px); transition:opacity .5s ease, transform .5s ease;"><strong>Por que isto funciona:</strong> a aptidão $F$ não é um atributo do indivíduo, é a relação entre ele e a função objetivo — o ambiente. Por isso o algoritmo <b>não elimina</b> os piores nem preserva só o campeão: manter diversidade é o que permite escapar de um vale ruim mais adiante. Um AG que vira cópia do melhor indivíduo é um AG que parou de buscar.</div>
         </section>
 
         <!-- 5. Um campo cheio de vales (Plotly: superfície 3D interativa) -->
         <section class="compact" id="slide-campo-vales">
             <h2>Um Campo Cheio de Vales</h2>
             <p>A <span class="highlight">Rastrigin modificada</span> é o exemplo de função multimodal: um paraboloide suave coberto por uma ondulação cossenoidal que cria dezenas de mínimos locais em torno de um único mínimo global.</p>
-            <div class="formula-box" style="font-size:0.78em; margin:6px 0;">$$f(x_1,x_2) = 20 + \sum_{i=1}^{2}\left[x_i^2 - 10\cos(2\pi x_i)\right], \qquad x^\star = (0,\,0), \quad f(x^\star) = 0$$</div>
+            <div class="formula-box formula-tight" style="font-size:0.78em;">$$f(x_1,x_2) = 20 + \sum_{i=1}^{2}\left[x_i^2 - 10\cos(2\pi x_i)\right], \qquad x^\star = (0,\,0), \quad f(x^\star) = 0$$</div>
             <div class="plot-toolbar">
                 <button class="plot-btn active" data-modo="superficie">Superfície 3D</button>
                 <button class="plot-btn" data-modo="contorno">Curvas de nível</button>
@@ -1352,20 +1356,20 @@ fprintf('ga     : media %.3f | acertos %d/30\n', mean(r(:,2)), sum(r(:,2) < 1e-4
        ===================================================================== */
     (function () {
         const W = 880, H = 300;
-        // duas faixas: em cima a linhagem especialista, embaixo a diversa
+        // duas faixas: em cima a linhagem especialista, embaixo a adaptada
         const FX0 = 150, FX1 = 858;                    // extensao util das faixas
         const YA = 92, YB = 216;                       // linha de base de cada faixa
         const NIND = 14;
         // O "ambiente" e um optimo que se desloca: comeca em 0,26 e vai para 0,76.
         const AMB_INI = 0.26, AMB_FIM = 0.76, LARG = 0.13;   // largura do nicho
-        const ambiente = t => AMB_INI + (AMB_FIM - AMB_INI) * Math.max(0, Math.min(1, (t - 0.30) / 0.42));
+        const ambiente = progresso => AMB_INI + (AMB_FIM - AMB_INI) * ease(Math.max(0, Math.min(1, progresso)));
         // aptidao = proximidade ao nicho corrente
         const apt = (p, c) => Math.exp(-Math.pow((p - c) / LARG, 2));
 
-        let espec = [], diver = [], nicho = null, nichoB = null, faixaTxt = null, veredito = null;
+        let espec = [], arvoreAdapt = [], nicho = null, nichoB = null, faixaTxt = null, veredito = null;
 
         ANIM['anim-adapta'] = {
-            dur: 11000,
+            dur: 14000,
             build() {
                 const svg = mkSvg('anim-adapta', W, H);
                 const px = p => FX0 + p * (FX1 - FX0);
@@ -1378,7 +1382,7 @@ fprintf('ga     : media %.3f | acertos %d/30\n', mean(r(:,2)), sum(r(:,2) < 1e-4
                     t2.textContent = sub; svg.appendChild(t2);
                 }
                 rotulo(YA, 'Linhagem especialista', 'todos iguais ao campeão', '#c0392b');
-                rotulo(YB, 'Linhagem diversa', 'traços variados preservados', '#1e8449');
+                rotulo(YB, 'Linhagem adaptada', 'traços variados preservados', '#1e8449');
 
                 // ---- o nicho: faixa que representa o ambiente favoravel --------
                 // desenhado antes dos individuos, para ficar ao fundo
@@ -1390,24 +1394,51 @@ fprintf('ga     : media %.3f | acertos %d/30\n', mean(r(:,2)), sum(r(:,2) < 1e-4
                 [YA, YB].forEach(y => svg.appendChild(svgEl('line', {
                     x1: FX0, y1: y + 40, x2: FX1, y2: y + 40, stroke: '#dde5ee', 'stroke-width': 2 })));
 
-                // ---- individuos ------------------------------------------------
-                // especialistas: todos praticamente no mesmo ponto (sem diversidade)
-                espec = []; diver = [];
+                // ---- indivíduos da linhagem especialista ----------------------
+                // Quase todos ocupam o mesmo nicho: há pouca diversidade.
+                espec = [];
                 for (let i = 0; i < NIND; i++) {
-                    const p = AMB_INI + (i / (NIND - 1) - 0.5) * 0.045;      // nuvem estreita
+                    const p = AMB_INI + (i / (NIND - 1) - 0.5) * 0.045;
                     const c = svgEl('circle', { cx: px(p), cy: YA, r: 7, fill: '#c0392b',
-                                                stroke: '#fff', 'stroke-width': 1.6 });
+                        stroke: '#fff', 'stroke-width': 1.6 });
                     svg.appendChild(c);
                     espec.push({ el: c, p });
                 }
-                // diversos: espalhados por todo o eixo de tracos
-                for (let i = 0; i < NIND; i++) {
-                    const p = 0.06 + 0.88 * i / (NIND - 1);                  // nuvem larga
-                    const c = svgEl('circle', { cx: px(p), cy: YB, r: 7, fill: '#1e8449',
-                                                stroke: '#fff', 'stroke-width': 1.6 });
-                    svg.appendChild(c);
-                    diver.push({ el: c, p });
-                }
+
+                // ---- árvore genealógica da linhagem adaptada -----------------
+                // Cada geração produz de 2 a 4 filhos. Os marcados com keep
+                // prosperam e dão origem à geração seguinte; os demais esmaecem.
+                const ay = y => YB + (y - YA) * 0.72;
+                const geracoes = [
+                    [{ y: YB, parent: -1, keep: true }],
+                    [{ y: ay(55), parent: 0 }, { y: ay(79), parent: 0, keep: true },
+                     { y: ay(104), parent: 0, keep: true }, { y: ay(128), parent: 0 }],
+                    [{ y: ay(51), parent: 1 }, { y: ay(70), parent: 1, keep: true },
+                     { y: ay(89), parent: 1 }, { y: ay(107), parent: 2, keep: true },
+                     { y: ay(126), parent: 2 }],
+                    [{ y: ay(59), parent: 1 }, { y: ay(81), parent: 1 },
+                     { y: ay(103), parent: 3, keep: true }, { y: ay(125), parent: 3 }],
+                    [{ y: ay(76), parent: 2 }, { y: ay(101), parent: 2, keep: true },
+                     { y: ay(126), parent: 2 }],
+                    [{ y: ay(59), parent: 1 }, { y: ay(81), parent: 1 },
+                     { y: ay(104), parent: 1, keep: true }, { y: ay(127), parent: 1 }]
+                ];
+                const gx = g => FX0 + 18 + g * ((FX1 - FX0 - 36) / (geracoes.length - 1));
+                arvoreAdapt = geracoes.map((geracao, g) => geracao.map((no, i) => ({ ...no, g, i, x: gx(g) })));
+
+                // As conexões ficam atrás dos círculos e são desenhadas durante o nascimento.
+                arvoreAdapt.slice(1).forEach((geracao, gi) => geracao.forEach(no => {
+                    const pai = arvoreAdapt[gi][no.parent];
+                    no.linha = svgEl('line', { x1: pai.x, y1: pai.y, x2: no.x, y2: no.y,
+                        stroke: '#1e8449', 'stroke-width': 1.8, opacity: 0,
+                        'stroke-dasharray': 150, 'stroke-dashoffset': 150 });
+                    svg.appendChild(no.linha);
+                }));
+                arvoreAdapt.flat().forEach(no => {
+                    no.el = svgEl('circle', { cx: no.x, cy: no.y, r: 0, fill: '#1e8449',
+                        stroke: '#fff', 'stroke-width': 1.6, opacity: 0 });
+                    svg.appendChild(no.el);
+                });
 
                 // ---- textos de estado -------------------------------------------
                 faixaTxt = svgEl('text', { x: (FX0 + FX1) / 2, y: 22, class: 'svg-title',
@@ -1423,43 +1454,84 @@ fprintf('ga     : media %.3f | acertos %d/30\n', mean(r(:,2)), sum(r(:,2) < 1e-4
             },
             draw(t) {
                 const px = p => FX0 + p * (FX1 - FX0);
-                const c = ambiente(t);
-                const mudando = t > 0.30 && t < 0.72;
+                // A comparação é contada em duas etapas: primeiro a linhagem
+                // especialista completa sua trajetória; somente depois começa a
+                // linhagem adaptada. Os textos abaixo seguem o mesmo relógio.
+                const pEspecialista = Math.max(0, Math.min(1, (t - 0.04) / 0.38));
+                const pAdaptada = Math.max(0, Math.min(1, (t - 0.48) / 0.38));
+                const faseAdaptada = t >= 0.48;
+                const cE = ambiente(pEspecialista);
+                const cA = ambiente(pAdaptada);
+                const nw = (FX1 - FX0) * LARG * 2.3;
 
-                // o nicho acompanha o ambiente
-                const nx = px(c - LARG * 1.15), nw = (FX1 - FX0) * LARG * 2.3;
-                [nicho, nichoB].forEach(n => {
-                    n.setAttribute('x', nx.toFixed(1));
-                    n.setAttribute('width', nw.toFixed(1));
-                    n.setAttribute('fill', mudando ? '#e67e22' : '#f5b041');
-                });
+                nicho.setAttribute('x', px(cE - LARG * 1.15).toFixed(1));
+                nicho.setAttribute('width', nw.toFixed(1));
+                nicho.setAttribute('fill', pEspecialista > 0 && pEspecialista < 1 ? '#e67e22' : '#f5b041');
+                nichoB.setAttribute('x', px(cA - LARG * 1.15).toFixed(1));
+                nichoB.setAttribute('width', nw.toFixed(1));
+                nichoB.setAttribute('fill', pAdaptada > 0 && pAdaptada < 1 ? '#e67e22' : '#f5b041');
+                nichoB.setAttribute('opacity', faseAdaptada ? '.22' : '0');
 
-                // cada individuo desvanece conforme perde aptidao no ambiente atual
-                function pintar(lista, corViva) {
+                // A linhagem especialista perde aptidão quando o nicho se desloca.
+                function pintar(lista, corViva, centroAmbiente) {
                     lista.forEach(o => {
-                        const a = apt(o.p, c);                    // 0..1
+                        const a = apt(o.p, centroAmbiente);
                         o.el.setAttribute('opacity', (0.12 + 0.88 * a).toFixed(2));
                         o.el.setAttribute('r', (3.4 + 3.6 * a).toFixed(1));
                         o.el.setAttribute('fill', a > 0.35 ? corViva : '#b9c4d2');
                     });
-                    return lista.filter(o => apt(o.p, c) > 0.35).length;
+                    return lista.filter(o => apt(o.p, centroAmbiente) > 0.35).length;
                 }
-                const vivosE = pintar(espec, '#c0392b');
-                const vivosD = pintar(diver, '#1e8449');
+                const vivosE = pintar(espec, '#c0392b', cE);
 
-                faixaTxt.textContent = t < 0.30
-                    ? 'Ambiente estável — o especialista domina, é o "mais forte"'
-                    : mudando
-                        ? 'O ambiente está mudando…'
-                        : 'Novo ambiente estabelecido';
-                faixaTxt.setAttribute('fill', mudando ? '#c0392b' : '#12324f');
+                // Na linhagem adaptada, nascimento e seleção avançam geração por
+                // geração. Cada grupo de filhos nasce verde; em seguida os ramos
+                // sem descendência ficam cinza e só um ou dois seguem adiante.
+                arvoreAdapt.forEach((geracao, g) => geracao.forEach(no => {
+                    if (g === 0) {
+                        no.el.setAttribute('r', '7');
+                        no.el.setAttribute('opacity', faseAdaptada ? '1' : '0');
+                        return;
+                    }
+                    const q = Math.max(0, Math.min(1, pAdaptada * (arvoreAdapt.length - 1) - (g - 1)));
+                    const nascimento = Math.max(0, Math.min(1, q / 0.38));
+                    const selecao = Math.max(0, Math.min(1, (q - 0.56) / 0.30));
+                    no.linha.setAttribute('opacity', nascimento > 0 ? (no.keep ? '.72' : '.38') : '0');
+                    no.linha.setAttribute('stroke-dashoffset', (150 * (1 - nascimento)).toFixed(1));
+                    no.linha.setAttribute('stroke', selecao > 0 && !no.keep ? '#d5dbe3' : '#1e8449');
+                    no.el.setAttribute('r', (7 * nascimento * (no.keep ? 1 : 1 - 0.38 * selecao)).toFixed(2));
+                    no.el.setAttribute('opacity', (nascimento * (no.keep ? 1 : 1 - 0.72 * selecao)).toFixed(2));
+                    no.el.setAttribute('fill', selecao > 0 && !no.keep ? '#aeb8c5' : '#1e8449');
+                }));
 
-                if (t > 0.80) {
-                    veredito.setAttribute('opacity', Math.min(1, (t - 0.80) / 0.12).toFixed(2));
+                const mudandoE = pEspecialista > 0 && pEspecialista < 1;
+                const mudandoA = pAdaptada > 0 && pAdaptada < 1;
+                const geracaoAtual = Math.min(arvoreAdapt.length - 1,
+                    Math.max(1, Math.ceil(pAdaptada * (arvoreAdapt.length - 1))));
+                faixaTxt.textContent = !faseAdaptada
+                    ? (mudandoE ? 'O ambiente muda — a população especialista perde aptidão' : 'Ambiente inicial — a linhagem especialista domina')
+                    : (mudandoA
+                        ? `Geração ${geracaoAtual} — surgem 2 a 4 filhos; apenas 1 ou 2 ramos prosperam`
+                        : 'Linhagem adaptada — sucessão concluída');
+                faixaTxt.setAttribute('fill', mudandoE || mudandoA ? '#c0392b' : '#12324f');
+
+                const revelar = (id, inicio) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    const visivel = t >= inicio;
+                    el.style.opacity = visivel ? '1' : '0';
+                    el.style.transform = visivel ? 'translateY(0)' : 'translateY(10px)';
+                };
+                revelar('texto-especialista', 0.04);
+                revelar('texto-adaptada', 0.48);
+                revelar('conclusao-adaptacao', 0.90);
+
+                if (t > 0.86) {
+                    veredito.setAttribute('opacity', Math.min(1, (t - 0.86) / 0.04).toFixed(2));
                     veredito.textContent = vivosE === 0
-                        ? `linhagem especialista: extinta   ·   linhagem diversa: continua (${vivosD} aptos)`
-                        : `especialista: ${vivosE}   ·   diversa: ${vivosD}`;
-                    veredito.setAttribute('fill', vivosD > vivosE ? '#1e8449' : '#12324f');
+                        ? 'linhagem especialista: extinta   ·   linhagem adaptada: continua'
+                        : `especialista: ${vivosE} aptos   ·   linhagem adaptada: continua`;
+                    veredito.setAttribute('fill', '#1e8449');
                 } else {
                     veredito.setAttribute('opacity', 0);
                 }
@@ -2464,18 +2536,20 @@ fprintf('ga     : media %.3f | acertos %d/30\n', mean(r(:,2)), sum(r(:,2) < 1e-4
        interacao (rotacao/zoom) e continua, nao um quadro em funcao de t.
        ===================================================================== */
     (function () {
-        const LIMV = 5.12;
+        // Metade do domínio clássico da Rastrigin: busca e plotagem em [-2,56; 2,56]².
+        const LIMV = 2.56;
         const fR  = (x, y) => 20 + (x*x - 10*Math.cos(2*Math.PI*x)) + (y*y - 10*Math.cos(2*Math.PI*y));
         // derivada parcial (a funcao e separavel: vale para as duas variaveis)
         const dR  = v => 2*v + 20*Math.PI*Math.sin(2*Math.PI*v);
 
         // Descida mais rapida com passo pequeno: garante descida LOCAL de verdade,
         // sem saltar entre vales (passo grande faria a trajetoria "pular" bacias).
-        function descida(x0, y0, h = 0.004, n = 220) {
+        function descida(x0, y0, h = 0.00004, n = 220) {
             const P = [[x0, y0]];
             let x = x0, y = y0;
             for (let k = 0; k < n; k++) {
-                x -= h * dR(x); y -= h * dR(y);
+                x = Math.max(-LIMV, Math.min(LIMV, x - h * dR(x)));
+                y = Math.max(-LIMV, Math.min(LIMV, y - h * dR(y)));
                 if (!isFinite(x) || !isFinite(y)) break;
                 P.push([x, y]);
             }
@@ -2485,9 +2559,9 @@ fprintf('ga     : media %.3f | acertos %d/30\n', mean(r(:,2)), sum(r(:,2) < 1e-4
         // Tres pontos iniciais escolhidos para destinos distintos: dois travam em
         // minimos locais diferentes e apenas o terceiro alcanca o global (0,0).
         const INICIOS = [
-            { x: -3.55, y:  2.75, cor: '#c0392b', nome: 'x₀⁽¹⁾' },
-            { x:  2.70, y: -3.35, cor: '#f39c12', nome: 'x₀⁽²⁾' },
-            { x:  0.34, y: -0.29, cor: '#1e8449', nome: 'x₀⁽³⁾' }
+            { x: -1.775, y:  1.375, cor: '#c0392b', nome: 'x₀⁽¹⁾' },
+            { x:  1.350, y: -1.675, cor: '#f39c12', nome: 'x₀⁽²⁾' },
+            { x:  0.170, y: -0.145, cor: '#1e8449', nome: 'x₀⁽³⁾' }
         ];
         const TRAJ = INICIOS.map(p => descida(p.x, p.y));
 
@@ -2527,7 +2601,7 @@ fprintf('ga     : media %.3f | acertos %d/30\n', mean(r(:,2)), sum(r(:,2) < 1e-4
             const t = [];
             if (modo === 'superficie') {
                 t.push({ type: 'surface', x: xs, y: xs, z: zs, colorscale: ESCALA,
-                         showscale: false, opacity: 0.92, hoverinfo: 'skip',
+                         showscale: false, opacity: 0.2, hoverinfo: 'skip',
                          contours: { z: { show: true, usecolormap: true, width: 1, project: { z: false } } } });
             } else {
                 t.push({ type: 'contour', x: xs, y: xs, z: zs, colorscale: ESCALA,
