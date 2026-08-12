@@ -16,6 +16,15 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <!-- Plotly.js: superficie 3D interativa -->
     <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+    <!-- Three.js: o lobo 3D da capa -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 
     <style>
         :root {
@@ -204,9 +213,33 @@
         .passo-box h4 { display:inline; font-size:0.78em; color:var(--ufpr-dark); }
         .passo-box .conta { font-family:'Consolas','Menlo',monospace; font-size:0.72em; color:#344254;
             background:#f7fafd; border-radius:5px; padding:6px 10px; margin-top:6px; display:block; line-height:1.7; }
+
+        /* Lobo 3D da capa */
+        #lobo3d { width:100%; height:400px; margin:6px auto 0; cursor:pointer; position:relative; z-index:1; }
+        #lobo3d canvas { display:block; width:100% !important; height:100% !important; }
+        @media print { #lobo3d { display:none; } }
+
+        /* Matilha de fundo: cobre a tela toda, ATRAS do conteudo do slide.
+           So aparece na capa (a classe no body e trocada por slidechanged). */
+        /* Camada propria, totalmente fora do fluxo: z-index NEGATIVO deixa a
+           cena atras de todo o conteudo sem precisar mexer em position/
+           z-index do reveal — o reveal posiciona os slides com position
+           absolute e transforms proprios, e alterar isso desloca o layout. */
+        #matilhaFundo { position:fixed; inset:0; z-index:-1; pointer-events:none;
+            opacity:0; transition:opacity .6s ease; }
+        body.capa-ativa #matilhaFundo { opacity:1; }
+        #matilhaFundo canvas { display:block; width:100%; height:100%; }
+        /* o tema white.css pinta .reveal-viewport de branco, o que taparia a
+           camada de z-index negativo; deixamos transparente SO na capa */
+        html, body { background:transparent; }
+        body.capa-ativa .reveal-viewport { background:transparent !important; }
+        @media print { #matilhaFundo { display:none !important; } }
     </style>
 </head>
 <body>
+
+<!-- matilha circulando ao fundo (so na capa) -->
+<div id="matilhaFundo" aria-hidden="true"></div>
 
 <div class="topbar">
     <div class="anim-speed">
@@ -224,10 +257,10 @@
         <section style="text-align:center;">
             <p class="small-text" style="letter-spacing:2px; text-transform:uppercase; color:#7a8497;">Universidade Federal do Paraná</p>
             <p class="small-text" style="letter-spacing:1px; text-transform:uppercase; color:#9aa7b8;">Programa de Pós-Graduação em Engenharia Mecânica</p>
-            <h1 style="font-size:1.7em; margin-top:18px;">Otimização por Lobos-Cinzentos</h1>
-            <p style="font-size:1.15em; color:var(--wolf-dark); font-weight:700; margin-top:2px;">Grey Wolf Optimizer — GWO</p>
-            <div style="font-size:2.6em; margin:18px 0 10px;">🐺</div>
-            <p class="small-text" style="margin-top:20px;">Trabalho 7 — Algoritmos Bioinspirados<br>Otimização Não Linear · Prof. Dr. Carlos Alberto Bavastri</p>
+            <h1 style="font-size:1.2em; margin-top:5px;">Otimização por Lobos-Cinzentos</h1>
+            <p style="font-size:1em; color:var(--wolf-dark); font-weight:600; margin-top:2px;">Grey Wolf Optimizer — GWO</p>
+            <div id="lobo3d" title="clique no lobo"></div>
+            <p class="small-text" style="margin-top:6px;">Trabalho 7 — Algoritmos Bioinspirados<br>Otimização Não Linear · Prof. Dr. Carlos Alberto Bavastri</p>
         </section>
 
         <!-- 2. Roteiro -->
@@ -1995,6 +2028,468 @@ title('Convergencia do GWO na funcao de Rastrigin');</code></pre>
             if (b1) b1.addEventListener('click', ev => { ev.stopPropagation(); rodar(); });
             if (b2) b2.addEventListener('click', ev => { ev.stopPropagation(); limpar(); });
         });
+    })();
+</script>
+
+<!-- =====================================================================
+     LOBO 3D DA CAPA — parado de frente (Idle); ao clicar, vira para a
+     direita, galopa e sai da tela; depois volta ao repouso de frente.
+     ===================================================================== -->
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    (function () {
+        const host = document.getElementById('lobo3d');
+        if (!host) return;
+
+        // O canvas ocupa a LARGURA TOTAL do slide (1100 no palco do reveal),
+        // para o lobo ter espaco de corrida e sair pela borda direita de fato.
+        // W e H saem do tamanho REAL do host (definido no CSS): se o buffer
+        // fosse criado com um aspecto e o canvas esticado por CSS para outro,
+        // a imagem sairia distorcida e a cabeca do lobo seria cortada.
+        let W = host.clientWidth || 1100;
+        let H = host.clientHeight || 400;
+        const scene = new THREE.Scene();                 // fundo transparente: o slide e branco
+        const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 100);
+        // posicao definitiva e calculada apos carregar o modelo, a partir da
+        // bounding box real (enquadraLobo) — evita chutar escala/distancia
+        camera.position.set(0, 1.0, 6);
+        camera.lookAt(0, 0.6, 0);
+
+        // aviso visivel em caso de falha — melhor que sumir sem explicacao
+        function falhar(msg) {
+            host.innerHTML = '<div style="font-size:2.6em; line-height:1;">🐺</div>' +
+                '<div style="font-size:11px; color:#9aa7b8; margin-top:6px;">' + msg + '</div>';
+        }
+
+        let renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        } catch (e) { falhar('WebGL indisponível'); return; }
+        renderer.setSize(W, H, false);   // false: nao mexe no style, o CSS cuida disso
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        host.appendChild(renderer.domElement);
+
+        // acompanha mudancas de largura do slide (janela redimensionada,
+        // rescale do reveal): reajusta buffer, aspecto e limites da corrida
+        function redimensionar() {
+            const nw = host.clientWidth, nh = host.clientHeight;
+            if (!nw || !nh || (Math.abs(nw - W) < 1 && Math.abs(nh - H) < 1)) return;
+            W = nw; H = nh;
+            renderer.setSize(W, H, false);
+            camera.aspect = W / H;
+            camera.updateProjectionMatrix();
+            if (lobo) enquadraLobo(lobo);   // recalcula distancia, X_SAIDA e VEL
+        }
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(() => redimensionar()).observe(host);
+        }
+        window.addEventListener('resize', redimensionar);
+
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa7b8, 2.6));
+        const dir = new THREE.DirectionalLight(0xffffff, 1.9);
+        dir.position.set(2.5, 5, 4);
+        scene.add(dir);
+
+        const clock = new THREE.Clock();
+        let mixer = null, lobo = null;
+        let acaoIdle = null, acaoCorrer = null, acaoAtual = null;
+
+        // estados: 'parado' -> (clique) 'virando' -> 'correndo' -> 'fora' -> 'parado'
+        let estado = 'parado';
+        let giro = 0;                 // rotacao Y corrente (0 = de frente para a plateia)
+        const GIRO_CORRIDA = Math.PI / 2;   // olhando para +X (direita da tela)
+        // X_SAIDA e VEL sao derivados do enquadramento real em enquadraLobo(),
+        // para a corrida funcionar em qualquer escala de modelo
+        let X_SAIDA = 7;              // x a partir do qual o lobo ja saiu de cena
+        let VEL = 4.2;                // unidades/segundo durante o galope
+
+        function trocarAcao(nova, fade = 0.25) {
+            if (!nova || nova === acaoAtual) return;
+            if (acaoAtual) acaoAtual.fadeOut(fade);
+            nova.reset().fadeIn(fade).play();
+            acaoAtual = nova;
+        }
+
+        // Enquadra o lobo pela sua bounding box REAL: normaliza a altura para
+        // ALVO_ALTURA unidades, apoia as patas em y=0 e recua a camera o
+        // suficiente para a silhueta caber com folga (FOLGA) na vertical e na
+        // horizontal. Assim o tamanho na tela nao depende da escala com que o
+        // .glb foi exportado.
+        const ALVO_ALTURA = 1.6;   // altura do lobo, em unidades de cena
+        const FOLGA = 1.7;         // 1 = colado nas bordas; 1.7 = 70% de margem (orelhas livres)
+        // Box3.setFromObject() NAO serve aqui: para malhas com esqueleto
+        // (SkinnedMesh) ele usa o boundingBox pre-computado da geometria, que
+        // neste modelo devolve ~527 unidades de "altura" — valor sem relacao
+        // com a silhueta real. Medimos percorrendo os vertices com a
+        // matrixWorld aplicada, que da a caixa correta (2,68 x 5,55).
+        function caixaPorVertices(raiz) {
+            const bb = new THREE.Box3();
+            const v = new THREE.Vector3();
+            raiz.updateWorldMatrix(true, true);
+            raiz.traverse(c => {
+                const pos = c.geometry && c.geometry.attributes && c.geometry.attributes.position;
+                if (!pos) return;
+                c.updateWorldMatrix(true, false);
+                for (let i = 0; i < pos.count; i++) {
+                    v.fromBufferAttribute(pos, i).applyMatrix4(c.matrixWorld);
+                    bb.expandByPoint(v);
+                }
+            });
+            return bb;
+        }
+
+        function enquadraLobo(obj) {
+            obj.scale.setScalar(1);
+            const cx = caixaPorVertices(obj);
+            const tam = cx.getSize(new THREE.Vector3());
+            const alturaBruta = Math.max(1e-6, tam.y);
+            const escala = ALVO_ALTURA / alturaBruta;
+            obj.scale.setScalar(escala);
+
+            // reposiciona: centrado em x/z, patas no chao (y = 0)
+            const cx2 = caixaPorVertices(obj);
+            const centro = cx2.getCenter(new THREE.Vector3());
+            obj.position.x -= centro.x;
+            obj.position.z -= centro.z;
+            obj.position.y -= cx2.min.y;
+
+            // distancia necessaria para caber na vertical e na horizontal
+            const t2 = cx2.getSize(new THREE.Vector3());
+            const larguraMax = Math.max(t2.x, t2.z);
+            const vFOV = THREE.MathUtils.degToRad(camera.fov);
+            const distV = (t2.y * FOLGA / 2) / Math.tan(vFOV / 2);
+            const hFOV = 2 * Math.atan(Math.tan(vFOV / 2) * camera.aspect);
+            const distH = (larguraMax * FOLGA / 2) / Math.tan(hFOV / 2);
+            const dist = Math.max(distV, distH);
+
+            const alvoY = t2.y * 0.5;
+            camera.position.set(0, alvoY, dist);
+            camera.lookAt(0, alvoY, 0);
+            camera.updateProjectionMatrix();
+
+            // meia-largura visivel no plano do lobo (z = 0): a partir dai ele
+            // ja saiu completamente do quadro, somando o proprio comprimento
+            const meiaLargVisivel = Math.tan(hFOV / 2) * dist;
+            X_SAIDA = meiaLargVisivel + Math.max(t2.x, t2.z);
+            VEL = X_SAIDA / 1.6;      // ~1,6 s para atravessar e sumir
+        }
+
+        const loader = new GLTFLoader();
+        loader.load('./wolf.glb', (gltf) => {
+          try {
+            lobo = gltf.scene;
+            lobo.position.set(0, 0, 0);
+            lobo.rotation.y = 0;                 // de frente para a camera
+            scene.add(lobo);
+            enquadraLobo(lobo);
+
+            mixer = new THREE.AnimationMixer(lobo);
+            // o modelo traz os clipes duplicados (com e sem prefixo "AnimalArmature|");
+            // pegamos pelo sufixo, entao qualquer uma das variantes serve
+            const achar = alvo => gltf.animations.find(c => c.name === alvo)
+                              || gltf.animations.find(c => c.name.endsWith('|' + alvo));
+            const clipeIdle = achar('Idle');
+            const clipeCorrer = achar('Gallop') || achar('Walk');
+            if (clipeIdle) acaoIdle = mixer.clipAction(clipeIdle);
+            if (clipeCorrer) acaoCorrer = mixer.clipAction(clipeCorrer);
+
+            trocarAcao(acaoIdle, 0);
+            animar();
+          } catch (e) {
+            // um erro aqui dentro seria engolido pelo GLTFLoader; mostramos o motivo
+            console.error('[lobo3d]', e);
+            falhar('erro ao montar o lobo: ' + e.message);
+          }
+        }, undefined, (e) => {
+            // arquivo ausente ou bloqueado (ex.: aberto via file:// sem servidor)
+            console.error('[lobo3d] falha ao carregar wolf.glb', e);
+            falhar('wolf.glb não pôde ser carregado (sirva a pasta por HTTP)');
+        });
+
+        function aoClicar() {
+            if (estado !== 'parado' || !lobo) return;
+            estado = 'virando';
+            trocarAcao(acaoCorrer || acaoIdle);
+            // a matilha do fundo dispara junto (o modulo dela expoe esta funcao)
+            if (typeof window.__matilhaFugir === 'function') window.__matilhaFugir();
+        }
+        host.addEventListener('click', ev => { ev.stopPropagation(); aoClicar(); });
+
+        // Terminada a corrida, avanca para o proximo slide. Espera a matilha
+        // do fundo sair tambem (ela leva mais tempo que o lobo da capa), com
+        // um teto de seguranca para nunca travar caso o fundo nao exista —
+        // por exemplo se o WebGL do fundo falhou ou o .glb nao carregou.
+        let avancoAgendado = false;
+        function avancarSlide() {
+            if (avancoAgendado) return;
+            avancoAgendado = true;
+            const t0 = performance.now();
+            (function esperar() {
+                const matilhaFora = typeof window.__matilhaFora !== 'function' || window.__matilhaFora();
+                const estourouTempo = performance.now() - t0 > 5000;
+                if (matilhaFora || estourouTempo) {
+                    setTimeout(() => {
+                        avancoAgendado = false;
+                        // so avanca se o usuario ainda estiver na capa (ele pode
+                        // ter navegado manualmente durante a animacao)
+                        const s = (typeof Reveal !== 'undefined' && Reveal.getCurrentSlide) ? Reveal.getCurrentSlide() : null;
+                        if (s && s.querySelector('#lobo3d') && typeof Reveal !== 'undefined') Reveal.next();
+                    }, 400);              // respiro apos o ultimo lobo sumir
+                } else {
+                    requestAnimationFrame(esperar);
+                }
+            })();
+        }
+
+        // Repoe o lobo no centro, de frente e em repouso. So e chamada quando
+        // o usuario (re)entra no slide da capa — nunca automaticamente apos a
+        // corrida, para o lobo permanecer fora da tela ate a proxima visita.
+        function reporLobo() {
+            if (!lobo || estado === 'parado') return;
+            estado = 'parado';
+            giro = 0;
+            lobo.rotation.y = 0;
+            lobo.position.x = 0;
+            lobo.visible = true;
+            trocarAcao(acaoIdle, 0);
+        }
+
+        if (typeof Reveal !== 'undefined') {
+            Reveal.on('slidechanged', e => {
+                if (e.currentSlide && e.currentSlide.querySelector('#lobo3d')) {
+                    reporLobo();
+                    // a matilha do fundo volta ao circulo junto
+                    if (typeof window.__matilhaRepor === 'function') window.__matilhaRepor();
+                }
+            });
+        }
+
+        function animar() {
+            requestAnimationFrame(animar);
+            const dt = Math.min(0.05, clock.getDelta());
+            if (mixer) mixer.update(dt);
+
+            if (lobo) {
+                if (estado === 'virando') {
+                    // gira ate ficar de perfil, olhando para a direita
+                    giro = Math.min(GIRO_CORRIDA, giro + dt * 6);
+                    lobo.rotation.y = giro;
+                    if (giro >= GIRO_CORRIDA - 1e-3) estado = 'correndo';
+                } else if (estado === 'correndo') {
+                    lobo.position.x += VEL * dt;
+                    if (lobo.position.x > X_SAIDA) {
+                        // 'fora' e um estado TERMINAL: o lobo fica fora de cena
+                        // ate o usuario voltar ao slide (ver reporLobo()). Antes
+                        // ele reaparecia no centro no quadro seguinte, o que
+                        // parecia a animacao "recomecando" sozinha.
+                        estado = 'fora';
+                        lobo.visible = false;
+                        avancarSlide();
+                    }
+                }
+            }
+            renderer.render(scene, camera);
+        }
+    })();
+</script>
+
+<!-- =====================================================================
+     MATILHA DE FUNDO — tres lobos caminhando em circulo no centro da tela,
+     vistos da altura de uma pessoa (~1,7 m), como se rondassem o lobo da
+     capa. Cobre o body inteiro, atras do conteudo; visivel so na capa.
+     ===================================================================== -->
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { clone as clonarComEsqueleto } from 'three/addons/utils/SkeletonUtils.js';
+
+    (function () {
+        const host = document.getElementById('matilhaFundo');
+        if (!host) return;
+
+        let W = window.innerWidth, H = window.innerHeight;
+        const scene = new THREE.Scene();
+
+        // Camera na altura dos olhos de uma pessoa (1,7 m), levemente afastada
+        // do centro do circulo e olhando para ele: os lobos passam a frente,
+        // de lado e atras, dando a sensacao de estarmos no meio da matilha.
+        // Valores ajustados medindo quantos lobos ficam no campo de visao ao
+        // longo de uma volta: com fov 75 e a camera a 4,5 m do centro, sempre
+        // ha 2 ou 3 lobos na tela, e um deles chega a passar a 0,5 m da
+        // camera — bem rente, reforcando a sensacao de estar cercado.
+        const ALTURA_OLHOS = 1.7;         // altura dos olhos de uma pessoa
+        const RAIO = 4.0;                 // raio do circulo que eles percorrem
+        const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 200);
+        camera.position.set(0, ALTURA_OLHOS, 4.5);
+        camera.lookAt(0, 1.0, 0);
+
+        let renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        } catch (e) { return; }           // sem WebGL: fundo simplesmente nao aparece
+        renderer.setSize(W, H, false);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));  // fundo: leve
+        host.appendChild(renderer.domElement);
+
+        scene.add(new THREE.HemisphereLight(0xdce8f5, 0x8a93a8, 2.2));
+        const sol = new THREE.DirectionalLight(0xffffff, 1.5);
+        sol.position.set(3, 6, 2);
+        scene.add(sol);
+
+        const clock = new THREE.Clock();
+        const NLOBOS = 3;
+        const lobos = [];                 // { obj, mixer, fase }
+        let pronto = false;
+
+        new GLTFLoader().load('./wolf.glb', (gltf) => {
+          try {
+            const achar = alvo => gltf.animations.find(c => c.name === alvo)
+                              || gltf.animations.find(c => c.name.endsWith('|' + alvo));
+            const clipeAndar = achar('Walk');
+            const clipeCorrer = achar('Gallop') || clipeAndar;
+
+            // normaliza a altura para ~0,9 m (porte de um lobo adulto), medindo
+            // os vertices — Box3.setFromObject falha em malhas com esqueleto
+            const bb = new THREE.Box3(), v = new THREE.Vector3();
+            gltf.scene.updateWorldMatrix(true, true);
+            gltf.scene.traverse(c => {
+                const pos = c.geometry && c.geometry.attributes && c.geometry.attributes.position;
+                if (!pos) return;
+                c.updateWorldMatrix(true, false);
+                for (let i = 0; i < pos.count; i++) {
+                    v.fromBufferAttribute(pos, i).applyMatrix4(c.matrixWorld);
+                    bb.expandByPoint(v);
+                }
+            });
+            const alturaBruta = Math.max(1e-6, bb.getSize(new THREE.Vector3()).y);
+            const escala = 0.9 / alturaBruta;
+
+            for (let i = 0; i < NLOBOS; i++) {
+                const obj = clonarComEsqueleto(gltf.scene);
+                obj.scale.setScalar(escala);
+                scene.add(obj);
+                const mixer = new THREE.AnimationMixer(obj);
+                let aAndar = null, aCorrer = null;
+                if (clipeAndar) {
+                    aAndar = mixer.clipAction(clipeAndar);
+                    aAndar.time = (clipeAndar.duration / NLOBOS) * i;  // passos dessincronizados
+                    aAndar.play();
+                }
+                if (clipeCorrer && clipeCorrer !== clipeAndar) aCorrer = mixer.clipAction(clipeCorrer);
+                lobos.push({
+                    obj, mixer, aAndar, aCorrer,
+                    fase: (Math.PI * 2 / NLOBOS) * i,
+                    x: 0, z: 0,           // posicao corrente (preenchida em fugir())
+                    giro: 0, espera: 0,   // idem — estado da fuga
+                    atraso: i * 0.12      // escalona a largada, para nao saírem em bloco
+                });
+            }
+            pronto = true;
+            animar();
+          } catch (e) {
+            console.error('[matilhaFundo]', e);
+          }
+        }, undefined, () => { /* sem o .glb o fundo fica vazio, sem quebrar a capa */ });
+
+        function redimensionar() {
+            W = window.innerWidth; H = window.innerHeight;
+            renderer.setSize(W, H, false);
+            camera.aspect = W / H;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener('resize', redimensionar);
+
+        const VEL_ANG = 0.22;             // rad/s: caminhada tranquila
+        const VEL_FUGA = 7.5;             // m/s da disparada para a direita
+        const X_FORA = 16;                // limite: alem disso ja saiu de cena
+        const GIRO_FUGA = Math.PI / 2;    // olhando para +X (direita da tela)
+        let t = 0;
+        let fugindo = false;              // true entre o clique e o retorno ao circulo
+
+        // Dispara a fuga da matilha: cada lobo vira para a direita e galopa
+        // para fora da tela. Chamado pelo clique no lobo da capa.
+        function fugir() {
+            if (fugindo || !pronto) return;
+            fugindo = true;
+            lobos.forEach(l => {
+                const ang = l.fase + t * VEL_ANG;
+                l.x = Math.sin(ang) * RAIO;      // congela a posicao do circulo
+                l.z = Math.cos(ang) * RAIO;
+                l.giro = ang + Math.PI / 2;      // de onde comeca a virar
+                l.espera = l.atraso;
+                if (l.aCorrer) { l.aAndar && l.aAndar.fadeOut(0.25); l.aCorrer.reset().fadeIn(0.25).play(); }
+            });
+        }
+        window.__matilhaFugir = fugir;    // o lobo da capa chama isto ao ser clicado
+
+        // Repoe a matilha no circulo. Como no lobo da capa, isto NAO acontece
+        // sozinho quando eles saem de cena: so ao (re)entrar no slide, para a
+        // matilha nao "reaparecer" do nada durante a apresentacao.
+        function voltarAoCirculo() {
+            if (!fugindo) return;
+            fugindo = false;
+            lobos.forEach(l => {
+                l.obj.visible = true;
+                if (l.aCorrer) { l.aCorrer.fadeOut(0.3); l.aAndar && l.aAndar.reset().fadeIn(0.3).play(); }
+            });
+        }
+        window.__matilhaRepor = voltarAoCirculo;
+        // usado pelo lobo da capa para so avancar o slide quando TODOS ja
+        // sairam de cena (a matilha demora mais que ele); se ainda nem
+        // comecou a fugir, considera-se "fora" para nao travar o avanco
+        window.__matilhaFora = () => !fugindo || lobos.every(l => l.x >= X_FORA);
+
+        function animar() {
+            requestAnimationFrame(animar);
+            const dt = Math.min(0.05, clock.getDelta());
+            // so gasta tempo de GPU quando o fundo esta de fato visivel
+            if (!pronto || !document.body.classList.contains('capa-ativa')) return;
+
+            if (!fugindo) {
+                t += dt;
+                lobos.forEach(l => {
+                    l.mixer.update(dt);
+                    const ang = l.fase + t * VEL_ANG;
+                    l.obj.position.set(Math.sin(ang) * RAIO, 0, Math.cos(ang) * RAIO);
+                    // olha na direcao do movimento (tangente ao circulo)
+                    l.obj.rotation.y = ang + Math.PI / 2;
+                });
+            } else {
+                let todosFora = true;
+                lobos.forEach(l => {
+                    l.mixer.update(dt);
+                    if (l.espera > 0) { l.espera -= dt; }      // largada escalonada
+                    else {
+                        // gira ate ficar de perfil e entao dispara para +X
+                        const delta = GIRO_FUGA - l.giro;
+                        if (Math.abs(delta) > 0.02) l.giro += Math.sign(delta) * Math.min(Math.abs(delta), dt * 7);
+                        else l.x += VEL_FUGA * dt;
+                    }
+                    l.obj.position.set(l.x, 0, l.z);
+                    l.obj.rotation.y = l.giro;
+                    if (l.x < X_FORA) todosFora = false;
+                    else l.obj.visible = false;   // saiu: some e fica fora
+                });
+                // proposital: NAO chamamos voltarAoCirculo() aqui — a matilha
+                // permanece fora ate o usuario voltar ao slide da capa
+                void todosFora;
+            }
+            renderer.render(scene, camera);
+        }
+
+        // liga/desliga o fundo conforme o slide corrente for a capa
+        function marcarCapa() {
+            const s = (typeof Reveal !== 'undefined' && Reveal.getCurrentSlide) ? Reveal.getCurrentSlide() : null;
+            const eCapa = !!(s && s.querySelector('#lobo3d'));
+            document.body.classList.toggle('capa-ativa', eCapa);
+        }
+        if (typeof Reveal !== 'undefined') {
+            Reveal.on('ready', marcarCapa);
+            Reveal.on('slidechanged', marcarCapa);
+        }
+        marcarCapa();
     })();
 </script>
 </body>

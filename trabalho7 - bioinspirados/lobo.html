@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Lobo 3D</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #222; font-family: sans-serif; }
+        .controls { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 5; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; border-radius: 5px; border: none; background: #eee; }
+        #log { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.5); padding: 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div id="log">Carregando lobo...</div>
+    
+    <div class="controls" id="btn-container">
+        <!-- Os botões serão criados automaticamente aqui -->
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let scene, camera, renderer, mixer, clock;
+        let actions = {}; // Vamos guardar por nome
+        let activeAction;
+
+        // O SEU ARQUIVO LOCAL
+        const modelUrl = './wolf.glb'; 
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x336633); // Fundo verde grama
+            
+            clock = new THREE.Clock();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 3);
+            scene.add(hemiLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // Chão simples
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshPhongMaterial({color: 0x224422}));
+            floor.rotation.x = -Math.PI/2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            const loader = new GLTFLoader();
+            loader.load(modelUrl, (gltf) => {
+                const model = gltf.scene;
+                
+                // AJUSTE DE ESCALA: Para o lobo do Poly Pizza, 1 geralmente é o ideal
+                model.scale.set(1.5, 1.5, 1.5); 
+                
+                scene.add(model);
+                document.getElementById('log').innerText = "Lobo carregado com sucesso!";
+
+                // CONFIGURAR ANIMAÇÕES
+                mixer = new THREE.AnimationMixer(model);
+                const container = document.getElementById('btn-container');
+
+                gltf.animations.forEach((clip) => {
+                    const action = mixer.clipAction(clip);
+                    actions[clip.name] = action;
+
+                    // Criar botão para cada animação que ele encontrar no arquivo
+                    const btn = document.createElement('button');
+                    btn.innerText = clip.name;
+                    btn.onclick = () => fadeToAction(clip.name);
+                    container.appendChild(btn);
+                });
+
+                // Tocar a primeira animação encontrada
+                if (gltf.animations.length > 0) {
+                    activeAction = actions[gltf.animations[0].name];
+                    activeAction.play();
+                }
+
+                animate();
+            }, undefined, (e) => {
+                document.getElementById('log').innerHTML = "ERRO: O arquivo 'wolf.glb' não foi encontrado na pasta.<br>Certifique-se de que ele está na mesma pasta do HTML e que você está usando um servidor (Live Server).";
+                console.error(e);
+            });
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function fadeToAction(name) {
+            const nextAction = actions[name];
+            if (nextAction !== activeAction) {
+                activeAction.fadeOut(0.2);
+                nextAction.reset().fadeIn(0.2).play();
+                activeAction = nextAction;
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            if (mixer) mixer.update(delta);
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
