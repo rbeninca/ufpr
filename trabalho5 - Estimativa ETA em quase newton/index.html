@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trabalho 5 — Determinação e Estimativa de η em Métodos Quase-Newton</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] } };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+    .paper { max-width: 210mm; margin: 40px auto; background: white; padding: 20mm 25mm; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; }
+
+    h1 { font-size: 22pt; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 10px; }
+    h2 { font-size: 16pt; font-weight: 700; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px; }
+    h3 { font-size: 13pt; font-weight: 600; color: #334155; margin-top: 20px; margin-bottom: 10px; }
+
+    p { margin-bottom: 12px; line-height: 1.6; text-align: justify; font-size: 11pt; }
+    ul, ol { margin-left: 22px; margin-bottom: 12px; font-size: 11pt; line-height: 1.6; }
+    ul { list-style-type: disc; }
+
+    pre { background:#0f172a; color:#e2e8f0; font-family:'JetBrains Mono', monospace; font-size:9.5pt; padding:16px; border-radius:8px; overflow-x:auto; line-height:1.5; margin-bottom:14px; }
+    code { font-family:'JetBrains Mono', monospace; font-size:10pt; background:#eef2ff; padding:1px 5px; border-radius:4px; color:#3730a3; }
+    pre code { background:none; padding:0; color:inherit; }
+    .back { color:#1d4ed8; text-decoration:none; font-size:10pt; }
+    table { width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:14px; }
+    th, td { border:1px solid #cbd5e1; padding:6px 10px; text-align:left; }
+    th { background:#f1f5f9; }
+
+    .chart-box { border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px 10px; background:#fcfdff; margin:14px 0 18px; }
+    .chart-box canvas { max-height:320px; }
+    .caption { font-size:9.5pt; color:#64748b; text-align:center; margin-top:8px; font-style:italic; }
+
+    /* Folhas do caderno em largura total da página (extravasam o padding lateral do .paper) */
+    .folha-full { margin-left:-25mm; margin-right:-25mm; }
+    .folha-full img { width:100%; display:block; }
+
+    /* Ajustes para impressão / geração de PDF */
+    @page { size: A4; margin: 12mm; }
+    @media print {
+      body { background:#fff; }
+      .paper { box-shadow:none; margin:0; max-width:none; border-radius:0; padding:0; }
+      .back { display:none; }
+      /* No PDF não há rolagem horizontal: quebra as linhas longas de código */
+      pre { white-space:pre-wrap; word-break:break-word; overflow-x:visible; }
+      /* folhas voltam a ocupar a largura útil da página (sem o padding de 25mm) */
+      .folha-full { margin-left:0; margin-right:0; }
+      .folha-full img, .chart-box { break-inside:avoid; page-break-inside:avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="paper">
+
+    <div class="text-center my-8">
+      <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Otimização Não Linear — Trabalho 5</p>
+      <h1>Determinação e Estimativa de η em Métodos Quase-Newton</h1>
+
+      <p class="text-slate-500 text-sm mt-3">Romulo de Aguiar Beninca · Prof. Dr. Carlos Alberto Bavastri</p>
+    </div>
+
+    <section>
+        <div class="folha-full">
+        <img src="./folha1.png" alt="Folha 1 — introdução ao problema de otimização, gradiente, Hessiana e modelo quadrático quase-Newton" />
+      </div>
+
+      <div class="folha-full">
+        <img src="./folha2.png" alt="Folha 2 — solução do sistema B_k p = -∇f_k, atualização x_k+1 = x_k + α p_k, e dedução da equação B_k+1 s_k = y_k a partir da coincidência de gradientes do modelo quadrático" />
+      </div>
+
+      <div class="folha-full">
+        <img src="./folha3.png" alt="Folha 3 — condição de curvatura s_k^T y_k > 0, definição de η_k como inversa da Hessiana aproximada e fórmula geral de David-Fletcher-Powell para atualização de H_k" />
+      </div>
+
+      <div class="folha-full">
+        <img src="./folha4.png" alt="Folha 4 — substituição das definições H(x_k) ≡ η(x_k), s_k ≡ Δx_k, y_k ≡ Δg(x_k) na fórmula DFP e uso da simetria de η(x_k) para reescrever o segundo termo" />
+      </div>
+
+      <div class="folha-full">
+        <img src="./folha5.png" alt="Folha 5 — particularização da fórmula parametrizada com ω=1, y=Δx_k, z=η(x_k)Δg(x_k), obtendo o primeiro e o segundo termo da atualização DFP" />
+      </div>
+
+      <div class="folha-full">
+        <img src="./folha6.png" alt="Folha 6 — fórmula final de atualização de η(x_k) pelo método DFP e conclusão sobre o papel de η como aproximação inversa da Hessiana" />
+      </div>
+
+    </section>
+
+  </div>
+</body>
+</html>

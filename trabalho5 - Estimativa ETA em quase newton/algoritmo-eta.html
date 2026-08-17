@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Determinação e Estimativa de η em Métodos Quase-Newton</title>
+
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/css/print/pdf.css" media="print">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <!-- KaTeX para formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --ufpr-blue: #004a8e;
+            --math-red: #e74c3c;
+            --math-green: #27ae60;
+            --math-gold: #f39c12;
+            --grid-color: #f0f0f0;
+        }
+        .reveal h1, .reveal h2 { color: var(--ufpr-blue); font-weight: 800; text-transform: uppercase; }
+        .reveal h2 {
+            border-bottom: 3px solid var(--ufpr-blue);
+            display: inline-block;
+            padding-bottom: 3px;
+            margin: 0 0 10px;
+            line-height: 1.1;
+            font-size: 1.35em;
+        }
+        .reveal section { text-align: left; padding: 8px 20px; }
+        .reveal section > h2 + * { margin-top: 0; }
+
+        .reveal section p { margin: 8px 0; }
+        .reveal section ul, .reveal section ol { margin: 8px 0; }
+
+        .reveal section.compact { font-size: 0.82em; }
+        .reveal section.compact li { margin: 5px 0; }
+
+        .formula-box {
+            background: #f8faff;
+            padding: 12px 16px;
+            border-left: 6px solid var(--ufpr-blue);
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .canvas-container {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            padding: 6px;
+            margin-top: 8px;
+        }
+        .canvas-container canvas { max-width: 100%; height: auto; }
+
+        .highlight { color: var(--ufpr-blue); font-weight: bold; }
+        .small-text { font-size: 0.7em; color: #666; }
+
+        table.numeric-example {
+            width: 100%;
+            font-size: 0.6em;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table.numeric-example th { background: var(--ufpr-blue); color: white; padding: 8px; }
+        table.numeric-example td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        table.numeric-example td.left { text-align: left; }
+
+        table.tab-sqp tr.linha-final td { background: #eaf7ee; }
+        table.tab-sqp tr[data-it] td { transition: background 0.25s, color 0.25s; }
+        table.tab-sqp tr.ativa td {
+            background: var(--math-gold) !important;
+            color: #fff; font-weight: 700;
+            box-shadow: inset 0 0 0 1px #d68910;
+        }
+        table.tab-sqp tr.ativa td:first-child::before { content: "▶ "; font-size: 0.9em; }
+        table.tab-sqp tr[data-it].futura td { opacity: 0.35; }
+        table.numeric-example code { color: #b03060; font-size: 0.95em; }
+
+        .two-col { display: flex; align-items: center; gap: 40px; }
+        .two-col .col-text { flex: 1.2; }
+        .two-col .col-img { flex: 1; text-align: center; }
+        .two-col .col-img img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+        }
+        .icon-list { list-style: none; margin-left: 0; }
+        .icon-list li { margin: 14px 0; padding-left: 4px; }
+        .icon-list .ic { color: var(--ufpr-blue); margin-right: 8px; }
+
+        .cards { display: flex; gap: 18px; margin-top: 14px; }
+        .cards .card {
+            flex: 1; background: #f8faff; border-top: 5px solid var(--ufpr-blue);
+            border-radius: 6px; padding: 12px 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+        .cards .card h4 { margin: 0 0 8px; color: var(--ufpr-blue); font-size: 0.95em; font-weight: 800; }
+        .cards .card p { font-size: 0.72em; color: #444; margin: 0; line-height: 1.4em; }
+        .cards .card.red    { border-top-color: var(--math-red); }
+        .cards .card.red h4 { color: var(--math-red); }
+        .cards .card.green    { border-top-color: var(--math-green); }
+        .cards .card.green h4 { color: var(--math-green); }
+        .cards .card.gold    { border-top-color: var(--math-gold); }
+        .cards .card.gold h4 { color: #b9770e; }
+
+        pre.matlab {
+            background: #1e2b3a; color: #e8eef5; border-radius: 6px;
+            padding: 12px 16px; font-size: 0.6em; line-height: 1.5em;
+            overflow-x: auto; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+            font-family: "Consolas", "Monaco", monospace;
+        }
+
+        .anim-ctrl {
+            display: block; margin: 6px auto 0;
+            background: var(--ufpr-blue); color: #fff; border: none;
+            border-radius: 5px; padding: 5px 12px; font-size: 12px;
+            font-weight: 700; cursor: pointer;
+        }
+        .anim-ctrl:hover { background: #003567; }
+        .anim-ctrl:disabled { background: #b7c1cd; cursor: default; }
+        @media print { .anim-ctrl { display: none !important; } }
+
+        .passo-ctrl {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin-top: 6px;
+        }
+        .passo-ctrl .anim-ctrl { margin: 0; padding: 4px 10px; }
+        .passo-ctrl .passo-lbl {
+            font-size: 13px; font-weight: 700; color: var(--ufpr-blue);
+            min-width: 46px; text-align: center;
+            background: #eaf1f9; border-radius: 4px; padding: 4px 6px;
+        }
+        @media print { .passo-ctrl { display: none !important; } }
+
+        #btnPdf {
+            position: fixed; top: 16px; right: 16px; z-index: 1000;
+            background: var(--ufpr-blue); color: #fff; border: none;
+            border-radius: 6px; padding: 8px 14px; font-size: 14px;
+            font-weight: 700; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            transition: background 0.2s, transform 0.1s;
+        }
+        #btnPdf:hover { background: #003567; }
+        #btnPdf:active { transform: scale(0.96); }
+        @media print { #btnPdf { display: none !important; } }
+
+        .reveal .slides section.slide-centro {
+            height: 100%;
+            display: flex !important;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #velCtrl {
+            position: fixed; top: 16px; right: 92px; z-index: 1000;
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.94);
+            border: 1px solid #cfd8e3;
+            border-radius: 6px; padding: 5px 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        #velCtrl .vel-ic { font-size: 13px; line-height: 1; }
+        #velCtrl input[type=range] { width: 108px; accent-color: var(--ufpr-blue); cursor: pointer; }
+        #velVal { font-size: 12px; font-weight: 700; color: var(--ufpr-blue); min-width: 34px; text-align: right; }
+        @media print { #velCtrl { display: none !important; } }
+
+        .reveal .slide-number {
+            background: var(--ufpr-blue);
+            color: #fff;
+            font-size: 16px;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .note-eta {
+            border-left: 3px solid var(--math-gold);
+            background: #fff8e8;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #6b4b0a;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+
+<button id="btnPdf" title="Gerar PDF da apresentação" aria-label="Gerar PDF">📄 PDF</button>
+
+<div id="velCtrl" title="Velocidade das animações">
+    <span class="vel-ic">🐢</span>
+    <input type="range" id="velRange" min="0.6" max="3" step="0.1" value="1.6">
+    <span class="vel-ic">🐇</span>
+    <span id="velVal">1,6×</span>
+</div>
+
+<div class="reveal">
+    <div class="slides">
+
+        <!-- SLIDE 1: CAPA -->
+        <section class="slide-centro" style="text-align: center;">
+            <h1 style="font-size: 2em;">Determinação e Estimativa de <code style="color:#b03060">η</code></h1>
+            <h2 style="border:none; color: #555; font-size:1.1em;">em Métodos Quase-Newton</h2>
+            <div style="margin-top: 70px;">
+                <p><strong>Aluno:</strong> Romulo de Aguiar Beninca</p>
+                <p style="margin-top:18px;"><strong>Professor:</strong> Prof. Dr. Carlos Alberto Bavastri</p>
+                <p class="small-text">UFPR — Engenharia Mecânica · Otimização Não Linear · Trabalho 5</p>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: DE ONDE VEM O SQP (LIGACAO COM O TRABALHO 8) -->
+        <section class="compact">
+            <h2>SQP: o Mesmo η em Ação</h2>
+            <p>No <strong>Trabalho 8</strong>, vimos que o <code>fmincon</code> usa <span class="highlight">SQP</span> (Sequential Quadratic Programming) como um de seus motores internos: a cada iteração, troca o problema difícil por um <strong>subproblema quadrático local</strong>.</p>
+            <div class="cards">
+                <div class="card">
+                    <h4>Modelo quadrático</h4>
+                    <p>\(q(d) = f(x_k) + f'(x_k)\,d + \tfrac{1}{2}f''(x_k)\,d^2\) — mesma estrutura de \(m_k(p) = f_k + \nabla f_k^T p + \tfrac12 p^T B_k p\) do Trabalho 5.</p>
+                </div>
+                <div class="card gold">
+                    <h4>Curvatura \(f''(x_k)\)</h4>
+                    <p>É exatamente o papel de \(B_k\) (ou de sua inversa \(\eta(x_k)\)): informação de segunda ordem usada para calcular o passo.</p>
+                </div>
+                <div class="card green">
+                    <h4>Passo de Newton</h4>
+                    <p>\(d_k = -f'(x_k)/f''(x_k)\) é a versão escalar de \(p_k = -\eta(x_k)\,\nabla f_k\).</p>
+                </div>
+            </div>
+            <div class="note-eta">O SQP do <code>fmincon</code> mostra, numa ferramenta real de mercado, exatamente o mecanismo que η formaliza: aproximar a curvatura da função para obter uma direção de busca melhor que a do gradiente puro.</div>
+        </section>
+
+        <!-- SLIDE 3 (= Slide 8 do Trabalho 8): SQP ANIMADO -->
+        <section class="compact">
+            <h2>SQP: Parábola a Cada Passo</h2>
+            <p style="margin:0 0 6px;"><strong>SQP</strong> = <span class="highlight">Sequential Quadratic Programming</span> — resolve uma <strong>sequência</strong> de subproblemas <strong>quadráticos</strong>. A cada iteração troca o problema difícil por um <strong>fácil e local</strong>: $f$ vira parábola, as restrições viram retas.</p>
+            <div class="canvas-container" style="margin-top:2px;">
+                <canvas id="cvSqp" width="900" height="300"></canvas>
+            </div>
+            <div class="passo-ctrl">
+                <button class="anim-ctrl" data-passo-de="sqp" data-passo-acao="prev">◀</button>
+                <span class="passo-lbl" data-passo-de="sqp" data-passo-acao="label">1 / 5</span>
+                <button class="anim-ctrl" data-passo-de="sqp" data-passo-acao="next">▶</button>
+                <button class="anim-ctrl" data-anim="sqp">↻ animar</button>
+            </div>
+            <p class="small-text" style="margin:4px 0 0;">A parábola (laranja) toca $f$ no ponto atual com a <strong>mesma inclinação e curvatura</strong>. O <strong>mínimo dela</strong> vira o próximo ponto — o mesmo papel que \(\eta(x_k)\) desempenha ao transformar \(\nabla f(x_k)\) em direção de busca.</p>
+        </section>
+
+        <!-- SLIDE 4 (= Slide 8c do Trabalho 8): SQP PASSO A PASSO COM NUMEROS -->
+        <section class="compact">
+            <h2>SQP: O Subproblema, Passo a Passo</h2>
+            <p style="margin:0 0 6px;">Exemplo em 1D com $f(x) = \tfrac{x^4}{4} - x^2 + x + 3$, partindo de $x_0 = 2{,}2$. A cada passo monta-se a parábola e resolve-se <strong>onde ela tem mínimo</strong>:</p>
+            <div class="two-col" style="gap:20px; align-items:flex-start;">
+                <div class="col-img" style="flex:0 0 46%;">
+                    <div class="canvas-container" style="margin-top:0;">
+                        <canvas id="cvSqpPasso" width="500" height="300"></canvas>
+                    </div>
+                    <div class="passo-ctrl">
+                        <button class="anim-ctrl" data-passo-de="sqpPasso" data-passo-acao="prev">◀</button>
+                        <span class="passo-lbl" data-passo-de="sqpPasso" data-passo-acao="label">1 / 5</span>
+                        <button class="anim-ctrl" data-passo-de="sqpPasso" data-passo-acao="next">▶</button>
+                        <button class="anim-ctrl" data-anim="sqpPasso">↻ animar</button>
+                    </div>
+                </div>
+                <div class="col-text" style="flex:1;">
+                    <div class="formula-box small-text" style="margin:0 0 3px; font-size: 0.6em;">
+                        Modelo: &nbsp;$q(d) = f(x_k) + f'(x_k)\,d + \tfrac{1}{2}f''(x_k)\,d^2$ <br>
+                        Mínimo: &nbsp;$d_k = -\,f'(x_k)\,/\,f''(x_k)$ &nbsp;→&nbsp; $x_{k+1} = x_k + d_k$
+                    </div>
+                    <table class="numeric-example tab-sqp" style="font-size:0.6em; margin-top:0;">
+                        <tr><th data-tip="Número da iteração.">$k$</th><th data-tip="Ponto atual.">$x_k$</th><th data-tip="Gradiente no ponto atual.">$f'(x_k)$</th><th data-tip="Curvatura (segunda derivada).">$f''(x_k)$</th><th data-tip="Passo de Newton.">passo $d_k$</th></tr>
+                        <tr data-it="0"><td>0</td><td>2,200</td><td>7,248</td><td>12,520</td><td>−0,579</td></tr>
+                        <tr data-it="1"><td>1</td><td>1,621</td><td>2,018</td><td>5,884</td><td>−0,343</td></tr>
+                        <tr data-it="2"><td>2</td><td>1,278</td><td>0,532</td><td>2,901</td><td>−0,183</td></tr>
+                        <tr data-it="3"><td>3</td><td>1,095</td><td>0,123</td><td>1,596</td><td>−0,077</td></tr>
+                        <tr data-it="4"><td>4</td><td>1,018</td><td>0,019</td><td>1,109</td><td>−0,017</td></tr>
+                        <tr data-it="5" class="linha-final"><td>5</td><td><strong>1,001</strong></td><td>0,001</td><td>1,005</td><td>−0,001</td></tr>
+                    </table>
+                    <div class="formula-box small-text" style="margin:8px 0 0;">
+                        Repare no $f'(x_k)$: <strong>7,2 → 2,0 → 0,5 → 0,12 → 0,02</strong>. O erro é <strong>elevado ao quadrado</strong> a cada passo — é a <span class="highlight">convergência quadrática</span> que torna o SQP tão rápido perto da solução.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: VARIANTES (Secao 10 do eta.md) -->
+        <section class="compact">
+            <h2>Outras Variantes de η: Broyden e Rophisan</h2>
+            <p>Além do DFP, a mesma fórmula parametrizada gera outras estimativas de η, variando apenas ω, ȳ e z̄:</p>
+            <div class="cards">
+                <div class="card gold">
+                    <h4>Broyden</h4>
+                    <p>ω = 1, ȳ = z̄ = Δx<sub>k</sub></p>
+                    <div class="formula-box small-text" style="margin-top:8px;">
+                        \( \Delta\eta(x_k) = \dfrac{(\Delta x_k - \eta(x_k)\Delta g(x_k))\,\Delta x_k^T}{\Delta x_k^T\,\Delta g(x_k)} \)
+                    </div>
+                </div>
+                <div class="card green">
+                    <h4>Rophisan</h4>
+                    <p>ω → ∞, z̄ = η(x<sub>k</sub>)Δg(x<sub>k</sub>)</p>
+                    <div class="formula-box small-text" style="margin-top:8px;">
+                        \( \eta(x_{k+1}) \to \dfrac{\eta(x_k)\Delta g(x_k)\Delta g(x_k)^T\eta(x_k)}{\Delta g(x_k)^T\eta(x_k)\Delta g(x_k)} \)
+                    </div>
+                </div>
+            </div>
+            <p class="small-text" style="margin-top:14px;">Isso mostra que a fórmula parametrizada é, de fato, um <strong>esqueleto geral</strong> do qual DFP, Broyden e demais métodos quase-Newton são casos particulares — todos usam η como matriz que aproxima \(H^{-1}(x_k)\), diferindo apenas nos parâmetros da correção.</p>
+        </section>
+
+        <!-- SLIDE 6: ALGORITMO COMPLETO (Secao 11 do eta.md) -->
+        <section class="compact">
+            <h2>Algoritmo Completo Usando η (Fletcher–Powell)</h2>
+            <ol class="small-text" style="font-size:0.92em;">
+                <li><strong>Conhecer</strong> \(f(x)\), \(\nabla f(x)\); escolher \(x_0\) e \(\varepsilon>0\); inicializar \(k=0\), \(\eta(x_0)=I\).</li>
+                <li><strong>Direção de busca:</strong> \(d_k = -\eta(x_k)\nabla f(x_k) \,/\, \lVert\eta(x_k)\nabla f(x_k)\rVert\)</li>
+                <li><strong>Minimizar</strong> \(f(x_k+\lambda d_k)\) (busca unidimensional), obtendo \(\lambda_k^{*}\).</li>
+                <li><strong>Atualizar:</strong> \(x_{k+1} = x_k + \lambda_k^{*} d_k\)</li>
+                <li><strong>Calcular</strong> \(\Delta g(x_k) = \nabla f(x_{k+1})-\nabla f(x_k)\), \(\Delta x_k = \lambda_k^{*} d_k\)</li>
+                <li><strong>Parada:</strong> se \(\Delta x_k \to 0\) (ou \(\nabla f(x_{k+1})\to 0\)), parar; senão, seguir.</li>
+                <li><strong>Atualizar</strong> \(\eta(x_{k+1}) = \eta(x_k) + \Delta\eta(x_k)\) pela fórmula DFP (ou Broyden/Rophisan).</li>
+                <li><strong>Teste de singularidade:</strong> se \(|\det[\eta(x_{k+1})]| \le \varepsilon\), reinicializar \(\eta(x_{k+1})=I\).</li>
+                <li>\(k=k+1\), voltar ao passo 2.</li>
+            </ol>
+            <div class="note-eta">η aparece em dois pontos-chave: no <strong>passo 2</strong>, convertendo o gradiente em direção de busca (o mesmo papel do mínimo da parábola no SQP); e no <strong>passo 7</strong>, sendo corrigida apenas com as variações observadas \(\Delta x_k\) e \(\Delta g(x_k)\) — sem nunca recalcular a Hessiana verdadeira.</div>
+        </section>
+
+        <!-- SLIDE 7: ENCERRAMENTO -->
+        <section class="slide-centro" style="text-align: center;">
+            <h1 style="font-size: 1.6em;">Fim</h1>
+            <div style="margin-top:60px;">
+                <p><strong>Romulo de Aguiar Beninca</strong></p>
+                <p class="small-text">Prof. Dr. Carlos Alberto Bavastri · UFPR — Engenharia Mecânica</p>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+<script>
+    Reveal.initialize({
+        hash: true,
+        center: false,
+        transition: 'slide',
+        slideNumber: 'c/t',
+        width: 1100,
+        height: 800,
+        margin: 0.04,
+        minScale: 0.2,
+        maxScale: 1.5
+    });
+
+    document.getElementById('btnPdf').addEventListener('click', function () {
+        if (window.location.search.indexOf('print-pdf') === -1) {
+            const sep = window.location.search ? '&' : '?';
+            window.location.href = window.location.pathname + window.location.search + sep + 'print-pdf';
+        } else {
+            window.print();
+        }
+    });
+
+    if (window.location.search.indexOf('print-pdf') !== -1) {
+        window.addEventListener('load', () => setTimeout(() => window.print(), 1200));
+    }
+
+    renderMathInElement(document.body, {
+        delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$',  right: '$',  display: false },
+            { left: '\\[', right: '\\]', display: true },
+            { left: '\\(', right: '\\)', display: false }
+        ],
+        throwOnError: false
+    });
+
+    /* =======================================================================
+       ENGINE DE DESENHO / ANIMACAO (reaproveitado do Trabalho 8)
+       ======================================================================= */
+    const cores = {
+        azul:   '#004a8e',
+        claro:  '#2e6fc4',
+        verde:  '#27ae60',
+        verm:   '#e74c3c',
+        ouro:   '#f39c12',
+        roxo:   '#8e44ad',
+        cinza:  '#7f8c9b',
+        grade:  '#eef1f6'
+    };
+
+    function grade(ctx, w, h, passo) {
+        ctx.strokeStyle = cores.grade; ctx.lineWidth = 1;
+        for (let i = 0; i <= w; i += (passo || 40)) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,h); ctx.stroke(); }
+        for (let i = 0; i <= h; i += (passo || 40)) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(w,i); ctx.stroke(); }
+    }
+    function ponto(ctx, x, y, cor, r) {
+        ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(x, y, r || 5, 0, Math.PI*2); ctx.fill();
+    }
+    function seta(ctx, x1, y1, x2, y2, cor, lw) {
+        const ang = Math.atan2(y2-y1, x2-x1), hl = 9;
+        ctx.strokeStyle = cor; ctx.lineWidth = lw || 2;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2,y2);
+        ctx.lineTo(x2 - hl*Math.cos(ang - Math.PI/6), y2 - hl*Math.sin(ang - Math.PI/6));
+        ctx.lineTo(x2 - hl*Math.cos(ang + Math.PI/6), y2 - hl*Math.sin(ang + Math.PI/6));
+        ctx.closePath(); ctx.fillStyle = cor; ctx.fill();
+    }
+    function rotulo(ctx, s, x, y, cor, font) {
+        ctx.font = font || 'bold 12px Arial';
+        const larg = ctx.measureText(s).width;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillRect(x - 3, y - 12, larg + 6, 16);
+        ctx.fillStyle = cor || '#333';
+        ctx.fillText(s, x, y);
+    }
+    const suave = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+
+    const ANIM = {};
+    const RODANDO = {};
+
+    function registrar(nome, idCanvas, dur, draw) {
+        const cv = document.getElementById(idCanvas);
+        if (!cv) return;
+        ANIM[nome] = { cv, ctx: cv.getContext('2d'), dur, draw };
+    }
+
+    const PASSOS = {};
+    const PASSO_ATUAL = {};
+
+    function tParaPasso(nome, i) {
+        const n = PASSOS[nome];
+        if (i >= n) return 1;
+        return (i + 0.5) / n;
+    }
+
+    function desenharPasso(nome, i) {
+        const a = ANIM[nome];
+        if (!a) return;
+        if (RODANDO[nome]) { cancelAnimationFrame(RODANDO[nome]); RODANDO[nome] = null; }
+        const n = PASSOS[nome];
+        i = Math.max(0, Math.min(n, i));
+        PASSO_ATUAL[nome] = i;
+        a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+        a.draw(tParaPasso(nome, i));
+        atualizarCtrlPasso(nome);
+    }
+
+    function passoAnterior(nome) { desenharPasso(nome, (PASSO_ATUAL[nome] ?? 0) - 1); }
+    function passoSeguinte(nome) { desenharPasso(nome, (PASSO_ATUAL[nome] ?? 0) + 1); }
+
+    function atualizarCtrlPasso(nome) {
+        const n = PASSOS[nome], i = PASSO_ATUAL[nome] ?? 0;
+        document.querySelectorAll('[data-passo-de="' + nome + '"]').forEach(el => {
+            const acao = el.dataset.passoAcao;
+            if (acao === 'label') {
+                el.textContent = (i >= n ? n : i + 1) + ' / ' + n;
+            } else if (acao === 'prev') {
+                el.disabled = (i <= 0);
+            } else if (acao === 'next') {
+                el.disabled = (i >= n);
+            }
+        });
+    }
+
+    let fatorVel = 1.6;
+    try {
+        const salvo = parseFloat(localStorage.getItem('etaVel'));
+        if (isFinite(salvo) && salvo > 0) fatorVel = salvo;
+    } catch (e) { /* localStorage indisponivel */ }
+
+    function tocar(nome) {
+        const a = ANIM[nome];
+        if (!a) return;
+        if (RODANDO[nome]) cancelAnimationFrame(RODANDO[nome]);
+        const dur = a.dur * fatorVel;
+        const t0 = performance.now();
+        const passo = (agora) => {
+            const t = Math.min(1, (agora - t0) / dur);
+            a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+            a.draw(t);
+            if (t < 1) RODANDO[nome] = requestAnimationFrame(passo);
+            else RODANDO[nome] = null;
+        };
+        RODANDO[nome] = requestAnimationFrame(passo);
+    }
+
+    function quadroFinal(nome) {
+        const a = ANIM[nome];
+        if (!a) return;
+        a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+        a.draw(1);
+    }
+
+    /* =======================================================================
+       FIGURA — SQP: parabola a cada passo (identica ao Trabalho 8, slide 8)
+       ======================================================================= */
+    registrar('sqp', 'cvSqp', 3600, function (t) {
+        const a = ANIM.sqp, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        const f  = (x) => 0.06*Math.pow(x-4.2, 4) - 0.5*Math.pow(x-4.2, 2) + 0.25*x + 3;
+        const df = (x) => 0.24*Math.pow(x-4.2, 3) - 1.0*(x-4.2) + 0.25;
+        const d2f= (x) => 0.72*Math.pow(x-4.2, 2) - 1.0;
+
+        const dx0 = 0.6, dx1 = 8.2;
+        const px = (x) => 60 + (x - dx0)/(dx1 - dx0) * (w - 100);
+        const py = (v) => h - 45 - (v - 0.5) / 5.5 * (h - 90);
+
+        grade(ctx, w, h, 45);
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(50, h-35); ctx.lineTo(w-25, h-35); ctx.stroke();
+
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let x = dx0; x <= dx1; x += 0.02) {
+            const X = px(x), Y = py(f(x));
+            x === dx0 ? ctx.moveTo(X,Y) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        rotulo(ctx, 'f(x) verdadeira', px(6.9), py(f(7.2)) - 26, cores.azul, 'bold 13px Arial');
+
+        const iter = [1.3];
+        for (let k = 0; k < 5; k++) {
+            const x = iter[k];
+            const cur = Math.max(0.25, d2f(x));
+            iter.push(x - df(x)/cur);
+        }
+
+        const nSteps = iter.length - 1;
+        const prog = suave(t) * nSteps;
+        const k = Math.min(nSteps - 1, Math.floor(prog));
+        const frac = prog - k;
+
+        for (let i = 0; i <= k; i++) ponto(ctx, px(iter[i]), py(f(iter[i])), '#aab4c2', 4);
+
+        const xk = iter[k];
+        const cur = Math.max(0.25, d2f(xk));
+        const q = (x) => f(xk) + df(xk)*(x - xk) + 0.5*cur*Math.pow(x - xk, 2);
+
+        ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2.5; ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        let inic = true;
+        for (let x = xk - 3.2; x <= xk + 3.2; x += 0.02) {
+            if (x < dx0 || x > dx1) continue;
+            const X = px(x), Y = py(q(x));
+            inic ? (ctx.moveTo(X,Y), inic = false) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+
+        ponto(ctx, px(xk), py(f(xk)), cores.verm, 7);
+        rotulo(ctx, 'x' + k, px(xk) - 6, py(f(xk)) - 14, cores.verm, 'bold 13px Arial');
+
+        const xNovo = iter[k+1];
+        const xInterp = xk + frac*(xNovo - xk);
+        ponto(ctx, px(xNovo), py(q(xNovo)), cores.ouro, 6);
+        rotulo(ctx, 'mín. da parábola', px(xNovo) + 10, py(q(xNovo)) + 4, '#b9770e', 'bold 12px Arial');
+
+        seta(ctx, px(xk), py(f(xk)) + 22, px(xInterp), py(f(xk)) + 22, cores.roxo, 2);
+        rotulo(ctx, 'passo d', (px(xk)+px(xInterp))/2 - 22, py(f(xk)) + 40, cores.roxo, 'bold 12px Arial');
+
+        rotulo(ctx, 'Iteração ' + (k+1) + ' de ' + nSteps, 62, 26, '#444', 'bold 14px Arial');
+        rotulo(ctx, 'laranja = modelo quadrático local (o subproblema que o SQP resolve)',
+               62, 46, '#777', '12px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA — SQP passo a passo, sincronizado com a tabela
+       (identica ao Trabalho 8, slide 8c)
+       ======================================================================= */
+    function marcarLinha(seletor, idx, total) {
+        document.querySelectorAll(seletor).forEach(tr => {
+            const i = parseInt(tr.dataset.it, 10);
+            tr.classList.toggle('ativa', i === idx);
+            tr.classList.toggle('futura', idx >= 0 && idx < total && i > idx);
+        });
+    }
+
+    registrar('sqpPasso', 'cvSqpPasso', 7000, function (t) {
+        const a = ANIM.sqpPasso, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+
+        const f   = (x) => x*x*x*x/4 - x*x + x + 3;
+        const df  = (x) => x*x*x - 2*x + 1;
+        const d2f = (x) => 3*x*x - 2;
+
+        const xs = [2.2];
+        for (let k = 0; k < 5; k++) {
+            const x = xs[k];
+            xs.push(x - df(x)/d2f(x));
+        }
+
+        const dx0 = 0.55, dx1 = 2.55, vy0 = 3.05, vy1 = 6.9;
+        const px = (x) => 46 + (x-dx0)/(dx1-dx0)*(w-70);
+        const py = (v) => h - 34 - (v-vy0)/(vy1-vy0)*(h-58);
+
+        grade(ctx, w, h, 40);
+        ctx.strokeStyle = '#b9c3d1'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(40, h-34); ctx.lineTo(w-16, h-34); ctx.stroke();
+
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 2.8;
+        ctx.beginPath();
+        for (let x = dx0; x <= dx1; x += 0.005) {
+            const X = px(x), Y = py(f(x));
+            x === dx0 ? ctx.moveTo(X,Y) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        rotulo(ctx, 'f(x)', px(2.35), py(f(2.42)), cores.azul, 'bold 13px Arial');
+
+        const nIt = 5;
+        const prog = t * nIt;
+        const k = Math.min(nIt - 1, Math.floor(prog));
+        const frac = prog - k;
+
+        marcarLinha('table.tab-sqp tr[data-it]', t >= 1 ? nIt : k, nIt);
+
+        for (let i = 0; i <= k; i++) ponto(ctx, px(xs[i]), py(f(xs[i])), '#aab4c2', 4);
+
+        const xk = xs[k], g = df(xk), H = d2f(xk);
+        const q = (x) => f(xk) + g*(x-xk) + 0.5*H*(x-xk)*(x-xk);
+
+        ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2.5; ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        let ini = true;
+        for (let x = dx0; x <= dx1; x += 0.005) {
+            const v = q(x);
+            if (v < vy0 - 0.6 || v > vy1 + 0.6) { ini = true; continue; }
+            const X = px(x), Y = py(v);
+            ini ? (ctx.moveTo(X,Y), ini = false) : ctx.lineTo(X,Y);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+        rotulo(ctx, 'parábola q(d)', px(dx0)+8, py(vy1-0.25), '#b9770e', 'bold 12px Arial');
+
+        ponto(ctx, px(xk), py(f(xk)), cores.verm, 7);
+        rotulo(ctx, 'x'+k, px(xk)-6, py(f(xk))-14, cores.verm, 'bold 13px Arial');
+
+        const xn = xs[k+1];
+        ponto(ctx, px(xn), py(q(xn)), cores.ouro, 6);
+        rotulo(ctx, 'mín. da parábola', px(xn)-30, py(q(xn))+20, '#b9770e', 'bold 11px Arial');
+
+        const xInt = xk + frac*(xn - xk);
+        seta(ctx, px(xk), py(f(xk))+20, px(xInt), py(f(xk))+20, cores.roxo, 2);
+        rotulo(ctx, 'd'+k, (px(xk)+px(xInt))/2 - 6, py(f(xk))+38, cores.roxo, 'bold 12px Arial');
+
+        ctx.strokeStyle = '#1e7e44'; ctx.lineWidth = 1.5; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(px(1), py(f(1))); ctx.lineTo(px(1), h-34); ctx.stroke();
+        ctx.setLineDash([]);
+        rotulo(ctx, 'x* = 1', px(1)-16, h-16, '#1e7e44', 'bold 11px Arial');
+
+        rotulo(ctx, 'iteração ' + (k+1) + ' de ' + nIt, 52, 22, '#444', 'bold 13px Arial');
+    });
+
+    /* =======================================================================
+       DISPARO DAS ANIMACOES
+       ======================================================================= */
+    const SLIDE_ANIM = { cvSqp: 'sqp', cvSqpPasso: 'sqpPasso' };
+
+    Object.values(SLIDE_ANIM).forEach(quadroFinal);
+
+    const modoPdf = window.location.search.indexOf('print-pdf') !== -1;
+
+    function animarSlideAtual(slide) {
+        if (!slide || modoPdf) return;
+        slide.querySelectorAll('canvas').forEach(cv => {
+            const nome = SLIDE_ANIM[cv.id];
+            if (!nome) return;
+            if (PASSOS[nome] !== undefined) {
+                PASSO_ATUAL[nome] = PASSOS[nome];
+                atualizarCtrlPasso(nome);
+            }
+            if (ANIM[nome].dur > 1) tocar(nome);
+        });
+    }
+
+    Reveal.on('ready', (e) => animarSlideAtual(e.currentSlide));
+    Reveal.on('slidechanged', (e) => animarSlideAtual(e.currentSlide));
+
+    document.querySelectorAll('.anim-ctrl[data-anim]').forEach(b => {
+        b.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            tocar(b.dataset.anim);
+        });
+    });
+
+    PASSOS.sqp      = 5;
+    PASSOS.sqpPasso = 5;
+
+    Object.keys(PASSOS).forEach(nome => { PASSO_ATUAL[nome] = 0; });
+
+    document.querySelectorAll('[data-passo-de]').forEach(el => {
+        const nome = el.dataset.passoDe, acao = el.dataset.passoAcao;
+        if (acao === 'label') return;
+        el.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            acao === 'prev' ? passoAnterior(nome) : passoSeguinte(nome);
+        });
+    });
+
+    (function ligarControleVel() {
+        const range = document.getElementById('velRange');
+        const val   = document.getElementById('velVal');
+        if (!range || !val) return;
+
+        const aplicar = (v, salvar) => {
+            fatorVel = v;
+            val.textContent = v.toFixed(1).replace('.', ',') + '×';
+            if (salvar) { try { localStorage.setItem('etaVel', String(v)); } catch (e) {} }
+        };
+
+        range.value = fatorVel;
+        aplicar(fatorVel, false);
+
+        range.addEventListener('input', () => aplicar(parseFloat(range.value), true));
+        range.addEventListener('change', () => {
+            const slide = Reveal.getCurrentSlide();
+            if (slide) animarSlideAtual(slide);
+        });
+        range.addEventListener('keydown', (ev) => ev.stopPropagation());
+    })();
+</script>
+</body>
+</html>

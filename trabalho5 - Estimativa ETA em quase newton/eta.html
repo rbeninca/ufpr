@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório: Estimativa de η em Métodos Quase-Newton</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --panel2:#1e222b;
+    --text:#e8e9ec;
+    --muted:#9aa2b1;
+    --accent:#5eb3ff;
+    --accent2:#ff9d5e;
+    --accent3:#7ee89a;
+    --border:#2a2f3a;
+    --code-bg:#11141a;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f5f6f8;
+      --panel:#ffffff;
+      --panel2:#f0f1f4;
+      --text:#1b1e24;
+      --muted:#5b6270;
+      --accent:#1266c7;
+      --accent2:#c76a12;
+      --accent3:#1a8a4c;
+      --border:#dde1e8;
+      --code-bg:#eef0f4;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: "Segoe UI", Roboto, -apple-system, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+  }
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:2.5rem 1.5rem 5rem;
+  }
+  h1{
+    font-size:1.7rem;
+    border-bottom:2px solid var(--accent);
+    padding-bottom:0.6rem;
+    margin-bottom:0.3rem;
+  }
+  .subtitle{ color:var(--muted); margin-bottom:2rem; font-size:0.95rem;}
+  h2{
+    font-size:1.25rem;
+    margin-top:2.6rem;
+    color:var(--accent);
+    border-left:4px solid var(--accent);
+    padding-left:0.6rem;
+  }
+  h3{ font-size:1.05rem; margin-top:1.6rem; color:var(--text);}
+  p{ margin:0.8rem 0; }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.2rem 1.4rem;
+    margin:1rem 0;
+  }
+  .formula{
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:0.9rem 1.1rem;
+    margin:0.8rem 0;
+    overflow-x:auto;
+    font-family: "Cambria Math", "STIX Two Math", Georgia, serif;
+    font-size:1.05rem;
+    text-align:center;
+  }
+  .formula .label{
+    float:right;
+    color:var(--muted);
+    font-family: "Segoe UI", sans-serif;
+    font-size:0.8rem;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:1rem 0;
+    font-size:0.92rem;
+  }
+  th,td{
+    border:1px solid var(--border);
+    padding:0.5rem 0.7rem;
+    text-align:left;
+  }
+  th{ background:var(--panel2); color:var(--accent);}
+  ul,ol{ padding-left:1.4rem; }
+  li{ margin:0.35rem 0; }
+  .note{
+    border-left:3px solid var(--accent2);
+    background:var(--panel2);
+    padding:0.7rem 1rem;
+    border-radius:6px;
+    font-size:0.92rem;
+    color:var(--muted);
+    margin:0.8rem 0;
+  }
+  .chart-panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.2rem;
+    margin:1.2rem 0;
+  }
+  .chart-title{
+    font-weight:600;
+    margin-bottom:0.4rem;
+  }
+  .chart-desc{
+    color:var(--muted);
+    font-size:0.88rem;
+    margin-bottom:0.8rem;
+  }
+  canvas{
+    width:100%;
+    max-width:100%;
+    background:var(--code-bg);
+    border-radius:8px;
+    display:block;
+  }
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:1rem;
+    align-items:center;
+    margin-bottom:0.9rem;
+    font-size:0.88rem;
+  }
+  .controls label{ display:flex; align-items:center; gap:0.4rem; color:var(--muted); }
+  input[type=range]{ width:140px; }
+  .legend{
+    display:flex;
+    gap:1.2rem;
+    flex-wrap:wrap;
+    font-size:0.85rem;
+    margin-top:0.6rem;
+    color:var(--muted);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:0.35rem; }
+  .swatch{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .stat-row{
+    display:flex;
+    gap:1rem;
+    flex-wrap:wrap;
+    margin-top:0.8rem;
+  }
+  .stat{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:0.6rem 1rem;
+    font-size:0.85rem;
+    min-width:140px;
+  }
+  .stat b{ display:block; font-size:1.1rem; color:var(--accent); }
+  code{
+    background:var(--code-bg);
+    padding:0.1rem 0.4rem;
+    border-radius:4px;
+    font-size:0.9em;
+  }
+  .toc{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1rem 1.4rem;
+    margin-bottom:2rem;
+    font-size:0.9rem;
+  }
+  .toc a{ color:var(--accent); text-decoration:none; }
+  .toc ol{ columns:2; }
+  footer{
+    margin-top:3rem;
+    padding-top:1rem;
+    border-top:1px solid var(--border);
+    color:var(--muted);
+    font-size:0.82rem;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Relatório: Determinação e Estimativa de η em Métodos Quase-Newton</h1>
+  <div class="subtitle">Unidade de Otimização Numérica — Trabalho 5</div>
+
+  <div class="toc">
+    <ol>
+      <li><a href="#intro">Introdução</a></li>
+      <li><a href="#newton">Algoritmo de Newton</a></li>
+      <li><a href="#eta">O que é η(x<sub>k</sub>)</a></li>
+      <li><a href="#modelo">Modelo quadrático</a></li>
+      <li><a href="#secante">Equação secante</a></li>
+      <li><a href="#curvatura">Condição de curvatura</a></li>
+      <li><a href="#dfp">Estimativa DFP</a></li>
+      <li><a href="#algoritmo">Algoritmo completo</a></li>
+      <li><a href="#graf1">Gráfico: trajetórias</a></li>
+      <li><a href="#graf2">Gráfico: convergência</a></li>
+      <li><a href="#conclusao">Conclusão</a></li>
+    </ol>
+  </div>
+
+  <h2 id="intro">1. Introdução</h2>
+  <p>Nos métodos de otimização numérica, o objetivo é encontrar um ponto <i>x*</i> que minimize uma função objetivo <i>f(x)</i>. Quando a função é diferenciável, usamos informação de primeira ordem — o gradiente ∇f(x) — para definir uma direção de descida. Quando também usamos informação de segunda ordem, entra em cena a matriz Hessiana H(x), que descreve a curvatura local da função.</p>
+  <p>O <b>método de Newton</b> utiliza diretamente a Hessiana para calcular a direção de busca. Características principais:</p>
+  <ul>
+    <li>Usa informação da 1ª e da 2ª derivadas;</li>
+    <li>Necessita inverter H a cada passo;</li>
+    <li>Usa um modelo quadrático de f(x), obtido da série de Taylor;</li>
+    <li>Para uma f quadrática, converge em um só passo.</li>
+  </ul>
+  <p>Calcular e inverter a Hessiana a cada iteração pode ser caro ou inviável. Surgem então os <b>métodos quase-Newton</b>, que constroem iterativamente uma aproximação barata da Hessiana ou de sua inversa — representada pela matriz <b>η(x<sub>k</sub>)</b>.</p>
+
+  <h2 id="newton">2. Algoritmo do método de Newton (referência)</h2>
+  <div class="card">
+    <ol>
+      <li>Conhecer f(x): ℝⁿ→ℝ, ∇f(x)∈ℝⁿ, H(x)<sub>n×n</sub>; inicializar k=0 e x₀; calcular ∇f(x₀).</li>
+      <li>Calcular H(x<sub>k</sub>).</li>
+      <li>Calcular H⁻¹(x<sub>k</sub>).</li>
+      <li>Atualizar o ponto:
+        <div class="formula">x<sub>k+1</sub> = x<sub>k</sub> − H⁻¹(x<sub>k</sub>) ∇f(x<sub>k</sub>)</div>
+      </li>
+      <li>Calcular ∇f(x<sub>k+1</sub>).</li>
+      <li>Critério de parada: se ∇f(x<sub>k+1</sub>) = 0 → x* = x<sub>k+1</sub>, fim; senão, ir ao passo 7.</li>
+      <li>k = k+1, voltar ao passo 2.</li>
+    </ol>
+  </div>
+  <h3>Variantes do método de Newton</h3>
+  <ul>
+    <li><b>Variante I</b> — inverte-se H(x) uma vez e usa-se como constante durante todo o processo.</li>
+    <li><b>Variante II</b> — mantém-se H⁻¹(x) constante por algumas iterações; depois, atualiza-se H(x).</li>
+    <li><b>Variante III</b> — direção de Newton normalizada:
+      <div class="formula">d<sub>k</sub> = −H⁻¹(x<sub>k</sub>)∇f(x<sub>k</sub>) / ‖H(x<sub>k</sub>)∇f(x<sub>k</sub>)‖</div>
+      Para algoritmos que não usam Hessiana (método do gradiente), toma-se H⁻¹ = I.
+    </li>
+  </ul>
+
+  <h2 id="eta">3. O que é η(x<sub>k</sub>)</h2>
+  <p>No método quase-Newton, a direção de busca é escrita de forma genérica como</p>
+  <div class="formula">d<sub>k</sub> = η(x<sub>k</sub>) ∇f(x<sub>k</sub>) <span class="label">direção de busca quase-Newton</span></div>
+  <p>onde η(x<sub>k</sub>) é uma <b>estimativa</b> de H⁻¹(x<sub>k</sub>). Três casos definem o espectro de métodos:</p>
+  <table>
+    <tr><th>Condição</th><th>Consequência</th><th>Método</th></tr>
+    <tr><td>η(x<sub>k</sub>) = I</td><td>d<sub>k</sub> = ∇f(x<sub>k</sub>)</td><td>Método do Gradiente</td></tr>
+    <tr><td>I &lt; η(x<sub>k</sub>) ≤ H⁻¹(x<sub>k</sub>)</td><td>direção intermediária</td><td>Quase-Newton</td></tr>
+    <tr><td>η(x<sub>k</sub>) = H⁻¹(x<sub>k</sub>)</td><td>direção exata de Newton</td><td>Newton</td></tr>
+  </table>
+  <p>Ou seja, η <b>não é escalar</b>: é uma matriz n×n usada para transformar o gradiente em uma direção de busca melhor do que a direção do gradiente puro, sem exigir o cálculo explícito e a inversão da Hessiana verdadeira.</p>
+
+  <h2 id="modelo">4. Modelo quadrático e origem de η</h2>
+  <p>Em cada iteração k, os métodos quase-Newton constroem um modelo quadrático local da função objetivo:</p>
+  <div class="formula">m<sub>k</sub>(p) = f<sub>k</sub> + ∇f<sub>k</sub><sup>T</sup>p + ½ p<sup>T</sup> B<sub>k</sub> p</div>
+  <p>onde f<sub>k</sub> = f(x<sub>k</sub>), ∇f<sub>k</sub> = ∇f(x<sub>k</sub>), e B<sub>k</sub> ≈ H(x<sub>k</sub>). A direção que minimiza esse modelo é</p>
+  <div class="formula">p<sub>k</sub> = −B<sub>k</sub>⁻¹ ∇f<sub>k</sub></div>
+  <p>Define-se η(x<sub>k</sub>) = B<sub>k</sub>⁻¹, de modo que</p>
+  <div class="formula">p<sub>k</sub> = −η(x<sub>k</sub>) ∇f<sub>k</sub></div>
+  <p>Essa é a função central de η: permitir uma direção semelhante à de Newton sem calcular explicitamente a Hessiana exata a cada passo.</p>
+
+  <h3>Variações entre iterações</h3>
+  <p>Após atualizar o ponto x<sub>k+1</sub> = x<sub>k</sub> + α<sub>k</sub> p<sub>k</sub>, definem-se as únicas informações novas disponíveis:</p>
+  <div class="formula">Δx<sub>k</sub> = x<sub>k+1</sub> − x<sub>k</sub> = λ<sub>k</sub>* d<sub>k</sub></div>
+  <div class="formula">Δg(x<sub>k</sub>) = ∇f(x<sub>k+1</sub>) − ∇f(x<sub>k</sub>)</div>
+  <p>É a partir desses dois vetores que η é corrigida a cada iteração.</p>
+
+  <h2 id="secante">5. A equação secante</h2>
+  <p>Para que o modelo quadrático represente melhor a curvatura real da função, impõe-se a <b>equação secante</b>:</p>
+  <div class="formula">B<sub>k+1</sub> Δx<sub>k</sub> = Δg(x<sub>k</sub>)</div>
+  <p>Isto é, a nova aproximação da Hessiana deve transformar o deslocamento Δx<sub>k</sub> na variação observada do gradiente Δg(x<sub>k</sub>). Como o interesse está na inversa, H<sub>k+1</sub> = B<sub>k+1</sub>⁻¹, a equação secante equivalente fica:</p>
+  <div class="formula">η(x<sub>k+1</sub>) Δg(x<sub>k</sub>) = Δx<sub>k</sub> <span class="label">equação secante para η</span></div>
+  <p>A nova matriz η(x<sub>k+1</sub>) deve transformar a variação do gradiente na variação observada da posição.</p>
+
+  <h2 id="curvatura">6. Condição de curvatura</h2>
+  <p>Para garantir que a matriz atualizada preserve propriedades desejáveis (positividade definida), exige-se:</p>
+  <div class="formula">Δx<sub>k</sub><sup>T</sup> Δg(x<sub>k</sub>) &gt; 0</div>
+  <p>Geometricamente, indica curvatura positiva na direção percorrida. Se η(x<sub>k</sub>) for positiva definida, a direção p<sub>k</sub> = −η(x<sub>k</sub>)∇f(x<sub>k</sub>) tende a ser uma direção de descida.</p>
+
+  <h2 id="dfp">7. Fórmula geral e estimativa DFP</h2>
+  <p>A matriz é atualizada iterativamente: η(x<sub>k+1</sub>) = η(x<sub>k</sub>) + Δη(x<sub>k</sub>), com a forma parametrizada geral:</p>
+  <div class="formula">
+    Δη(x<sub>k</sub>) = (1/ω) · [Δx<sub>k</sub> ȳ<sup>T</sup> / (ȳ<sup>T</sup>Δg(x<sub>k</sub>))] − [η(x<sub>k</sub>)Δg(x<sub>k</sub>) z̄<sup>T</sup> / (z̄<sup>T</sup>Δg(x<sub>k</sub>))]
+  </div>
+  <p>onde ω é escalar e ȳ, z̄ são vetores cuja escolha depende do método:</p>
+  <table>
+    <tr><th>Método</th><th>ω</th><th>ȳ</th><th>z̄</th></tr>
+    <tr><td>Broyden</td><td>1</td><td>Δx<sub>k</sub></td><td>Δx<sub>k</sub></td></tr>
+    <tr><td>Fletcher–Powell (DFP)</td><td>1</td><td>Δx<sub>k</sub></td><td>η(x<sub>k</sub>)Δg(x<sub>k</sub>)</td></tr>
+    <tr><td>Rophisan</td><td>ω→∞</td><td>η(x<sub>k</sub>)Δg(x<sub>k</sub>)</td><td>Δg(x<sub>k</sub>)</td></tr>
+  </table>
+  <p>Substituindo os parâmetros do DFP, obtém-se a atualização:</p>
+  <div class="formula">
+    η(x<sub>k+1</sub>) = η(x<sub>k</sub>) +
+    [Δx<sub>k</sub> Δx<sub>k</sub><sup>T</sup> / (Δg(x<sub>k</sub>)<sup>T</sup>Δx<sub>k</sub>)]
+    − [η(x<sub>k</sub>)Δg(x<sub>k</sub>)Δg(x<sub>k</sub>)<sup>T</sup>η(x<sub>k</sub>) / (Δg(x<sub>k</sub>)<sup>T</sup>η(x<sub>k</sub>)Δg(x<sub>k</sub>))]
+    <span class="label">DFP</span>
+  </div>
+  <p><b>Primeiro termo</b> (adição): incorpora informação nova baseada no deslocamento efetivamente realizado. <b>Segundo termo</b> (subtração): remove da matriz anterior a parte da informação incompatível com a nova observação de curvatura. A atualização é, portanto, um ajuste — remove-se o que ficou obsoleto e adiciona-se o que é compatível com os dados mais recentes.</p>
+
+  <h2 id="algoritmo">8. Algoritmo completo usando η (Fletcher–Powell)</h2>
+  <div class="card">
+    <ol>
+      <li>Conhecer f(x), ∇f(x); escolher x₀ e ε&gt;0; inicializar k=0, η(x₀)=I.</li>
+      <li>Calcular a direção de busca: d<sub>k</sub> = −η(x<sub>k</sub>)∇f(x<sub>k</sub>) / ‖η(x<sub>k</sub>)∇f(x<sub>k</sub>)‖</li>
+      <li>Minimizar f(x<sub>k</sub>+λd<sub>k</sub>) por busca unidimensional, obtendo λ<sub>k</sub>*.</li>
+      <li>Atualizar o ponto: x<sub>k+1</sub> = x<sub>k</sub> + λ<sub>k</sub>* d<sub>k</sub></li>
+      <li>Calcular Δf(x<sub>k+1</sub>) = f(x<sub>k+1</sub>) − f(x<sub>k</sub>)</li>
+      <li>Calcular Δg(x<sub>k</sub>) = ∇f(x<sub>k+1</sub>) − ∇f(x<sub>k</sub>) e Δx<sub>k</sub> = λ<sub>k</sub>* d<sub>k</sub></li>
+      <li>Critério de parada: se Δx<sub>k</sub> (ou ∇f(x<sub>k+1</sub>)) → 0, parar; senão, seguir.</li>
+      <li>Atualizar η(x<sub>k+1</sub>) = η(x<sub>k</sub>) + Δη(x<sub>k</sub>) pela fórmula DFP.</li>
+      <li>Teste de singularidade: se |det[η(x<sub>k+1</sub>)]| ≤ ε, reinicializar η(x<sub>k+1</sub>)=I.</li>
+      <li>k = k+1, voltar ao passo 2.</li>
+    </ol>
+  </div>
+
+  <h2 id="graf1">9. Gráfico interativo: trajetórias de convergência</h2>
+  <p>Para ilustrar a diferença entre η = I (gradiente), η ≈ H⁻¹ (quase-Newton/DFP) e η = H⁻¹ (Newton exato), plotamos a trajetória de cada método sobre as curvas de nível de uma função quadrática mal condicionada:</p>
+  <div class="formula">f(x,y) = ½ (a x² + b y²), com a ≪ b</div>
+
+  <div class="chart-panel">
+    <div class="chart-title">Trajetórias sobre as curvas de nível</div>
+    <div class="chart-desc">Ajuste o mal-condicionamento da função (razão b/a) e veja como η=I (gradiente) zigue-zagueia enquanto DFP e Newton vão quase direto ao mínimo.</div>
+    <div class="controls">
+      <label>Condicionamento b/a: <input type="range" id="condSlider" min="1" max="60" value="20"> <span id="condVal">20</span></label>
+      <label><input type="checkbox" id="showGrad" checked> Gradiente (η=I)</label>
+      <label><input type="checkbox" id="showDfp" checked> Quase-Newton (DFP)</label>
+      <label><input type="checkbox" id="showNewton" checked> Newton (η=H⁻¹)</label>
+      <button id="replayBtn" style="padding:0.3rem 0.8rem;border-radius:6px;border:1px solid var(--border);background:var(--panel2);color:var(--text);cursor:pointer;">Replotar</button>
+    </div>
+    <canvas id="trajCanvas" width="900" height="500"></canvas>
+    <div class="legend">
+      <span><span class="swatch" style="background:#ff5e5e"></span>Gradiente (η=I)</span>
+      <span><span class="swatch" style="background:#5eb3ff"></span>Quase-Newton (DFP)</span>
+      <span><span class="swatch" style="background:#7ee89a"></span>Newton (η=H⁻¹)</span>
+      <span><span class="swatch" style="background:#888"></span>Curvas de nível</span>
+    </div>
+    <div class="stat-row" id="statRow"></div>
+  </div>
+
+  <h2 id="graf2">10. Gráfico: convergência do erro por iteração</h2>
+  <div class="chart-panel">
+    <div class="chart-title">‖∇f(x<sub>k</sub>)‖ em escala logarítmica</div>
+    <div class="chart-desc">Mostra a velocidade de convergência de cada método: o gradiente decresce lentamente e de forma linear; o DFP acelera à medida que η se aproxima de H⁻¹; Newton converge quadraticamente (poucas iterações).</div>
+    <canvas id="convCanvas" width="900" height="380"></canvas>
+  </div>
+
+  <div class="note">Os gráficos são gerados dinamicamente em JavaScript puro (sem bibliotecas externas), executando os três algoritmos sobre a mesma função quadrática, com a mesma condição inicial x₀ e a mesma busca de passo (exata, por linha, já que f é quadrática).</div>
+
+  <h2 id="conclusao">11. Conclusão</h2>
+  <p>A matriz η(x<sub>k</sub>) é a estimativa da inversa da Hessiana usada nos métodos quase-Newton. Ela permite calcular uma direção de busca que incorpora informação de curvatura sem exigir o cálculo direto da Hessiana exata:</p>
+  <ul>
+    <li>η(x<sub>k</sub>) = I → método do gradiente;</li>
+    <li>η(x<sub>k</sub>) = H⁻¹(x<sub>k</sub>) → método de Newton;</li>
+    <li>I &lt; η(x<sub>k</sub>) ≤ H⁻¹(x<sub>k</sub>) → método quase-Newton.</li>
+  </ul>
+  <p>Partindo do modelo quadrático local (B<sub>k</sub> ≈ H(x<sub>k</sub>)), define-se H<sub>k</sub> = B<sub>k</sub>⁻¹ ≡ η(x<sub>k</sub>). A atualização de η é construída a partir da <b>equação secante</b> e da <b>condição de curvatura</b>, usando apenas as variações observadas Δx<sub>k</sub> e Δg(x<sub>k</sub>). A fórmula final do método DFP/Fletcher–Powell é:</p>
+  <div class="formula">
+    η(x<sub>k+1</sub>) = η(x<sub>k</sub>) +
+    [Δx<sub>k</sub> Δx<sub>k</sub><sup>T</sup> / (Δg(x<sub>k</sub>)<sup>T</sup>Δx<sub>k</sub>)]
+    − [η(x<sub>k</sub>)Δg(x<sub>k</sub>)Δg(x<sub>k</sub>)<sup>T</sup>η(x<sub>k</sub>) / (Δg(x<sub>k</sub>)<sup>T</sup>η(x<sub>k</sub>)Δg(x<sub>k</sub>))]
+  </div>
+  <p>η é, portanto, a <b>memória de curvatura</b> do método quase-Newton: registra, a cada iteração, como o gradiente mudou em relação ao deslocamento realizado, permitindo construir de forma barata e incremental uma aproximação cada vez melhor da direção de Newton — como os gráficos acima demonstram numericamente.</p>
+
+  <footer>Relatório gerado para a disciplina de Otimização Numérica — Trabalho 5 — UFPR.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  function matVec2(M, v){ return [M[0][0]*v[0]+M[0][1]*v[1], M[1][0]*v[0]+M[1][1]*v[1]]; }
+  function outer2(u, v){ return [[u[0]*v[0], u[0]*v[1]], [u[1]*v[0], u[1]*v[1]]]; }
+  function matSub2(A,B){ return [[A[0][0]-B[0][0],A[0][1]-B[0][1]],[A[1][0]-B[1][0],A[1][1]-B[1][1]]]; }
+  function matAdd2(A,B){ return [[A[0][0]+B[0][0],A[0][1]+B[0][1]],[A[1][0]+B[1][0],A[1][1]+B[1][1]]]; }
+  function matScale2(A,s){ return [[A[0][0]*s,A[0][1]*s],[A[1][0]*s,A[1][1]*s]]; }
+  function dot2(u,v){ return u[0]*v[0]+u[1]*v[1]; }
+  function norm2(v){ return Math.sqrt(v[0]*v[0]+v[1]*v[1]); }
+
+  function makeProblem(a, b){
+    return {
+      f: (x) => 0.5*(a*x[0]*x[0] + b*x[1]*x[1]),
+      grad: (x) => [a*x[0], b*x[1]],
+      Hinv: [[1/a, 0],[0, 1/b]]
+    };
+  }
+
+  function exactStep(prob, x, d){
+    var g = prob.grad(x);
+    var Hd = [ (d[0]>=0? d[0]*0:0), 0 ];
+    var a = prob.grad([1,0])[0];
+    var b = prob.grad([0,1])[1];
+    var Hd2 = [a*d[0], b*d[1]];
+    var num = -dot2(g,d);
+    var den = dot2(d, Hd2);
+    if (Math.abs(den) < 1e-14) return 0;
+    return num/den;
+  }
+
+  function runGradient(prob, x0, maxIter, tol){
+    var traj = [x0.slice()];
+    var errs = [norm2(prob.grad(x0))];
+    var x = x0.slice();
+    for (var k=0;k<maxIter;k++){
+      var g = prob.grad(x);
+      if (norm2(g) < tol) break;
+      var d = [-g[0], -g[1]];
+      var lambda = exactStep(prob, x, d);
+      x = [x[0]+lambda*d[0], x[1]+lambda*d[1]];
+      traj.push(x.slice());
+      errs.push(norm2(prob.grad(x)));
+    }
+    return {traj: traj, errs: errs};
+  }
+
+  function runDFP(prob, x0, maxIter, tol){
+    var traj = [x0.slice()];
+    var errs = [norm2(prob.grad(x0))];
+    var x = x0.slice();
+    var eta = [[1,0],[0,1]];
+    var g = prob.grad(x);
+    for (var k=0;k<maxIter;k++){
+      if (norm2(g) < tol) break;
+      var etaG = matVec2(eta, g);
+      var d = [-etaG[0], -etaG[1]];
+      var lambda = exactStep(prob, x, d);
+      var xNew = [x[0]+lambda*d[0], x[1]+lambda*d[1]];
+      var gNew = prob.grad(xNew);
+      var dx = [xNew[0]-x[0], xNew[1]-x[1]];
+      var dg = [gNew[0]-g[0], gNew[1]-g[1]];
+
+      var dxTdg = dot2(dx, dg);
+      var etaDg = matVec2(eta, dg);
+      var dgTetaDg = dot2(dg, etaDg);
+
+      if (Math.abs(dxTdg) > 1e-12 && Math.abs(dgTetaDg) > 1e-12){
+        var term1 = matScale2(outer2(dx,dx), 1/dxTdg);
+        var term2 = matScale2(outer2(etaDg, etaDg), 1/dgTetaDg);
+        eta = matAdd2(eta, matSub2(term1, term2));
+      }
+
+      x = xNew; g = gNew;
+      traj.push(x.slice());
+      errs.push(norm2(g));
+    }
+    return {traj: traj, errs: errs};
+  }
+
+  function runNewton(prob, x0, maxIter, tol){
+    var traj = [x0.slice()];
+    var errs = [norm2(prob.grad(x0))];
+    var x = x0.slice();
+    for (var k=0;k<maxIter;k++){
+      var g = prob.grad(x);
+      if (norm2(g) < tol) break;
+      var d = matVec2(prob.Hinv, [-g[0], -g[1]]);
+      x = [x[0]+d[0], x[1]+d[1]];
+      traj.push(x.slice());
+      errs.push(norm2(prob.grad(x)));
+    }
+    return {traj: traj, errs: errs};
+  }
+
+  var condSlider = document.getElementById('condSlider');
+  var condVal = document.getElementById('condVal');
+  var showGrad = document.getElementById('showGrad');
+  var showDfp = document.getElementById('showDfp');
+  var showNewton = document.getElementById('showNewton');
+  var replayBtn = document.getElementById('replayBtn');
+  var statRow = document.getElementById('statRow');
+
+  var trajCanvas = document.getElementById('trajCanvas');
+  var convCanvas = document.getElementById('convCanvas');
+  var tctx = trajCanvas.getContext('2d');
+  var cctx = convCanvas.getContext('2d');
+
+  function getColors(){
+    var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return {
+      grid: dark ? '#2a2f3a' : '#dde1e8',
+      text: dark ? '#9aa2b1' : '#5b6270',
+      level: dark ? '#3a4152' : '#c3c9d4',
+      grad: '#ff5e5e',
+      dfp: '#5eb3ff',
+      newton: '#7ee89a'
+    };
+  }
+
+  function drawTrajectories(){
+    var b_over_a = parseFloat(condSlider.value);
+    condVal.textContent = b_over_a.toFixed(0);
+    var a = 1, b = b_over_a;
+    var prob = makeProblem(a,b);
+    var x0 = [ (b_over_a>1 ? 3.6 : 3.6), 3.6 ];
+    var maxIter = 60, tol = 1e-6;
+
+    var resGrad = runGradient(prob, x0, maxIter, tol);
+    var resDfp = runDFP(prob, x0, maxIter, tol);
+    var resNewton = runNewton(prob, x0, maxIter, tol);
+
+    var W = trajCanvas.width, H = trajCanvas.height;
+    var colors = getColors();
+    tctx.clearRect(0,0,W,H);
+
+    var range = 4.2;
+    function toPx(pt){
+      var px = (pt[0] + range) / (2*range) * W;
+      var py = H - (pt[1] + range) / (2*range) * H;
+      return [px, py];
+    }
+
+    // level curves
+    tctx.strokeStyle = colors.level;
+    tctx.lineWidth = 1;
+    var levels = [0.3, 1, 2.5, 5, 9, 14];
+    levels.forEach(function(L){
+      tctx.beginPath();
+      var first = true;
+      for (var t=0; t<=200; t++){
+        var theta = t/200 * 2*Math.PI;
+        var rx = Math.sqrt(2*L/a) * Math.cos(theta);
+        var ry = Math.sqrt(2*L/b) * Math.sin(theta);
+        var p = toPx([rx, ry]);
+        if (first){ tctx.moveTo(p[0],p[1]); first=false; }
+        else tctx.lineTo(p[0],p[1]);
+      }
+      tctx.closePath();
+      tctx.stroke();
+    });
+
+    // axes
+    tctx.strokeStyle = colors.grid;
+    tctx.beginPath();
+    var o = toPx([0,0]);
+    tctx.moveTo(0, o[1]); tctx.lineTo(W, o[1]);
+    tctx.moveTo(o[0], 0); tctx.lineTo(o[0], H);
+    tctx.stroke();
+
+    function plotTraj(res, color, show){
+      if (!show) return;
+      tctx.strokeStyle = color;
+      tctx.fillStyle = color;
+      tctx.lineWidth = 2.2;
+      tctx.beginPath();
+      res.traj.forEach(function(pt, i){
+        var p = toPx(pt);
+        if (i===0) tctx.moveTo(p[0],p[1]);
+        else tctx.lineTo(p[0],p[1]);
+      });
+      tctx.stroke();
+      res.traj.forEach(function(pt){
+        var p = toPx(pt);
+        tctx.beginPath();
+        tctx.arc(p[0], p[1], 3, 0, 2*Math.PI);
+        tctx.fill();
+      });
+    }
+
+    plotTraj(resGrad, colors.grad, showGrad.checked);
+    plotTraj(resDfp, colors.dfp, showDfp.checked);
+    plotTraj(resNewton, colors.newton, showNewton.checked);
+
+    // start point marker
+    var p0 = toPx(x0);
+    tctx.fillStyle = colors.text;
+    tctx.beginPath();
+    tctx.arc(p0[0], p0[1], 5, 0, 2*Math.PI);
+    tctx.fill();
+
+    statRow.innerHTML =
+      '<div class="stat">Gradiente<br><b>'+ (resGrad.traj.length-1) +' iter.</b></div>' +
+      '<div class="stat">DFP (quase-Newton)<br><b>'+ (resDfp.traj.length-1) +' iter.</b></div>' +
+      '<div class="stat">Newton<br><b>'+ (resNewton.traj.length-1) +' iter.</b></div>' +
+      '<div class="stat">Condicionamento b/a<br><b>'+ b_over_a.toFixed(0) +'</b></div>';
+
+    drawConvergence(resGrad, resDfp, resNewton, colors);
+  }
+
+  function drawConvergence(resGrad, resDfp, resNewton, colors){
+    var W = convCanvas.width, H = convCanvas.height;
+    cctx.clearRect(0,0,W,H);
+    var margin = {l:55, r:20, t:20, b:40};
+    var plotW = W - margin.l - margin.r;
+    var plotH = H - margin.t - margin.b;
+
+    var allErrs = [].concat(resGrad.errs, resDfp.errs, resNewton.errs).filter(function(e){return e>0;});
+    var maxErr = Math.max.apply(null, allErrs);
+    var minErr = Math.max(1e-8, Math.min.apply(null, allErrs));
+    var maxIter = Math.max(resGrad.errs.length, resDfp.errs.length, resNewton.errs.length);
+
+    function logScale(e){
+      e = Math.max(e, minErr);
+      var t = (Math.log10(e) - Math.log10(minErr)) / (Math.log10(maxErr) - Math.log10(minErr) + 1e-12);
+      return margin.t + plotH * (1 - t);
+    }
+    function xScale(i){ return margin.l + (i/(maxIter-1||1)) * plotW; }
+
+    // grid + axis labels
+    cctx.strokeStyle = colors.grid;
+    cctx.fillStyle = colors.text;
+    cctx.font = '11px sans-serif';
+    cctx.lineWidth = 1;
+    var decades = Math.ceil(Math.log10(maxErr) - Math.log10(minErr));
+    for (var d=0; d<=decades; d++){
+      var val = Math.pow(10, Math.log10(minErr)+d);
+      var y = logScale(val);
+      cctx.beginPath();
+      cctx.moveTo(margin.l, y);
+      cctx.lineTo(W-margin.r, y);
+      cctx.stroke();
+      cctx.fillText(val.toExponential(0), 4, y+4);
+    }
+    cctx.beginPath();
+    cctx.moveTo(margin.l, margin.t);
+    cctx.lineTo(margin.l, H-margin.b);
+    cctx.lineTo(W-margin.r, H-margin.b);
+    cctx.stroke();
+    cctx.fillText('iteração k', W/2-20, H-8);
+
+    function plotLine(errs, color){
+      cctx.strokeStyle = color;
+      cctx.lineWidth = 2.2;
+      cctx.beginPath();
+      errs.forEach(function(e,i){
+        var x = xScale(i), y = logScale(e);
+        if (i===0) cctx.moveTo(x,y); else cctx.lineTo(x,y);
+      });
+      cctx.stroke();
+    }
+    if (showGrad.checked) plotLine(resGrad.errs, colors.grad);
+    if (showDfp.checked) plotLine(resDfp.errs, colors.dfp);
+    if (showNewton.checked) plotLine(resNewton.errs, colors.newton);
+  }
+
+  condSlider.addEventListener('input', drawTrajectories);
+  showGrad.addEventListener('change', drawTrajectories);
+  showDfp.addEventListener('change', drawTrajectories);
+  showNewton.addEventListener('change', drawTrajectories);
+  replayBtn.addEventListener('click', drawTrajectories);
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawTrajectories);
+
+  drawTrajectories();
+})();
+</script>
+</body>
+</html>
