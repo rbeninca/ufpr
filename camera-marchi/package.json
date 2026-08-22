@@ -1,0 +1,24 @@
+{
+  "name": "camera-marchi-web",
+  "version": "1.0.0",
+  "description": "Aplicação de Acesso e Controle de Câmera USB no Navegador",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "usb-camera",
+    "v4l2",
+    "uvc",
+    "mjpeg",
+    "webrtc",
+    "express"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

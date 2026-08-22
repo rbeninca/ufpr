@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central da Câmera USB - Visualizador e Controle</title>
+  <meta name="description" content="Aplicação web para visualização, gravação e captura de fotos da mini câmera USB via navegador.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="camera-icon-badge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </div>
+        <div>
+          <h1>Central da Câmera USB</h1>
+          <p id="camera-subtitle">SunplusIT HD User Facing (ID: 0408:a061)</p>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <div class="status-chip" id="status-chip">
+          <span class="pulse-dot"></span>
+          <span id="status-text">Detectando...</span>
+        </div>
+        <div class="system-chip">
+          <span class="code-badge">/dev/video0</span>
+          <span class="driver-badge">uvcvideo</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-layout">
+      <!-- Video Stream Viewer Section -->
+      <section class="video-section">
+        <div class="video-card">
+          <!-- Video Header / Mode Tabs -->
+          <div class="card-toolbar">
+            <div class="mode-tabs">
+              <button class="tab-btn active" id="mode-webrtc-btn" data-mode="webrtc">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-5v14l-5-5M4 6h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
+                Navegador Direto (WebRTC)
+              </button>
+              <button class="tab-btn" id="mode-mjpeg-btn" data-mode="mjpeg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+                Servidor Streamer (MJPEG)
+              </button>
+            </div>
+
+            <div class="stream-indicators">
+              <span class="live-indicator" id="live-indicator">
+                <span class="live-dot"></span> AO VIVO
+              </span>
+              <span class="badge-stat" id="fps-badge">-- FPS</span>
+              <span class="badge-stat" id="res-badge">1280x720</span>
+            </div>
+          </div>
+
+          <!-- Video Viewport -->
+          <div class="video-viewport" id="video-viewport">
+            <div class="flash-overlay" id="flash-overlay"></div>
+            
+            <!-- WebRTC Live Video Element -->
+            <video id="webcam-video" autoplay playsinline muted></video>
+
+            <!-- MJPEG Stream Image Element -->
+            <img id="mjpeg-img" src="" alt="Fluxo MJPEG da Câmera" style="display: none;">
+
+            <!-- Recording Overlay Badge -->
+            <div class="rec-overlay" id="rec-overlay">
+              <span class="rec-dot"></span> GRAVANDO <span id="rec-timer">00:00</span>
+            </div>
+
+            <!-- Viewport Controls Overlay -->
+            <div class="viewport-overlay-controls">
+              <button class="icon-btn" id="btn-fullscreen" title="Tela Cheia">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              </button>
+              <button class="icon-btn" id="btn-mirror" title="Espelhar Câmera">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M19 18l-7-7 7-7M5 18l7-7-7-7"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Action Bar -->
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btn-snapshot">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Tirar Foto
+            </button>
+
+            <button class="btn btn-record" id="btn-record">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+              <span id="record-btn-text">Iniciar Gravação</span>
+            </button>
+
+            <div class="select-group">
+              <label for="resolution-select">Resolução:</label>
+              <select id="resolution-select">
+                <option value="1280x720" selected>1280x720 (HD 720p)</option>
+                <option value="640x480">640x480 (VGA 4:3)</option>
+                <option value="640x360">640x360 (nHD 16:9)</option>
+              </select>
+            </div>
+
+            <div class="select-group">
+              <label for="filter-select">Filtro Visual:</label>
+              <select id="filter-select">
+                <option value="none">Nenhum (Normal)</option>
+                <option value="grayscale">Preto e Branco</option>
+                <option value="sepia">Sépia</option>
+                <option value="contrast">Alto Contraste</option>
+                <option value="nightvision">Visão Noturna</option>
+                <option value="invert">Inverter Cores</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side Controls & Diagnostics Panel -->
+      <aside class="side-panel">
+        <!-- Controls Adjustments Card -->
+        <div class="panel-card">
+          <h3>Ajustes de Imagem</h3>
+          <div class="range-group">
+            <div class="range-header">
+              <label for="slider-brightness">Brilho</label>
+              <span id="val-brightness">100%</span>
+            </div>
+            <input type="range" id="slider-brightness" min="50" max="200" value="100">
+          </div>
+
+          <div class="range-group">
+            <div class="range-header">
+              <label for="slider-contrast">Contraste</label>
+              <span id="val-contrast">100%</span>
+            </div>
+            <input type="range" id="slider-contrast" min="50" max="200" value="100">
+          </div>
+
+          <div class="range-group">
+            <div class="range-header">
+              <label for="slider-saturate">Saturação</label>
+              <span id="val-saturate">100%</span>
+            </div>
+            <input type="range" id="slider-saturate" min="0" max="200" value="100">
+          </div>
+
+          <button class="btn btn-secondary btn-sm" id="btn-reset-filters">Restaurar Padrão</button>
+        </div>
+
+        <!-- System Diagnostic Specs Card -->
+        <div class="panel-card">
+          <h3>Detalhes do Hardware</h3>
+          <div class="info-grid" id="info-grid">
+            <div class="info-item">
+              <span class="info-label">Fabricante:</span>
+              <span class="info-value" id="info-vendor">SunplusIT, Inc.</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Modelo:</span>
+              <span class="info-value" id="info-model">HD User Facing</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">USB VID:PID:</span>
+              <span class="info-value code font-mono" id="info-vidpid">0408:a061</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Kernel Driver:</span>
+              <span class="info-value code font-mono" id="info-driver">uvcvideo</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">V4L2 Node:</span>
+              <span class="info-value code font-mono" id="info-node">/dev/video0</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Formatos:</span>
+              <span class="info-value" id="info-formats">MJPEG, YUYV 4:2:2</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom Section: Gallery & CLI Helper -->
+    <section class="bottom-section">
+      <div class="panel-card full-width">
+        <div class="section-header-tabs">
+          <button class="sec-tab active" data-sectab="gallery">Galeria de Capturas (<span id="gallery-count">0</span>)</button>
+          <button class="sec-tab" data-sectab="cli">Comandos CLI Linux (Exemplos)</button>
+          <button class="sec-tab" data-sectab="doc">Documentação CAMERA_INFO.md</button>
+        </div>
+
+        <!-- Tab Content: Gallery -->
+        <div class="sec-tab-content active" id="sec-gallery">
+          <div class="gallery-grid" id="gallery-grid">
+            <div class="empty-gallery" id="empty-gallery">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p>Nenhuma foto ou vídeo capturado nesta sessão.</p>
+              <span>Clique no botão "Tirar Foto" ou "Iniciar Gravação" para capturar mídias da câmera.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Content: CLI Instructions -->
+        <div class="sec-tab-content" id="sec-cli">
+          <div class="cli-instructions">
+            <p>Você também pode capturar e visualizar a câmera diretamente pelo terminal Linux usando os seguintes comandos:</p>
+            <div class="code-block">
+              <div class="code-header">Tirar foto em 720p com FFmpeg:</div>
+              <pre><code>ffmpeg -y -f v4l2 -input_format mjpeg -video_size 1280x720 -i /dev/video0 -vframes 1 foto.jpg</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-header">Assistir stream em tempo real com MPV:</div>
+              <pre><code>mpv /dev/video0</code></pre>
+            </div>
+            <div class="code-block">
+              <div class="code-header">Assistir stream em tempo real com VLC:</div>
+              <pre><code>vlc v4l2:///dev/video0</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Documentation Info -->
+        <div class="sec-tab-content" id="sec-doc">
+          <div class="doc-view">
+            <p>As informações completas do dispositivo, drivers e arquitetura estão salvas no arquivo <code>CAMERA_INFO.md</code> nesta pasta.</p>
+            <a href="/CAMERA_INFO.md" target="_blank" class="btn btn-secondary btn-sm" style="display:inline-flex; width:auto; margin-top:8px;">Abrir CAMERA_INFO.md no Navegador</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Desenvolvido para Câmeras USB V4L2 / UVC • Antigravity AI Assistant</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
