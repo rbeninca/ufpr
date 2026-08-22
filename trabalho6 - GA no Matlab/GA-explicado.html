@@ -93,6 +93,13 @@ table.tbl tr.ok td{background:#eaf7ee;}
 .gene.mut{background:var(--mut);transform:scale(1.18);}
 .gene.paiA{background:var(--ufpr-blue);} .gene.paiB{background:var(--purple);}
 
+/* Enquanto nao ha populacao, o botao de sortear pulsa discretamente:
+   e a unica acao disponivel, entao ele indica o caminho.                 */
+@keyframes pulso{0%,100%{box-shadow:0 0 0 0 rgba(0,74,142,.42);}
+                 50%{box-shadow:0 0 0 5px rgba(0,74,142,0);}}
+.sim-params .btn.pulsando{animation:pulso 1.7s ease-in-out infinite;}
+@media (prefers-reduced-motion:reduce){.sim-params .btn.pulsando{animation:none;}}
+
 /* ---------- Grupo compacto "avancar N geracoes" ---------- */
 .grupo-ger{display:inline-flex;align-items:center;gap:0;font-size:10.5px;color:#5a6b7d;
   font-weight:600;white-space:nowrap;}
@@ -1561,6 +1568,18 @@ const SIM={
     ['agPasso','agG1','agG10','agG100','agG1000','agReset','agSortear','agBlocos']
       .forEach(i=>{const e=this.el(i); if(e)e.disabled=t;});
   },
+
+  /* Habilita/desabilita conforme o estado real: enquanto nao houver uma
+     populacao sorteada, os controles de passo e de geracao ficam INATIVOS.
+     Assim o unico caminho possivel e "sortear primeiro", sem depender de
+     o usuario clicar e so entao descobrir que faltava algo.               */
+  sincronizarBotoes(){
+    const habil = AG.pop.length>0 && AG.completa;
+    ['agPasso','agG1','agG10','agG100','agG1000']
+      .forEach(i=>{const e=this.el(i); if(e)e.disabled=!habil;});
+    const b=this.el('agSortear');
+    if(b)b.classList.toggle('pulsando',!habil);   // chama a atencao quando vazio
+  },
   /* nada a fazer enquanto a populacao nao foi sorteada */
   pronto(){
     if(AG.pop.length&&AG.completa)return true;
@@ -1570,7 +1589,7 @@ const SIM={
     return false;
   },
 
-  tudo(){this.etapas();this.lista();this.arvore();this.status();},
+  tudo(){this.etapas();this.lista();this.arvore();this.status();this.sincronizarBotoes();},
 
   /* avanca uma etapa; ao passar da ultima, materializa a geracao */
   passo(){
@@ -1679,6 +1698,7 @@ function correrGeracoes(btn,total){
     if(total>1)btn.textContent=i+'…';
     if(i<total){requestAnimationFrame(passo);return;}
     outros.forEach(b=>{b.disabled=false;});
+    SIM.sincronizarBotoes();   // depois de reabilitar, respeita o estado real
     btn.textContent=rotulo;
     const ms=Math.round(performance.now()-t0);
     const n=document.getElementById('agNota');
