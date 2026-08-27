@@ -1,0 +1,2530 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Condições de Karush-Kuhn-Tucker (KKT)</title>
+
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/css/print/pdf.css" media="print">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <!-- KaTeX para formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --ufpr-blue: #004a8e;
+            --math-red: #e74c3c;
+            --math-green: #27ae60;
+            --math-gold: #f39c12;
+            --math-purple: #8e44ad;
+        }
+        .reveal h1, .reveal h2 { color: var(--ufpr-blue); font-weight: 800; text-transform: uppercase; }
+        .reveal h2 {
+            border-bottom: 3px solid var(--ufpr-blue);
+            display: inline-block;
+            padding-bottom: 3px;
+            margin: 0 0 10px;
+            line-height: 1.1;
+            font-size: 1.35em;
+        }
+        .reveal section { text-align: left; padding: 8px 20px; }
+        .reveal section > h2 + * { margin-top: 0; }
+        .reveal section p { margin: 8px 0; }
+        .reveal section ul, .reveal section ol { margin: 8px 0; }
+        .reveal section.compact { font-size: 0.82em; }
+        .reveal section.compact li { margin: 5px 0; }
+
+        .formula-box {
+            background: #f8faff;
+            padding: 12px 16px;
+            border-left: 6px solid var(--ufpr-blue);
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        }
+        .formula-box.verde { background:#f2fbf5; border-left-color: var(--math-green); }
+        .formula-box.ouro  { background:#fdf8ef; border-left-color: var(--math-gold); }
+        .formula-box.verm  { background:#fdf1f0; border-left-color: var(--math-red); }
+
+        .canvas-container {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            padding: 6px;
+            margin-top: 8px;
+        }
+        .canvas-container canvas { max-width: 100%; height: auto; }
+
+        .highlight { color: var(--ufpr-blue); font-weight: bold; }
+        .small-text { font-size: 0.7em; color: #666; }
+
+        /* ---- Bloco "tradutor": simbolo generico -> valor concreto ----------
+           E o recurso central deste material. Quem trava em formula generica
+           precisa ver o simbolo e o numero lado a lado, sempre.            */
+        table.tradutor {
+            width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.72em;
+        }
+        table.tradutor th {
+            background: var(--ufpr-blue); color: #fff; padding: 7px 10px; text-align: left;
+        }
+        table.tradutor td { border: 1px solid #dde3ea; padding: 7px 10px; vertical-align: middle; }
+        table.tradutor td.sim {
+            width: 16%; text-align: center; background: #eef3fa;
+            font-weight: 700; color: var(--ufpr-blue);
+        }
+        table.tradutor td.vale {
+            width: 26%; text-align: center; background: #fffdf5;
+            font-weight: 700; color: #b9770e;
+        }
+        table.tradutor tr.destaque td { background: #eaf7ee; }
+
+        table.numeric-example {
+            width: 100%; font-size: 0.62em; border-collapse: collapse; margin-top: 10px;
+        }
+        table.numeric-example th { background: var(--ufpr-blue); color: white; padding: 8px; }
+        table.numeric-example td { border: 1px solid #ddd; padding: 7px; text-align: center; }
+        table.numeric-example td.left { text-align: left; }
+        table.numeric-example tr.ok  td { background: #eaf7ee; }
+        table.numeric-example tr.nok td { background: #fdeceb; }
+        table.numeric-example code { color: #b03060; font-size: 0.95em; }
+
+        .two-col { display: flex; align-items: center; gap: 34px; }
+        .two-col .col-text { flex: 1.2; }
+        .two-col .col-img { flex: 1; text-align: center; }
+
+        /* Cartoes */
+        .cards { display: flex; gap: 16px; margin-top: 14px; }
+        .cards .card {
+            flex: 1; background: #f8faff; border-top: 5px solid var(--ufpr-blue);
+            border-radius: 6px; padding: 12px 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+        .cards .card h4 { margin: 0 0 8px; color: var(--ufpr-blue); font-size: 0.95em; font-weight: 800; }
+        .cards .card p { font-size: 0.72em; color: #444; margin: 0; line-height: 1.4em; }
+        .cards .card.red    { border-top-color: var(--math-red); }
+        .cards .card.red h4 { color: var(--math-red); }
+        .cards .card.green    { border-top-color: var(--math-green); }
+        .cards .card.green h4 { color: var(--math-green); }
+        .cards .card.gold    { border-top-color: var(--math-gold); }
+        .cards .card.gold h4 { color: #b9770e; }
+        .cards .card.roxo    { border-top-color: var(--math-purple); }
+        .cards .card.roxo h4 { color: var(--math-purple); }
+
+        /* Slides divisores de parte */
+        .reveal section.divider {
+            background: var(--ufpr-blue);
+            height: 100%;
+            display: flex !important; flex-direction: column; justify-content: center;
+        }
+        .reveal section.divider h2 {
+            color: #fff; border-bottom-color: #fff; font-size: 1.6em;
+        }
+        .reveal section.divider p { color: #cfe0f2; font-size: 0.9em; }
+        .reveal section.divider .num {
+            color: #6fa8dc; font-size: 3.4em; font-weight: 900; line-height: 1; margin-bottom: 6px;
+        }
+
+        /* Passo numerado */
+        .passos { counter-reset: passo; list-style: none; margin-left: 0; }
+        .passos > li {
+            counter-increment: passo; position: relative;
+            padding-left: 44px; margin: 12px 0;
+        }
+        .passos > li::before {
+            content: counter(passo);
+            position: absolute; left: 0; top: -2px;
+            width: 30px; height: 30px; border-radius: 50%;
+            background: var(--ufpr-blue); color: #fff;
+            font-weight: 800; font-size: 0.8em;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        pre.matlab {
+            background: #1e2b3a; color: #e8eef5; border-radius: 6px;
+            padding: 12px 16px; font-size: 0.52em; line-height: 1.5em;
+            overflow-x: auto; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+            font-family: "Consolas", "Monaco", monospace;
+        }
+        pre.matlab .kw { color: #62b0ff; font-weight: bold; }
+        pre.matlab .cm { color: #7f9bb5; font-style: italic; }
+        pre.matlab .st { color: #ffb86c; }
+        pre.matlab .hl { background: rgba(243,156,18,0.25); border-radius: 3px; }
+
+        .anim-ctrl {
+            display: block; margin: 6px auto 0;
+            background: var(--ufpr-blue); color: #fff; border: none;
+            border-radius: 5px; padding: 5px 12px; font-size: 12px;
+            font-weight: 700; cursor: pointer;
+        }
+        .anim-ctrl:hover { background: #003567; }
+        .anim-ctrl:disabled { background: #b7c1cd; cursor: default; }
+        @media print { .anim-ctrl { display: none !important; } }
+
+        .passo-ctrl {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin-top: 6px;
+        }
+        .passo-ctrl .anim-ctrl { margin: 0; padding: 4px 10px; }
+        .passo-ctrl .passo-lbl {
+            font-size: 13px; font-weight: 700; color: var(--ufpr-blue);
+            min-width: 46px; text-align: center;
+            background: #eaf1f9; border-radius: 4px; padding: 4px 6px;
+        }
+        @media print { .passo-ctrl { display: none !important; } }
+
+        #btnPdf {
+            position: fixed; top: 16px; right: 16px; z-index: 1000;
+            background: var(--ufpr-blue); color: #fff; border: none;
+            border-radius: 6px; padding: 8px 14px;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        #btnPdf:hover { background: #003567; }
+        @media print { #btnPdf { display: none !important; } }
+
+        .reveal .slides section.slide-centro {
+            height: 100%;
+            display: flex !important; flex-direction: column; justify-content: center;
+        }
+
+        #velCtrl {
+            position: fixed; top: 16px; right: 92px; z-index: 1000;
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.94);
+            border: 1px solid #cfd8e3; border-radius: 6px;
+            padding: 5px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        #velCtrl .vel-ic { font-size: 13px; line-height: 1; }
+        #velCtrl input[type=range] { width: 108px; accent-color: var(--ufpr-blue); cursor: pointer; }
+        #velVal { font-size: 12px; font-weight: 700; color: var(--ufpr-blue); min-width: 34px; text-align: right; }
+        @media print { #velCtrl { display: none !important; } }
+
+        .reveal .slide-number {
+            background: var(--ufpr-blue); color: #fff;
+            font-size: 16px; padding: 4px 10px; border-radius: 4px;
+        }
+
+        /* Caixa de "leitura em voz alta" da formula */
+        .leitura {
+            background: #1e2b3a; color: #eef3f8; border-radius: 6px;
+            padding: 10px 14px; font-size: 0.72em; line-height: 1.5em;
+            margin: 10px 0; box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        }
+        .leitura b { color: var(--math-gold); }
+
+        /* Aviso / armadilha */
+        .aviso {
+            background: #fdf1f0; border-left: 6px solid var(--math-red);
+            border-radius: 4px; padding: 10px 14px; margin: 10px 0; font-size: 0.8em;
+        }
+        .aviso b { color: var(--math-red); }
+    </style>
+</head>
+<body>
+
+<button id="btnPdf" title="Gerar PDF da apresentação" aria-label="Gerar PDF">📄 PDF</button>
+
+<div id="velCtrl" title="Velocidade das animações">
+    <span class="vel-ic">🐢</span>
+    <input type="range" id="velRange" min="0.6" max="3" step="0.1" value="1.6">
+    <span class="vel-ic">🐇</span>
+    <span id="velVal">1,6×</span>
+</div>
+
+<div class="reveal">
+    <div class="slides">
+
+        <!-- ============================= SLIDE 1: CAPA ======================= -->
+        <section class="slide-centro" style="text-align:center;">
+            <h1 style="font-size:1.9em; margin-bottom:6px;">Condições de<br>Karush-Kuhn-Tucker</h1>
+            <p style="font-size:1.5em; color:var(--math-gold); font-weight:800; margin:0 0 18px;">KKT</p>
+            <p style="font-size:0.86em; color:#555; max-width:760px; margin:0 auto 22px;">
+                Como saber se um ponto é a <strong>melhor solução possível</strong>
+                quando existem <strong>restrições</strong> — e o que fazer quando ele não é.
+            </p>
+            <p class="small-text" style="margin-top:26px;">
+                Universidade Federal do Paraná &nbsp;·&nbsp; Engenharia Mecânica<br>
+                Otimização &nbsp;·&nbsp; Prof. Dr. Carlos Alberto Bavastri
+            </p>
+        </section>
+
+        <!-- ============================= SLIDE 2: COMO LER ==================== -->
+        <section class="compact">
+            <h2>Antes de começar: como ler este material</h2>
+            <p>Este material foi montado para quem <strong>trava quando vê fórmula genérica</strong>.
+               A regra que seguimos em todos os slides:</p>
+            <div class="cards" style="margin-top:18px;">
+                <div class="card green">
+                    <h4>1. Primeiro a ideia</h4>
+                    <p>Toda fórmula aparece <strong>depois</strong> de você já ter entendido a ideia com um desenho ou uma situação concreta.</p>
+                </div>
+                <div class="card gold">
+                    <h4>2. Símbolo ⇢ número</h4>
+                    <p>Sempre que surgir um símbolo ($\lambda$, $\nabla f$, $g_i$), há uma <strong>tabela tradutora</strong> mostrando o que ele vale <em>naquele</em> exemplo.</p>
+                </div>
+                <div class="card roxo">
+                    <h4>3. Leitura em voz alta</h4>
+                    <p>As caixas escuras traduzem a fórmula para <strong>português</strong>, como se você lesse em voz alta.</p>
+                </div>
+            </div>
+            <div class="leitura" style="margin-top:20px;">
+                <b>Exemplo do que faremos:</b> em vez de deixar “$\nabla f(x^*) + \lambda \nabla h(x^*) = 0$” solto,
+                você verá: <em>“a inclinação do que quero otimizar tem que ser um múltiplo da inclinação da parede.
+                Neste exemplo: $(-10,-10) + 10\cdot(1,1) = (0,0)$ ✔”</em>
+            </div>
+            <p class="small-text" style="margin-top:14px;">
+                💡 Use o controle 🐢/🐇 no topo para deixar as animações mais lentas, e as setas ←/→ para andar passo a passo nas figuras que têm iteração.
+            </p>
+        </section>
+
+        <!-- ===================== DIVISOR PARTE 1 ============================== -->
+        <section class="divider">
+            <div class="num">1</div>
+            <h2>O problema, sem nenhuma fórmula</h2>
+            <p>Por que “achar o mínimo” muda completamente quando existem restrições</p>
+        </section>
+
+        <!-- ============================= SLIDE 4: A CERCA ===================== -->
+        <section class="compact">
+            <h2>Uma situação que você já resolveu na vida</h2>
+            <p>Você tem <strong>40 metros de tela</strong> e quer cercar um terreno retangular com a
+               <strong>maior área possível</strong>.</p>
+            <div class="two-col">
+                <div class="col-img" style="flex:1.15;">
+                    <div class="canvas-container">
+                        <canvas id="cvCerca" width="470" height="330"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="cerca">▶ Repetir animação</button>
+                </div>
+                <div class="col-text">
+                    <p>Repare que existem <strong>duas coisas diferentes</strong> em jogo:</p>
+                    <ul>
+                        <li><strong style="color:var(--math-green);">O que você quer:</strong>
+                            área grande. Se pudesse, faria o terreno infinito.</li>
+                        <li><strong style="color:var(--math-red);">O que te impede:</strong>
+                            só existem 40 m de tela. Nem toda escolha é permitida.</li>
+                    </ul>
+                    <p>Sem a tela limitada, o problema <strong>não tem resposta</strong> (área cresceria sem parar).
+                       É a restrição que cria uma solução.</p>
+                    <div class="formula-box verde" style="font-size:0.8em;">
+                        A resposta é o <strong>quadrado 10 × 10</strong>, área = 100 m².<br>
+                        <span class="small-text">Um retângulo 15 × 5 usa a mesma tela e dá só 75 m².</span>
+                    </div>
+                </div>
+            </div>
+            <p style="margin-top:10px;"><strong>KKT é a matemática que responde:</strong>
+               como eu <em>reconheço</em> que 10 × 10 é a melhor, sem testar todas as possibilidades?</p>
+        </section>
+
+        <!-- ============================= SLIDE 5: DOIS MUNDOS ================= -->
+        <section class="compact">
+            <h2>Sem restrição × com restrição</h2>
+            <p>Toda a dificuldade do KKT vem de uma única diferença. Compare:</p>
+            <div class="two-col" style="align-items:flex-start; gap:26px;">
+                <div style="flex:1;">
+                    <div class="formula-box verde">
+                        <strong style="color:var(--math-green);">SEM restrição (o que você já viu)</strong><br><br>
+                        Onde está o mínimo? Onde o terreno é <strong>plano</strong>.<br>
+                        A bolinha para no fundo do vale.<br><br>
+                        <strong>Regra:</strong> inclinação $= 0$.
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="cvSemRestr" width="440" height="230"></canvas>
+                    </div>
+                </div>
+                <div style="flex:1;">
+                    <div class="formula-box verm">
+                        <strong style="color:var(--math-red);">COM restrição (o assunto de hoje)</strong><br><br>
+                        A bolinha desce, mas <strong>bate numa parede</strong> antes do fundo.<br>
+                        Ela para <em>inclinada</em>.<br><br>
+                        <strong>Regra: inclinação $\ne 0$!</strong> A antiga regra falha.
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="cvComRestr" width="440" height="230"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="leitura" style="margin-top:12px;">
+                <b>O ponto-chave de todo o assunto:</b> quando a solução encosta numa parede, o chão
+                <em>ainda está inclinado</em>. Procurar “inclinação zero” não funciona mais.
+                KKT é a <b>nova regra de parada</b> que substitui “inclinação = 0”.
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 6: A PAREDE SEGURA ============= -->
+        <section class="compact">
+            <h2>Por que a bolinha fica parada na parede?</h2>
+            <p>Se o chão está inclinado, por que ela não continua descendo? Porque a
+               <strong>parede empurra de volta</strong> exatamente com a força que falta.</p>
+            <div class="two-col">
+                <div class="col-img" style="flex:1.1;">
+                    <div class="canvas-container">
+                        <canvas id="cvForcas" width="470" height="340"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="forcas">▶ Repetir animação</button>
+                </div>
+                <div class="col-text">
+                    <ul class="passos">
+                        <li>A <strong style="color:var(--math-red);">gravidade</strong> (a vontade de melhorar $f$)
+                            puxa a bolinha morro abaixo.</li>
+                        <li>A <strong style="color:var(--ufpr-blue);">parede</strong> não deixa passar. Ela reage
+                            <strong>perpendicularmente</strong> à sua própria superfície.</li>
+                        <li>A bolinha fica parada quando as duas se <strong>cancelam</strong>:
+                            <em>empurrão da parede = puxão da gravidade</em>, em sentidos opostos.</li>
+                    </ul>
+                    <div class="formula-box ouro">
+                        <strong>Esse equilíbrio é literalmente a 1ª condição de KKT.</strong><br>
+                        <span class="small-text">O “quanto” a parede precisou empurrar ganha um nome:
+                        <strong>multiplicador</strong> $\lambda$ (ou $\mu$). É só isso.</span>
+                    </div>
+                </div>
+            </div>
+            <p style="margin-top:8px;"><strong>Consequência que usaremos o tempo todo:</strong>
+               no ponto ótimo, o puxão de $f$ e o empurrão da parede ficam
+               <span class="highlight">na mesma direção (paralelos)</span> — apontando para lados opostos.</p>
+        </section>
+
+        <!-- ===================== DIVISOR PARTE 2 ============================== -->
+        <section class="divider">
+            <div class="num">2</div>
+            <h2>Traduzindo para símbolos</h2>
+            <p>Cada letra que aparecer terá, ao lado, o número que ela vale</p>
+        </section>
+
+        <!-- ============================= SLIDE 8: O DICIONARIO ================ -->
+        <section class="compact">
+            <h2>O dicionário: 5 símbolos e nada mais</h2>
+            <p>Todo o KKT usa apenas estes símbolos. Aqui estão eles traduzidos <strong>no problema da cerca</strong>
+               (40 m de tela, maximizar área):</p>
+            <table class="tradutor">
+                <tr>
+                    <th style="width:16%;">Símbolo</th>
+                    <th>Como se lê / o que significa</th>
+                    <th style="width:26%;">Na cerca, vale</th>
+                </tr>
+                <tr>
+                    <td class="sim">$x$</td>
+                    <td>As <strong>decisões</strong> que você pode escolher. Uma lista de números.</td>
+                    <td class="vale">$x = (\text{largura},\ \text{altura})$</td>
+                </tr>
+                <tr>
+                    <td class="sim">$f(x)$</td>
+                    <td>A <strong>nota</strong> da sua escolha — o que você quer deixar pequeno (sempre <em>minimizamos</em>).</td>
+                    <td class="vale">$f = -\,\text{área} = -xy$</td>
+                </tr>
+                <tr>
+                    <td class="sim">$h(x)=0$</td>
+                    <td>Restrição de <strong>igualdade</strong>: “tem que dar exatamente isso”.</td>
+                    <td class="vale">$x + y - 20 = 0$</td>
+                </tr>
+                <tr>
+                    <td class="sim">$g(x)\le 0$</td>
+                    <td>Restrição de <strong>desigualdade</strong>: “no máximo isso”. (Não há na cerca.)</td>
+                    <td class="vale">—</td>
+                </tr>
+                <tr class="destaque">
+                    <td class="sim">$\lambda,\ \mu$</td>
+                    <td>O <strong>quanto a parede empurrou</strong>. É a incógnita nova que o KKT cria.</td>
+                    <td class="vale">$\lambda = 10$ <span class="small-text">(vamos achar)</span></td>
+                </tr>
+            </table>
+            <div class="aviso">
+                <b>Duas convenções que confundem todo mundo — decore:</b>
+                <b>(1)</b> Sempre <strong>minimizamos</strong>. Quer maximizar a área? Minimize $-\,$área.
+                <b>(2)</b> Toda desigualdade é escrita como “$\le 0$”. Tem $x \ge 3$? Reescreva como $3 - x \le 0$.
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 9: GRADIENTE =================== -->
+        <section class="compact">
+            <h2>O único cálculo que você precisa: $\nabla f$</h2>
+            <p>O símbolo $\nabla f$ (lê-se <strong>“nabla f”</strong> ou “gradiente de f”) assusta,
+               mas é só uma <strong>lista de derivadas</strong> — uma para cada variável.</p>
+            <div class="two-col">
+                <div class="col-text">
+                    <div class="formula-box">
+                        Se $f(x,y) = -xy$, então:
+                        $$\nabla f = \left(\frac{\partial f}{\partial x},\ \frac{\partial f}{\partial y}\right) = (-y,\ -x)$$
+                    </div>
+                    <p><strong>Como se calcula $\partial f/\partial x$:</strong> derive normalmente em relação a $x$,
+                       <span class="highlight">tratando $y$ como se fosse um número fixo</span> (tipo o 7).</p>
+                    <table class="tradutor" style="font-size:0.68em;">
+                        <tr><th>Se você tem</th><th>Derivando em $x$</th><th>Resultado</th></tr>
+                        <tr><td class="sim">$-xy$</td><td>$y$ é constante, sobra $-y \cdot 1$</td><td class="vale">$-y$</td></tr>
+                        <tr><td class="sim">$x^2$</td><td>regra do expoente</td><td class="vale">$2x$</td></tr>
+                        <tr><td class="sim">$(x-4)^2$</td><td>regra da cadeia</td><td class="vale">$2(x-4)$</td></tr>
+                        <tr><td class="sim">$3y^2$</td><td>não tem $x$: constante</td><td class="vale">$0$</td></tr>
+                    </table>
+                </div>
+                <div class="col-img" style="flex:1;">
+                    <div class="canvas-container">
+                        <canvas id="cvGrad" width="430" height="330"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="grad">▶ Repetir animação</button>
+                    <p class="small-text" style="margin-top:6px; text-align:left;">
+                        O gradiente é uma <strong>seta</strong>: aponta para onde $f$ <strong>cresce mais rápido</strong>.
+                        Para minimizar, andamos no sentido <strong>contrário</strong> ($-\nabla f$).
+                    </p>
+                </div>
+            </div>
+            <div class="leitura">
+                <b>Traduzindo:</b> “$\nabla f(10,10) = (-10,-10)$” quer dizer:
+                <em>estando no ponto (10,10), se eu aumentar a largura em 1, a nota $f$ cai 10;
+                se eu aumentar a altura em 1, ela também cai 10.</em>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 10: LAGRANGE =================== -->
+        <section class="compact">
+            <h2>O truque de Lagrange: juntar tudo numa função só</h2>
+            <p>Temos duas coisas separadas — o objetivo $f$ e a restrição $h$. A ideia genial é
+               <strong>grudar as duas</strong> numa função nova, chamada <strong>Lagrangeana</strong>:</p>
+            <div class="formula-box" style="text-align:center; font-size:1.05em;">
+                $$\mathcal{L}(x,\lambda) \;=\; \underbrace{f(x)}_{\text{o que quero}} \;+\; \underbrace{\lambda\, h(x)}_{\text{a regra} \times \text{o preço}}$$
+            </div>
+            <div class="two-col" style="align-items:flex-start;">
+                <div style="flex:1;">
+                    <p><strong>Por que isso funciona?</strong> $\lambda$ é como uma <strong>multa</strong>.
+                       Se você desobedecer a restriç&atilde;o ($h \ne 0$), paga $\lambda$ por unidade de desobediência.</p>
+                    <p>Com a multa embutida, o problema <em>com</em> restrição vira um problema
+                       <em>sem</em> restrição — e aí vale a regra velha: <strong>derivada igual a zero</strong>.</p>
+                    <div class="formula-box ouro" style="font-size:0.82em;">
+                        <strong>Montando na cerca:</strong><br>
+                        $f = -xy$ &nbsp;e&nbsp; $h = x+y-20$<br><br>
+                        $\mathcal{L} = -xy + \lambda(x+y-20)$
+                    </div>
+                </div>
+                <div style="flex:1;">
+                    <p><strong>Agora derive em relação a cada incógnita</strong> — inclusive $\lambda$:</p>
+                    <table class="tradutor" style="font-size:0.66em;">
+                        <tr><th>Derivo em</th><th>Conta</th><th>Igualo a 0</th></tr>
+                        <tr><td class="sim">$x$</td><td>$-y + \lambda$</td><td class="vale">$\lambda = y$</td></tr>
+                        <tr><td class="sim">$y$</td><td>$-x + \lambda$</td><td class="vale">$\lambda = x$</td></tr>
+                        <tr><td class="sim">$\lambda$</td><td>$x+y-20$</td><td class="vale">$x+y=20$</td></tr>
+                    </table>
+                    <div class="formula-box verde" style="font-size:0.8em;">
+                        Das duas primeiras: $x = y = \lambda$.<br>
+                        Jogando na terceira: $2x = 20 \Rightarrow$
+                        <strong>$x = y = 10$, $\lambda = 10$.</strong><br>
+                        <span class="small-text">Área $= 100$ m². É o quadrado, como esperávamos. ✔</span>
+                    </div>
+                </div>
+            </div>
+            <p class="small-text">
+                💡 Derivar $\mathcal{L}$ em $\lambda$ e igualar a zero <strong>devolve a própria restrição</strong>.
+                Não é coincidência — é assim que o método garante que a regra seja obedecida.
+            </p>
+        </section>
+
+        <!-- ============================= SLIDE 11: VERIFICA CERCA ============= -->
+        <section class="compact">
+            <h2>Conferindo: a substituição, número por número</h2>
+            <p>Esta é a parte que costuma travar. Vamos fazer <strong>devagar</strong>, trocando cada símbolo pelo seu valor.</p>
+            <div class="two-col">
+                <div class="col-text" style="flex:1.25;">
+                    <table class="numeric-example">
+                        <tr>
+                            <th style="width:22%;">Símbolo genérico</th>
+                            <th style="width:30%;">Substituindo</th>
+                            <th>Resultado</th>
+                        </tr>
+                        <tr><td class="left">$x^*$ (a solução)</td><td>—</td><td>$(10,\ 10)$</td></tr>
+                        <tr><td class="left">$\lambda$</td><td>—</td><td>$10$</td></tr>
+                        <tr><td class="left">$\nabla f = (-y,\,-x)$</td><td>$y=10,\ x=10$</td><td>$(-10,\ -10)$</td></tr>
+                        <tr><td class="left">$\nabla h = (1,\ 1)$</td><td>constante</td><td>$(1,\ 1)$</td></tr>
+                        <tr><td class="left">$\lambda\,\nabla h$</td><td>$10 \cdot (1,1)$</td><td>$(10,\ 10)$</td></tr>
+                        <tr class="ok"><td class="left"><strong>$\nabla f + \lambda\nabla h$</strong></td>
+                            <td>$(-10,-10) + (10,10)$</td>
+                            <td><strong>$(0,\ 0)$ ✔</strong></td></tr>
+                        <tr class="ok"><td class="left"><strong>$h(x^*) = x+y-20$</strong></td>
+                            <td>$10 + 10 - 20$</td>
+                            <td><strong>$0$ ✔</strong></td></tr>
+                    </table>
+                    <div class="leitura" style="margin-top:12px;">
+                        <b>Lendo a linha destacada em voz alta:</b> <em>“a seta que quer diminuir a área
+                        $(-10,-10)$ e a seta com que a restrição segura $(10,10)$ têm o mesmo tamanho
+                        e sentidos opostos — por isso elas somam zero e nada mais se move.”</em>
+                    </div>
+                </div>
+                <div class="col-img" style="flex:0.95;">
+                    <div class="canvas-container">
+                        <canvas id="cvCercaKkt" width="400" height="360"></canvas>
+                    </div>
+                    <p class="small-text" style="text-align:left; margin-top:6px;">
+                        A reta azul é a restrição $x+y=20$. As curvas cinzas são áreas constantes.
+                        No ótimo elas ficam <strong>tangentes</strong> — as setas, paralelas.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 12: SIGNIFICADO LAMBDA ========= -->
+        <section class="compact">
+            <h2>$\lambda$ não é lixo de conta: é um <em>preço</em></h2>
+            <p>Muita gente acha $\lambda$ e joga fora. Mas ele responde a pergunta mais valiosa da engenharia:
+               <strong>“quanto vale afrouxar a restrição?”</strong></p>
+            <div class="two-col">
+                <div class="col-img" style="flex:1.05;">
+                    <div class="canvas-container">
+                        <canvas id="cvPreco" width="450" height="320"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="preco">▶ Repetir animação</button>
+                </div>
+                <div class="col-text">
+                    <div class="formula-box ouro">
+                        $$\lambda \;=\; -\,\frac{\partial f^*}{\partial b}$$
+                        <span class="small-text">Quanto o resultado ótimo melhora por unidade de recurso a mais.
+                        Nome usual: <strong>preço-sombra</strong>.</span>
+                    </div>
+                    <p><strong>Na cerca:</strong> com 40 m de tela a área é 100 m².
+                       Com 41 m? A área passa a ≈ 105 m².</p>
+                    <table class="tradutor" style="font-size:0.66em;">
+                        <tr><th>Tela</th><th>Melhor área</th><th>Ganho</th></tr>
+                        <tr><td class="sim">40 m</td><td>100,00 m²</td><td class="vale">—</td></tr>
+                        <tr><td class="sim">41 m</td><td>105,06 m²</td><td class="vale">≈ 5</td></tr>
+                        <tr><td class="sim">42 m</td><td>110,25 m²</td><td class="vale">≈ 5</td></tr>
+                    </table>
+                    <p class="small-text">Cada metro extra de tela vale ~5 m² de terreno.
+                       <strong>Esse é o valor econômico da restrição</strong> — decide se compensa comprar mais tela.</p>
+                    <div class="aviso" style="font-size:0.68em; padding:8px 12px;">
+                        <b>Por que 5 e não 10?</b> Achamos $\lambda = 10$ para a restrição escrita como
+                        $x+y=20$ (meio-perímetro). Por <em>metro de tela</em> o perímetro é $2x+2y=40$,
+                        ou seja, o dobro — então o preço cai pela metade: $10/2 = 5$.
+                        <strong>$\lambda$ depende de como você escreveu a restrição.</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="aviso">
+                <b>Cuidado com a unidade:</b> $\lambda$ carrega a unidade de <em>$f$ dividido pela unidade da restrição</em>.
+                Aqui: m²/m = metros. Se $f$ fosse custo em R$ e a restrição fosse massa em kg, $\lambda$ sairia em <strong>R$/kg</strong>.
+            </div>
+        </section>
+
+        <!-- ===================== DIVISOR PARTE 3 ============================== -->
+        <section class="divider">
+            <div class="num">3</div>
+            <h2>Desigualdades: onde nasce o KKT</h2>
+            <p>Até aqui era Lagrange (1788). O que Karush, Kuhn e Tucker acrescentaram</p>
+        </section>
+
+        <!-- ============================= SLIDE 14: O PULO DO GATO ============= -->
+        <section class="compact">
+            <h2>A pergunta nova: a parede está sendo usada?</h2>
+            <p>Com igualdade ($h = 0$) você é <strong>obrigado</strong> a encostar na parede.
+               Com desigualdade ($g \le 0$) você <strong>pode ou não</strong> encostar. Isso muda tudo.</p>
+            <div class="two-col">
+                <div class="col-img" style="flex:1.1;">
+                    <div class="canvas-container">
+                        <canvas id="cvAtiva" width="470" height="330"></canvas>
+                    </div>
+                    <div class="passo-ctrl">
+                        <button class="anim-ctrl" data-passo-de="ativa" data-passo-acao="prev">◀</button>
+                        <span class="passo-lbl" data-passo-de="ativa" data-passo-acao="label">1 / 2</span>
+                        <button class="anim-ctrl" data-passo-de="ativa" data-passo-acao="next">▶</button>
+                        <button class="anim-ctrl" data-anim="ativa">▶ Animar</button>
+                    </div>
+                </div>
+                <div class="col-text">
+                    <div class="formula-box verde" style="font-size:0.8em;">
+                        <strong style="color:var(--math-green);">CASO A — restrição INATIVA (folgada)</strong><br>
+                        O mínimo natural já está dentro da área permitida.<br>
+                        A parede <strong>nem foi tocada</strong>.<br><br>
+                        ⇒ ela não empurrou nada: <strong>$\mu = 0$</strong><br>
+                        ⇒ vale a regra velha: $\nabla f = 0$
+                    </div>
+                    <div class="formula-box verm" style="font-size:0.8em;">
+                        <strong style="color:var(--math-red);">CASO B — restrição ATIVA (apertada)</strong><br>
+                        O mínimo natural está <strong>proibido</strong>.<br>
+                        A solução encosta na parede: $g = 0$.<br><br>
+                        ⇒ a parede empurrou: <strong>$\mu > 0$</strong><br>
+                        ⇒ vale $\nabla f + \mu\nabla g = 0$
+                    </div>
+                </div>
+            </div>
+            <div class="leitura">
+                <b>A observação central:</b> em qualquer um dos casos, <em>pelo menos um</em> entre
+                <b>$\mu$</b> e <b>$g$</b> é zero. Nunca os dois são diferentes de zero ao mesmo tempo.
+                Essa frase, escrita em símbolos, é <b>$\mu \cdot g = 0$</b> — a famosa <b>folga complementar</b>.
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 15: FOLGA COMPLEMENTAR ========= -->
+        <section class="compact">
+            <h2>Folga complementar: o interruptor $\mu \cdot g = 0$</h2>
+            <p>Este é o símbolo que mais assusta e o mais simples de todos. Ele é apenas um
+               <strong>interruptor liga/desliga</strong> escrito em linguagem matemática.</p>
+            <div class="two-col">
+                <div class="col-text" style="flex:1.15;">
+                    <table class="numeric-example">
+                        <tr>
+                            <th>Situação</th>
+                            <th>$g(x^*)$</th>
+                            <th>$\mu$</th>
+                            <th>$\mu \cdot g$</th>
+                            <th>Faz sentido?</th>
+                        </tr>
+                        <tr class="ok">
+                            <td class="left">Sobrou folga, parede não usada</td>
+                            <td>$-8$ &nbsp;<span class="small-text">(&lt;0)</span></td>
+                            <td>$0$</td><td>$0$ ✔</td>
+                            <td class="left">Sim: parede longe, não empurra</td>
+                        </tr>
+                        <tr class="ok">
+                            <td class="left">Encostou na parede</td>
+                            <td>$0$</td>
+                            <td>$4$ &nbsp;<span class="small-text">(&gt;0)</span></td>
+                            <td>$0$ ✔</td>
+                            <td class="left">Sim: parede em uso, empurra</td>
+                        </tr>
+                        <tr class="nok">
+                            <td class="left">Parede longe <em>mas</em> empurrando</td>
+                            <td>$-8$</td><td>$4$</td><td>$-32 \ne 0$ ✘</td>
+                            <td class="left">Absurdo: como empurra de longe?</td>
+                        </tr>
+                        <tr class="nok">
+                            <td class="left">Empurrão negativo</td>
+                            <td>$0$</td><td>$-4$</td><td>$0$</td>
+                            <td class="left">Absurdo: parede <em>puxando</em> para dentro</td>
+                        </tr>
+                    </table>
+                    <div class="aviso" style="margin-top:12px;">
+                        <b>Por que $\mu \ge 0$ (e $\lambda$ pode ser negativo)?</b>
+                        Uma parede só sabe <strong>empurrar</strong>, nunca puxar. Se a conta der $\mu &lt; 0$,
+                        significa que a solução queria <em>atravessar para o outro lado</em> — ou seja,
+                        aquela restrição não deveria estar ativa. Já a igualdade prende dos dois lados,
+                        então $\lambda$ tem sinal livre.
+                    </div>
+                </div>
+                <div class="col-img" style="flex:0.9;">
+                    <div class="canvas-container">
+                        <canvas id="cvFolga" width="390" height="340"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="folga">▶ Repetir animação</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 16: AS 4 CONDICOES ============= -->
+        <section class="compact">
+            <h2>As condições de KKT, enfim — todas as quatro</h2>
+            <p>Agora cada peça já foi vista separadamente. Juntando, para o problema
+               $\min f(x)$ sujeito a $g_i(x) \le 0$ e $h_j(x) = 0$:</p>
+            <table class="tradutor" style="font-size:0.7em;">
+                <tr>
+                    <th style="width:19%;">Condição</th>
+                    <th style="width:30%;">Em símbolos</th>
+                    <th>Em português</th>
+                </tr>
+                <tr>
+                    <td class="sim">1. Estacionaridade</td>
+                    <td style="text-align:center;">$\nabla f + \sum_i \mu_i \nabla g_i + \sum_j \lambda_j \nabla h_j = 0$</td>
+                    <td>As forças se cancelam. Ninguém consegue mais se mover e melhorar.</td>
+                </tr>
+                <tr>
+                    <td class="sim">2. Viabilidade</td>
+                    <td style="text-align:center;">$g_i(x) \le 0$ &nbsp;e&nbsp; $h_j(x) = 0$</td>
+                    <td>A solução <strong>obedece às regras</strong>. (Óbvio, mas precisa ser dito.)</td>
+                </tr>
+                <tr>
+                    <td class="sim">3. Sinal (dual)</td>
+                    <td style="text-align:center;">$\mu_i \ge 0$</td>
+                    <td>Paredes só empurram para dentro, nunca puxam.</td>
+                </tr>
+                <tr class="destaque">
+                    <td class="sim">4. Folga complementar</td>
+                    <td style="text-align:center;">$\mu_i \cdot g_i(x) = 0$</td>
+                    <td>Só empurra a parede em que se está <strong>encostado</strong>.</td>
+                </tr>
+            </table>
+            <div class="cards" style="margin-top:16px;">
+                <div class="card green">
+                    <h4>Onde já vimos cada uma</h4>
+                    <p><strong>1</strong> = bolinha parada na parede (slide 6).<br>
+                       <strong>2</strong> = respeitar os 40 m de tela.<br>
+                       <strong>3</strong> e <strong>4</strong> = o interruptor do slide anterior.</p>
+                </div>
+                <div class="card gold">
+                    <h4>Quantas equações?</h4>
+                    <p>$n$ variáveis + $m$ multiplicadores = <strong>$n+m$ incógnitas</strong>.
+                       As condições fornecem exatamente $n+m$ equações. Sistema fechado.</p>
+                </div>
+                <div class="card roxo">
+                    <h4>Se não há restrição</h4>
+                    <p>Não existem $g$ nem $h$; as condições 2–4 somem e a 1 vira
+                       $\nabla f = 0$. <strong>KKT contém o caso irrestrito.</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 17: RECEITA ==================== -->
+        <section class="compact">
+            <h2>A receita de bolo: como resolver na prática</h2>
+            <p>Sempre a mesma sequência. Vamos aplicá-la no próximo slide, passo a passo.</p>
+            <ol class="passos" style="font-size:0.94em;">
+                <li><strong>Padronize o problema.</strong> Transforme em minimização
+                    (troque o sinal se for máximo) e escreva toda desigualdade como $g \le 0$.</li>
+                <li><strong>Monte a Lagrangeana.</strong>
+                    $\mathcal{L} = f + \sum \mu_i g_i + \sum \lambda_j h_j$ — uma parcela por restrição.</li>
+                <li><strong>Derive e iguale a zero</strong> em cada variável $x$ (condição 1).
+                    Isso dá $n$ equações.</li>
+                <li><strong>Chute quais restrições estão ativas.</strong> Para cada desigualdade decida:
+                    ou $\mu_i = 0$ (folgada), ou $g_i = 0$ (encostada). <span class="small-text">São $2^m$ combinações — por isso começamos com poucas restrições.</span></li>
+                <li><strong>Resolva o sistema</strong> daquele cenário e ache $x$ e os multiplicadores.</li>
+                <li><strong>Teste o resultado</strong> contra as condições 2 e 3. Se $\mu &lt; 0$ ou alguma
+                    restrição foi violada, o chute estava errado — <strong>volte ao passo 4</strong>.</li>
+            </ol>
+            <div class="leitura">
+                <b>Por que “chutar” não é trapaça:</b> a folga complementar diz que cada desigualdade
+                está num de dois estados. Não há meio-termo. Testar as combinações é um método
+                <em>exato</em> — e os solvers numéricos (como o <code>fmincon</code>) fazem exatamente
+                isso de forma automática e esperta.
+            </div>
+        </section>
+
+        <!-- ===================== DIVISOR PARTE 4 ============================== -->
+        <section class="divider">
+            <div class="num">4</div>
+            <h2>Um exemplo inteiro, do zero ao fim</h2>
+            <p>Incluindo o chute errado — porque é assim que acontece de verdade</p>
+        </section>
+
+        <!-- ============================= SLIDE 19: O PROBLEMA ================= -->
+        <section class="compact">
+            <h2>Exemplo completo — passo 1: entender e padronizar</h2>
+            <div class="two-col">
+                <div class="col-text">
+                    <div class="formula-box">
+                        <strong>O problema:</strong>
+                        $$\min_{x,y}\; f(x,y) = (x-4)^2 + (y-4)^2$$
+                        $$\text{sujeito a}\quad x + y \le 4$$
+                    </div>
+                    <p><strong>Traduzindo para a vida real:</strong> você quer chegar o mais perto possível
+                       do alvo $(4,4)$, mas a soma dos seus dois recursos não pode passar de 4.</p>
+                    <table class="tradutor" style="font-size:0.68em;">
+                        <tr><th>Peça</th><th>O que é</th><th>Neste problema</th></tr>
+                        <tr><td class="sim">$f$</td><td>distância² até o alvo</td><td class="vale">$(x-4)^2+(y-4)^2$</td></tr>
+                        <tr><td class="sim">$g$</td><td>orçamento, já como $\le 0$</td><td class="vale">$x+y-4$</td></tr>
+                        <tr><td class="sim">$\nabla f$</td><td>derivadas de $f$</td><td class="vale">$\big(2(x-4),\,2(y-4)\big)$</td></tr>
+                        <tr><td class="sim">$\nabla g$</td><td>derivadas de $g$</td><td class="vale">$(1,\ 1)$</td></tr>
+                    </table>
+                </div>
+                <div class="col-img" style="flex:1;">
+                    <div class="canvas-container">
+                        <canvas id="cvEx1" width="420" height="350"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="ex1">▶ Repetir animação</button>
+                    <p class="small-text" style="text-align:left; margin-top:6px;">
+                        A área <span style="color:#27ae60;font-weight:700;">verde</span> é permitida.
+                        O alvo ✕ em $(4,4)$ está <strong>fora</strong> — logo a restrição vai atrapalhar.
+                    </p>
+                </div>
+            </div>
+            <div class="aviso">
+                <b>Primeira coisa a olhar sempre:</b> o mínimo sem restrição é o alvo $(4,4)$, onde $f=0$.
+                Ele obedece a regra? $4+4 = 8 \le 4$? <strong>Não!</strong> $8 > 4$.
+                Então a restrição <strong>vai estar ativa</strong> — já sabemos disso antes de qualquer conta.
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 20: CHUTE ERRADO =============== -->
+        <section class="compact">
+            <h2>Passo 2: o chute que <em>não</em> funciona (e como se descobre)</h2>
+            <p>A receita manda testar os cenários. Vamos ser honestos e começar pelo cenário mais
+               simples — que aqui vai <strong>falhar</strong>. Ver a falha é o que ensina a reconhecê-la.</p>
+            <div class="two-col" style="align-items:flex-start;">
+                <div style="flex:1;">
+                    <div class="formula-box verm">
+                        <strong style="color:var(--math-red);">CENÁRIO 1: “a restrição está folgada” ($\mu = 0$)</strong><br><br>
+                        Se $\mu = 0$, a condição 1 vira:
+                        $$\nabla f + 0\cdot\nabla g = 0 \;\Rightarrow\; \nabla f = 0$$
+                        Substituindo:
+                        $$2(x-4) = 0 \;\Rightarrow\; x = 4$$
+                        $$2(y-4) = 0 \;\Rightarrow\; y = 4$$
+                    </div>
+                    <p><strong>Agora o teste (condição 2 — viabilidade):</strong></p>
+                    <div class="formula-box verm" style="font-size:0.85em;">
+                        $g(4,4) = 4 + 4 - 4 = \mathbf{4}$<br>
+                        Mas precisamos de $g \le 0$, e $4 > 0$. &nbsp;<strong style="color:var(--math-red);">✘ VIOLADO</strong>
+                    </div>
+                    <p class="small-text">O ponto está fora da área permitida. <strong>Cenário descartado.</strong></p>
+                </div>
+                <div style="flex:1;">
+                    <div class="canvas-container">
+                        <canvas id="cvEx2" width="410" height="330"></canvas>
+                    </div>
+                    <div class="leitura" style="margin-top:10px;">
+                        <b>Como reconhecer o erro:</b> ao supor $\mu = 0$ você achou um ponto
+                        <b>proibido</b>. Isso é a prova de que a parede <em>é</em> necessária.
+                        Vá para o outro cenário: $g = 0$.
+                    </div>
+                </div>
+            </div>
+            <p class="small-text">
+                💡 Existe a falha oposta: supor a restrição ativa e achar $\mu &lt; 0$. Nesse caso a parede
+                estaria “puxando”, o que é impossível — e a conclusão é a inversa: a restrição era folgada.
+            </p>
+        </section>
+
+        <!-- ============================= SLIDE 21: CHUTE CERTO ================ -->
+        <section class="compact">
+            <h2>Passo 3: o cenário correto, resolvido linha a linha</h2>
+            <div class="two-col">
+                <div class="col-text" style="flex:1.25;">
+                    <div class="formula-box verde" style="font-size:0.82em;">
+                        <strong style="color:var(--math-green);">CENÁRIO 2: “a restrição está ativa” ($g = 0$, $\mu &gt; 0$)</strong>
+                    </div>
+                    <table class="numeric-example">
+                        <tr><th style="width:8%;">#</th><th style="width:38%;">Equação</th><th>De onde vem / o que dá</th></tr>
+                        <tr><td>A</td><td>$2(x-4) + \mu \cdot 1 = 0$</td><td class="left">Condição 1, derivando em $x$</td></tr>
+                        <tr><td>B</td><td>$2(y-4) + \mu \cdot 1 = 0$</td><td class="left">Condição 1, derivando em $y$</td></tr>
+                        <tr><td>C</td><td>$x + y - 4 = 0$</td><td class="left">Restrição ativa (hipótese do cenário)</td></tr>
+                        <tr><td>D</td><td>$x = 4 - \mu/2$</td><td class="left">Isolando $x$ em <strong>A</strong></td></tr>
+                        <tr><td>E</td><td>$y = 4 - \mu/2$</td><td class="left">Isolando $y$ em <strong>B</strong> (igual, por simetria)</td></tr>
+                        <tr><td>F</td><td>$(4-\tfrac{\mu}{2}) + (4-\tfrac{\mu}{2}) = 4$</td><td class="left">Jogando <strong>D</strong> e <strong>E</strong> dentro de <strong>C</strong></td></tr>
+                        <tr><td>G</td><td>$8 - \mu = 4$</td><td class="left">Somando os termos de <strong>F</strong></td></tr>
+                        <tr class="ok"><td>H</td><td>$\boldsymbol{\mu = 4}$</td><td class="left">Isolando. <strong>É positivo ✔</strong></td></tr>
+                        <tr class="ok"><td>I</td><td>$\boldsymbol{x = y = 4 - 4/2 = 2}$</td><td class="left">Voltando em <strong>D</strong> e <strong>E</strong></td></tr>
+                    </table>
+                </div>
+                <div class="col-img" style="flex:0.9;">
+                    <div class="canvas-container">
+                        <canvas id="cvEx3" width="400" height="340"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="ex3">▶ Repetir animação</button>
+                    <div class="formula-box verde" style="font-size:0.76em; margin-top:8px;">
+                        <strong>Solução:</strong> $x^* = (2,\ 2)$<br>
+                        $\mu = 4$, &nbsp; $f(2,2) = 8$
+                    </div>
+                </div>
+            </div>
+            <p class="small-text">
+                Repare no passo <strong>F</strong>: é exatamente “substituir a fórmula genérica pelo que ela vale”.
+                Toda a álgebra do KKT é isso — trocar símbolo por expressão e simplificar.
+            </p>
+        </section>
+
+        <!-- ============================= SLIDE 22: VERIFICACAO FINAL ========== -->
+        <section class="compact">
+            <h2>Passo 4: conferir as 4 condições (o checklist)</h2>
+            <p>Nunca entregue uma resposta sem passar por aqui. Com $x^*=(2,2)$ e $\mu=4$:</p>
+            <table class="numeric-example">
+                <tr>
+                    <th style="width:20%;">Condição</th>
+                    <th style="width:26%;">Fórmula genérica</th>
+                    <th style="width:32%;">Substituindo os números</th>
+                    <th>Veredito</th>
+                </tr>
+                <tr class="ok">
+                    <td class="left"><strong>1. Estacionaridade</strong></td>
+                    <td>$\nabla f + \mu\nabla g = 0$</td>
+                    <td>$(2(2\!-\!4),\,2(2\!-\!4)) + 4(1,1)$<br>$= (-4,-4)+(4,4) = (0,0)$</td>
+                    <td>✔ zerou</td>
+                </tr>
+                <tr class="ok">
+                    <td class="left"><strong>2. Viabilidade</strong></td>
+                    <td>$g(x^*) \le 0$</td>
+                    <td>$2 + 2 - 4 = 0 \le 0$</td>
+                    <td>✔ na fronteira</td>
+                </tr>
+                <tr class="ok">
+                    <td class="left"><strong>3. Sinal</strong></td>
+                    <td>$\mu \ge 0$</td>
+                    <td>$\mu = 4 \ge 0$</td>
+                    <td>✔ empurra</td>
+                </tr>
+                <tr class="ok">
+                    <td class="left"><strong>4. Folga complementar</strong></td>
+                    <td>$\mu \cdot g(x^*) = 0$</td>
+                    <td>$4 \times 0 = 0$</td>
+                    <td>✔ coerente</td>
+                </tr>
+            </table>
+            <div class="two-col" style="margin-top:14px; align-items:flex-start;">
+                <div style="flex:1;">
+                    <div class="leitura">
+                        <b>Conferência independente (força bruta):</b> varrendo toda a reta $x+y=4$ com passo
+                        de $0{,}0002$, o menor valor encontrado foi <b>$f = 8{,}000000$ em $(2{,}0000;\ 2{,}0000)$</b>.
+                        O KKT acertou <em>sem</em> testar ponto nenhum.
+                    </div>
+                </div>
+                <div style="flex:1;">
+                    <div class="formula-box ouro" style="font-size:0.8em;">
+                        <strong>E o $\mu = 4$, o que significa?</strong><br>
+                        Se o orçamento subisse de $4$ para $5$, $f$ cairia ≈ 4 unidades.<br>
+                        <span class="small-text">Confirmando: com $b=5$ a solução dá $f = 4{,}5$ — de fato
+                        caiu $3{,}5$, e a estimativa linear de $4$ é boa para passos pequenos.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 23: DUAS RESTRICOES ============ -->
+        <section class="compact">
+            <h2>Subindo o nível: duas restrições ao mesmo tempo</h2>
+            <p>Com $m$ desigualdades há $2^m$ cenários. Com duas, são quatro. Veja como a folga
+               complementar <strong>elimina</strong> os cenários impossíveis rapidamente.</p>
+            <div class="formula-box" style="font-size:0.86em;">
+                $\min f = (x-3)^2 + (y-2)^2$ &nbsp;&nbsp;s.a.&nbsp;&nbsp;
+                $g_1: x+y \le 4$ &nbsp;&nbsp;e&nbsp;&nbsp; $g_2: x \le 10$
+            </div>
+            <table class="numeric-example">
+                <tr>
+                    <th style="width:20%;">Cenário</th>
+                    <th style="width:26%;">Hipótese</th>
+                    <th style="width:28%;">O que sai</th>
+                    <th>Veredito</th>
+                </tr>
+                <tr class="nok">
+                    <td class="left">I — nenhuma ativa</td>
+                    <td>$\mu_1=\mu_2=0$</td>
+                    <td>$\nabla f = 0 \Rightarrow (3,2)$; mas $3+2=5 > 4$</td>
+                    <td class="left">✘ viola $g_1$</td>
+                </tr>
+                <tr class="ok">
+                    <td class="left"><strong>II — só $g_1$ ativa</strong></td>
+                    <td>$g_1=0,\ \mu_2=0$</td>
+                    <td>$\mu_1 = 1$, &nbsp;$x=2{,}5$, &nbsp;$y=1{,}5$</td>
+                    <td class="left"><strong>✔ tudo confere</strong></td>
+                </tr>
+                <tr class="nok">
+                    <td class="left">III — só $g_2$ ativa</td>
+                    <td>$g_2=0,\ \mu_1=0$</td>
+                    <td>$x=10 \Rightarrow 2(10-3)+\mu_2 = 0$, sai $\mu_2 = -14$</td>
+                    <td class="left">✘ exigiria $\mu_2 &lt; 0$</td>
+                </tr>
+                <tr class="nok">
+                    <td class="left">IV — ambas ativas</td>
+                    <td>$g_1=g_2=0$</td>
+                    <td>$x=10$ e $x+y=4 \Rightarrow y=-6$; sai $\mu_2 = -30$</td>
+                    <td class="left">✘ sinal impossível</td>
+                </tr>
+            </table>
+            <div class="two-col" style="margin-top:12px; align-items:flex-start;">
+                <div style="flex:1.05;">
+                    <table class="tradutor" style="font-size:0.66em;">
+                        <tr><th>Verificação do cenário II</th><th>Conta</th><th>OK?</th></tr>
+                        <tr><td class="sim">Estac. em $x$</td><td>$2(2{,}5-3) + 1\cdot 1 = -1+1$</td><td class="vale">$0$ ✔</td></tr>
+                        <tr><td class="sim">Estac. em $y$</td><td>$2(1{,}5-2) + 1\cdot 1 = -1+1$</td><td class="vale">$0$ ✔</td></tr>
+                        <tr><td class="sim">$g_1 = 0$</td><td>$2{,}5+1{,}5-4$</td><td class="vale">$0$ ✔</td></tr>
+                        <tr><td class="sim">$g_2 &lt; 0$</td><td>$2{,}5-10$</td><td class="vale">$-7{,}5$ ✔</td></tr>
+                        <tr><td class="sim">$\mu_2 \cdot g_2$</td><td>$0 \times (-7{,}5)$</td><td class="vale">$0$ ✔</td></tr>
+                    </table>
+                </div>
+                <div style="flex:0.95;">
+                    <div class="canvas-container">
+                        <canvas id="cvDuas" width="380" height="290"></canvas>
+                    </div>
+                </div>
+            </div>
+            <p class="small-text">Solução: $x^*=(2{,}5;\ 1{,}5)$, $f^*=0{,}5$ — confirmado por varredura numérica.
+               A restrição $g_2$ existe no papel mas <strong>não influencia nada</strong>: $\mu_2 = 0$.</p>
+        </section>
+
+        <!-- ===================== DIVISOR PARTE 5 ============================== -->
+        <section class="divider">
+            <div class="num">5</div>
+            <h2>Limitações: o que o KKT <em>não</em> garante</h2>
+            <p>Saber onde a ferramenta falha é tão importante quanto saber usá-la</p>
+        </section>
+
+        <!-- ============================= SLIDE 25: LIMITE 1 =================== -->
+        <section class="compact">
+            <h2>Limitação 1: KKT é <em>necessária</em>, não <em>suficiente</em></h2>
+            <p>Esta é a limitação mais importante e a mais mal compreendida. Traduzindo os termos:</p>
+            <div class="cards">
+                <div class="card green">
+                    <h4>✔ O que KKT garante</h4>
+                    <p>Se um ponto é mínimo (e há regularidade), então ele <strong>satisfaz</strong> KKT.<br>
+                       <em>Todo mínimo está na lista.</em></p>
+                </div>
+                <div class="card red">
+                    <h4>✘ O que NÃO garante</h4>
+                    <p>Satisfazer KKT <strong>não</strong> prova ser mínimo. Máximos e pontos de sela
+                       também satisfazem.<br><em>Nem tudo na lista é mínimo.</em></p>
+                </div>
+                <div class="card gold">
+                    <h4>Analogia</h4>
+                    <p>“Todo ladrão tem digital.” Isso ajuda a <strong>filtrar suspeitos</strong>,
+                       mas ter digital não faz de você ladrão.</p>
+                </div>
+            </div>
+            <div class="two-col" style="margin-top:14px;">
+                <div class="col-text">
+                    <div class="formula-box verm">
+                        <strong>Contraexemplo mínimo:</strong> $f(x,y) = x^2 - y^2$, sem restrições.<br><br>
+                        $\nabla f = (2x,\ -2y) = (0,0)$ em $(0,0)$. <strong>KKT satisfeito ✔</strong><br><br>
+                        Mas: $f(0,0) = 0$ &nbsp;e&nbsp; $f(0,1) = -1 &lt; 0$.<br>
+                        <strong style="color:var(--math-red);">Há vizinhos melhores — não é mínimo!</strong>
+                        É uma <strong>sela</strong>.
+                    </div>
+                    <p class="small-text">Para decidir, é preciso a <strong>2ª ordem</strong>: olhar a curvatura
+                       (Hessiana) nas direções permitidas. Ou provar que o problema é <strong>convexo</strong>.</p>
+                </div>
+                <div class="col-img">
+                    <div class="canvas-container">
+                        <canvas id="cvSela" width="420" height="300"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="sela">▶ Repetir animação</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 26: CONVEXIDADE ================ -->
+        <section class="compact">
+            <h2>A exceção de ouro: problemas convexos</h2>
+            <p>Existe uma família de problemas em que KKT deixa de ser só necessária e passa a ser
+               <strong>necessária E suficiente</strong>. Nela, KKT <em>prova</em> otimalidade global.</p>
+            <div class="two-col">
+                <div class="col-img" style="flex:1.05;">
+                    <div class="canvas-container">
+                        <canvas id="cvConvexo" width="450" height="300"></canvas>
+                    </div>
+                    <button class="anim-ctrl" data-anim="convexo">▶ Repetir animação</button>
+                </div>
+                <div class="col-text">
+                    <div class="formula-box verde">
+                        <strong>Problema convexo =</strong><br>
+                        • $f$ é convexa (“tigela”, sem ondulação)<br>
+                        • as $g_i$ são convexas<br>
+                        • as $h_j$ são <strong>lineares</strong><br><br>
+                        ⇒ KKT satisfeito <strong>⟺ mínimo global</strong>
+                    </div>
+                    <p><strong>Como reconhecer no dia a dia:</strong> somas de quadrados, normas,
+                       funções lineares, exponenciais — quase todo problema de <em>mínimos quadrados</em>
+                       ou <em>programação linear</em> é convexo.</p>
+                    <p class="small-text">Nos nossos exemplos: $(x-4)^2+(y-4)^2$ é convexa e $x+y-4$ é linear.
+                       Portanto $(2,2)$ não é “um” mínimo — é <strong>o</strong> mínimo global. Garantido.</p>
+                </div>
+            </div>
+            <div class="aviso">
+                <b>Sem convexidade, o que fazer?</b> KKT continua útil como <strong>critério de parada</strong>
+                e como filtro de candidatos, mas você só tem um mínimo <em>local</em>. É exatamente aí
+                que entram os métodos <strong>bioinspirados</strong> (PSO, GWO, genéticos) que estudamos —
+                eles varrem o espaço em busca de outros vales.
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 27: LIMITE 2 - LICQ =========== -->
+        <section class="compact">
+            <h2>Limitação 2: a “letra miúda” das qualificações</h2>
+            <p>Existe um caso raro, mas real, em que o ponto <strong>é</strong> o mínimo e mesmo assim
+               <strong>não existe</strong> multiplicador que feche a conta. KKT simplesmente não vale ali.</p>
+            <div class="two-col">
+                <div class="col-text" style="flex:1.15;">
+                    <div class="formula-box verm">
+                        <strong>Exemplo clássico:</strong>
+                        $$\min x \quad \text{s.a.} \quad h(x,y) = y^2 - x^3 = 0$$
+                        No ponto $(0,0)$, que é a solução:
+                        $$\nabla h = (-3x^2,\ 2y) \Big|_{(0,0)} = (0,\ 0)$$
+                        $$\nabla f = (1,\ 0)$$
+                        Precisaríamos de $\lambda$ com $(1,0) + \lambda(0,0) = (0,0)$.<br>
+                        <strong style="color:var(--math-red);">Nenhum $\lambda$ resolve isso.</strong>
+                    </div>
+                    <p><strong>O que deu errado:</strong> o gradiente da restrição <strong>morreu</strong>
+                       (virou zero) exatamente no ponto de interesse. A curva tem uma
+                       <em>bico/cúspide</em> ali, e a ideia de “direção perpendicular à parede” perde o sentido.</p>
+                </div>
+                <div class="col-img" style="flex:0.95;">
+                    <div class="canvas-container">
+                        <canvas id="cvLicq" width="400" height="320"></canvas>
+                    </div>
+                    <p class="small-text" style="text-align:left; margin-top:6px;">
+                        A curva $y^2 = x^3$ tem uma <strong>cúspide</strong> na origem —
+                        não existe reta tangente bem definida.
+                    </p>
+                </div>
+            </div>
+            <div class="formula-box ouro" style="font-size:0.78em;">
+                <strong>A condição que evita isso (LICQ):</strong> os gradientes das restrições
+                <strong>ativas</strong> devem ser linearmente independentes no ponto — em particular,
+                nenhum deles pode ser o vetor nulo.
+                <span class="small-text">Na prática de engenharia isso quase sempre vale; o problema aparece
+                com restrições redundantes (a mesma regra escrita duas vezes) ou geometrias degeneradas.</span>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 28: RESUMO LIMITES ============= -->
+        <section class="compact">
+            <h2>Quadro-resumo das limitações</h2>
+            <table class="numeric-example" style="font-size:0.66em;">
+                <tr>
+                    <th style="width:22%;">Limitação</th>
+                    <th style="width:30%;">O que pode acontecer</th>
+                    <th style="width:26%;">Como detectar</th>
+                    <th>O que fazer</th>
+                </tr>
+                <tr>
+                    <td class="left"><strong>Só 1ª ordem</strong></td>
+                    <td class="left">Encontrar sela ou máximo achando que é mínimo</td>
+                    <td class="left">Testar curvatura (Hessiana projetada)</td>
+                    <td class="left">Condições de 2ª ordem; ou provar convexidade</td>
+                </tr>
+                <tr>
+                    <td class="left"><strong>Mínimo local</strong></td>
+                    <td class="left">Parar num vale ruim; existe outro melhor longe dali</td>
+                    <td class="left">Rodar de vários pontos iniciais</td>
+                    <td class="left">Multi-start; métodos globais (PSO, GWO, AG)</td>
+                </tr>
+                <tr>
+                    <td class="left"><strong>Qualificação (LICQ)</strong></td>
+                    <td class="left">Não existir multiplicador, mesmo no ótimo</td>
+                    <td class="left">$\nabla g_i$ ativos nulos ou paralelos entre si</td>
+                    <td class="left">Remover restrições redundantes; reformular</td>
+                </tr>
+                <tr>
+                    <td class="left"><strong>Diferenciabilidade</strong></td>
+                    <td class="left">$f$ ou $g$ com “bico” (ex.: $|x|$) não têm gradiente</td>
+                    <td class="left">Módulos, mín/máx, degraus no modelo</td>
+                    <td class="left">Suavizar; ou usar subgradiente / reformular como LP</td>
+                </tr>
+                <tr>
+                    <td class="left"><strong>Explosão combinatória</strong></td>
+                    <td class="left">$2^m$ cenários: com 20 restrições, 1 milhão de casos</td>
+                    <td class="left">Muitas desigualdades no modelo</td>
+                    <td class="left">Não resolver à mão — usar <code>fmincon</code> / solver</td>
+                </tr>
+                <tr>
+                    <td class="left"><strong>Variáveis inteiras</strong></td>
+                    <td class="left">KKT usa derivadas; “3,5 parafusos” não existe</td>
+                    <td class="left">Modelo com contagens ou decisões sim/não</td>
+                    <td class="left">Programação inteira (branch-and-bound), não KKT</td>
+                </tr>
+            </table>
+            <div class="leitura" style="margin-top:14px;">
+                <b>Resumo honesto:</b> KKT é um <b>filtro poderoso e barato</b>, não um oráculo.
+                Ele reduz “procurar em infinitos pontos” a “resolver um sistema e conferir 4 regras”.
+                O que ele entrega é um <b>candidato</b>; transformá-lo em <b>certeza</b> exige
+                convexidade ou uma análise de 2ª ordem.
+            </div>
+        </section>
+
+        <!-- ===================== DIVISOR PARTE 6 ============================== -->
+        <section class="divider">
+            <div class="num">6</div>
+            <h2>Onde isso aparece na prática</h2>
+            <p>Engenharia, MATLAB e a ligação com o resto da disciplina</p>
+        </section>
+
+        <!-- ============================= SLIDE 30: APLICACOES ================= -->
+        <section class="compact">
+            <h2>Onde o KKT aparece de verdade</h2>
+            <div class="cards">
+                <div class="card">
+                    <h4>🔧 Projeto mecânico</h4>
+                    <p>Minimizar <strong>massa</strong> de uma peça com restrições de
+                       tensão máxima, deslocamento e frequência natural.
+                       Os $\mu_i$ dizem <em>quais</em> critérios estão dimensionando a peça.</p>
+                </div>
+                <div class="card green">
+                    <h4>📐 Otimização estrutural</h4>
+                    <p>Treliças e vigas: qual barra está no limite? A restrição com
+                       $\mu &gt; 0$ é a que <strong>governa o projeto</strong>. As de $\mu = 0$
+                       podem ser afrouxadas sem custo.</p>
+                </div>
+                <div class="card gold">
+                    <h4>💰 Economia / produção</h4>
+                    <p>É a origem do nome <strong>preço-sombra</strong>: quanto vale uma hora a mais
+                       de máquina, um kg a mais de matéria-prima.</p>
+                </div>
+            </div>
+            <div class="cards" style="margin-top:14px;">
+                <div class="card roxo">
+                    <h4>🤖 Machine Learning</h4>
+                    <p>O <strong>SVM</strong> (máquina de vetores de suporte) é resolvido inteiramente
+                       por KKT. Os “vetores de suporte” são exatamente os pontos com
+                       $\mu_i &gt; 0$ — os que <em>encostam</em> na margem.</p>
+                </div>
+                <div class="card red">
+                    <h4>⚙️ Dentro dos solvers</h4>
+                    <p>O <code>fmincon</code> não “procura” a resposta às cegas: ele
+                       persegue um ponto que satisfaça KKT. A <strong>“first-order optimality”</strong>
+                       impressa a cada iteração é o resíduo da condição 1.</p>
+                </div>
+                <div class="card">
+                    <h4>🧮 Controle e energia</h4>
+                    <p>Despacho econômico de geradores, controle preditivo (MPC):
+                       problemas convexos resolvidos milhares de vezes por segundo via KKT.</p>
+                </div>
+            </div>
+            <div class="leitura" style="margin-top:16px;">
+                <b>A pergunta de engenharia que o KKT responde melhor que qualquer outra ferramenta:</b>
+                <em>“de todas as especificações do meu projeto, quais estão realmente me limitando —
+                e quanto eu ganharia relaxando cada uma?”</em> A resposta é a lista de $\mu_i$.
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 31: MATLAB ===================== -->
+        <section class="compact">
+            <h2>No MATLAB: quem calcula o KKT por você</h2>
+            <p>Vamos resolver o <strong>mesmo exemplo</strong> do slide 19 ($\min (x-4)^2+(y-4)^2$
+               s.a. $x+y \le 4$) e comparar com a nossa conta manual.</p>
+<pre class="matlab">
+<span class="cm">% ---- objetivo: distancia ao quadrado ate o alvo (4,4) ----</span>
+f = @(v) (v(1)-4)^2 + (v(2)-4)^2;
+
+<span class="cm">% ---- restricao LINEAR de desigualdade: A*v &lt;= b  ->  x + y &lt;= 4 ----</span>
+A = [1 1];        <span class="cm">% coeficientes de x e y</span>
+b = 4;            <span class="cm">% lado direito</span>
+
+v0 = [0 0];       <span class="cm">% chute inicial (precisa ser viavel de preferencia)</span>
+
+opts = optimoptions(<span class="st">'fmincon'</span>, <span class="st">'Display'</span>, <span class="st">'iter'</span>, <span class="st">'Algorithm'</span>, <span class="st">'sqp'</span>);
+
+<span class="cm">% o 4o argumento de saida traz os MULTIPLICADORES DE KKT</span>
+[v, fval, flag, out, <span class="hl">lambda</span>] = fmincon(f, v0, A, b, [], [], [], [], [], opts);
+
+fprintf(<span class="st">'x* = (%.4f, %.4f)\n'</span>, v(1), v(2));
+fprintf(<span class="st">'f* = %.4f\n'</span>, fval);
+fprintf(<span class="st">'mu (ineqlin) = %.4f\n'</span>, <span class="hl">lambda.ineqlin</span>);
+</pre>
+            <div class="two-col" style="margin-top:12px; align-items:flex-start;">
+                <div style="flex:1.1;">
+                    <p><strong>Saída no Command Window:</strong>
+                       <span class="small-text">(as linhas intermediárias variam com a versão;
+                       o que importa são a 1ª e a última)</span></p>
+<pre class="matlab" style="font-size:0.5em;">
+                                    First-order
+ Iter F-count        f(x)          Feasibility   optimality
+    0       3    3.200000e+01     0.000e+00     8.000e+00
+    1       6    1.280000e+01     0.000e+00     4.800e+00
+    2       9    8.000000e+00     0.000e+00     1.421e-14
+
+Local minimum found that satisfies the constraints.
+
+x* = (2.0000, 2.0000)
+f* = 8.0000
+<span class="hl">mu (ineqlin) = 4.0000</span>
+</pre>
+                </div>
+                <div style="flex:0.95;">
+                    <table class="tradutor" style="font-size:0.66em;">
+                        <tr><th>Grandeza</th><th>Na mão</th><th>MATLAB</th></tr>
+                        <tr class="destaque"><td class="sim">$x^*$</td><td>$(2,\ 2)$</td><td class="vale">$(2{,}0000;\ 2{,}0000)$</td></tr>
+                        <tr class="destaque"><td class="sim">$f^*$</td><td>$8$</td><td class="vale">$8{,}0000$</td></tr>
+                        <tr class="destaque"><td class="sim">$\mu$</td><td>$4$</td><td class="vale">$4{,}0000$</td></tr>
+                    </table>
+                    <div class="formula-box verde" style="font-size:0.74em;">
+                        <strong>Bateu exatamente.</strong> O que fizemos em 9 linhas de álgebra,
+                        o solver faz em 2 iterações — mas resolvendo <em>as mesmas</em> condições de KKT.
+                    </div>
+                </div>
+            </div>
+            <div class="aviso">
+                <b>Leia a coluna <code>First-order optimality</code>:</b> ela é o tamanho de
+                $\|\nabla f + \sum\mu_i\nabla g_i\|$, ou seja, <strong>o resíduo da condição 1 de KKT</strong>.
+                Ela caiu de $8$ para $1{,}4\times10^{-14}$ — praticamente zero. É assim que o solver
+                sabe que chegou.
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 32: CAMPOS DO LAMBDA =========== -->
+        <section class="compact">
+            <h2>Lendo a estrutura <code>lambda</code> do MATLAB</h2>
+            <p>O <code>fmincon</code> devolve os multiplicadores <strong>separados por tipo de restrição</strong>.
+               Saber em qual campo olhar evita muita confusão:</p>
+            <table class="numeric-example" style="font-size:0.66em;">
+                <tr>
+                    <th style="width:24%;">Campo</th>
+                    <th style="width:30%;">Corresponde a</th>
+                    <th style="width:20%;">Símbolo teórico</th>
+                    <th>Sinal</th>
+                </tr>
+                <tr><td class="left"><code>lambda.ineqlin</code></td><td class="left">$A\,x \le b$ (linear)</td><td>$\mu$</td><td>$\ge 0$</td></tr>
+                <tr><td class="left"><code>lambda.eqlin</code></td><td class="left">$A_{eq}\,x = b_{eq}$ (linear)</td><td>$\lambda$</td><td>livre</td></tr>
+                <tr><td class="left"><code>lambda.ineqnonlin</code></td><td class="left">$c(x) \le 0$ (não linear)</td><td>$\mu$</td><td>$\ge 0$</td></tr>
+                <tr><td class="left"><code>lambda.eqnonlin</code></td><td class="left">$c_{eq}(x) = 0$ (não linear)</td><td>$\lambda$</td><td>livre</td></tr>
+                <tr><td class="left"><code>lambda.lower</code></td><td class="left">limite inferior $lb$</td><td>$\mu$</td><td>$\ge 0$</td></tr>
+                <tr><td class="left"><code>lambda.upper</code></td><td class="left">limite superior $ub$</td><td>$\mu$</td><td>$\ge 0$</td></tr>
+            </table>
+            <div class="two-col" style="margin-top:14px; align-items:flex-start;">
+                <div style="flex:1;">
+                    <p><strong>Diagnóstico de projeto em 3 linhas:</strong></p>
+<pre class="matlab" style="font-size:0.5em;">
+<span class="cm">% quais restricoes estao REALMENTE limitando o projeto?</span>
+ativas = find(lambda.ineqlin &gt; 1e-6);
+disp(<span class="st">'Restricoes ativas (governam o projeto):'</span>); disp(ativas);
+disp(<span class="st">'Valor de afrouxar 1 unidade de cada:'</span>);
+disp(lambda.ineqlin(ativas));
+</pre>
+                </div>
+                <div style="flex:1;">
+                    <div class="leitura">
+                        <b>Como usar isso no seu trabalho:</b> depois de otimizar, olhe os $\mu_i$.
+                        Os que vierem <b>≈ 0</b> são restrições que você pode até remover do modelo.
+                        O <b>maior</b> $\mu_i$ aponta a especificação que mais custa caro —
+                        é ali que vale a pena negociar com o cliente ou mudar o material.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 33: LIGACAO ==================== -->
+        <section class="compact">
+            <h2>Como o KKT se liga ao resto da disciplina</h2>
+            <p>Este não é um tópico isolado: é a <strong>cola</strong> que une o que já vimos.</p>
+            <table class="tradutor" style="font-size:0.68em;">
+                <tr><th style="width:26%;">Método estudado</th><th>Relação com KKT</th></tr>
+                <tr>
+                    <td class="sim">Descida mais rápida<br>Gradiente conjugado</td>
+                    <td>Resolvem o caso <strong>sem restrição</strong>. A condição de parada $\nabla f \approx 0$
+                        é o KKT quando não há nenhuma parede.</td>
+                </tr>
+                <tr>
+                    <td class="sim">Quase-Newton<br>(BFGS)</td>
+                    <td>Aproximam a <strong>curvatura</strong> — exatamente a informação de 2ª ordem que
+                        falta ao KKT para confirmar que o ponto é mínimo.</td>
+                </tr>
+                <tr>
+                    <td class="sim"><code>fmincon</code><br>(SQP, ponto interior)</td>
+                    <td><strong>Aplicação direta.</strong> Cada iteração resolve uma aproximação
+                        das condições de KKT; a “first-order optimality” é o resíduo delas.</td>
+                </tr>
+                <tr>
+                    <td class="sim">Genéticos, PSO, GWO<br>(bioinspirados)</td>
+                    <td><strong>Complementares.</strong> Não usam derivada nem KKT — servem justamente
+                        quando o problema é não convexo, não diferenciável ou discreto,
+                        casos em que o KKT falha.</td>
+                </tr>
+            </table>
+            <div class="cards" style="margin-top:16px;">
+                <div class="card green">
+                    <h4>Estratégia madura</h4>
+                    <p>Use um método <strong>global</strong> (PSO/GWO) para descobrir a região promissora,
+                       depois um método <strong>local</strong> baseado em KKT para refinar com precisão
+                       e obter os multiplicadores.</p>
+                </div>
+                <div class="card gold">
+                    <h4>O que só o KKT dá</h4>
+                    <p>Os bioinspirados devolvem <em>um ponto</em>. O KKT devolve o ponto
+                       <strong>e a explicação</strong>: quais restrições mandam e quanto valem.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 34: COLA ======================= -->
+        <section class="compact">
+            <h2>Cola final — leve isto para a prova</h2>
+            <div class="two-col" style="align-items:flex-start;">
+                <div style="flex:1.05;">
+                    <div class="formula-box">
+                        <strong>Problema padrão</strong>
+                        $$\min_x f(x) \quad \text{s.a.} \quad g_i(x) \le 0,\ \ h_j(x) = 0$$
+                    </div>
+                    <div class="formula-box ouro">
+                        <strong>Lagrangeana</strong>
+                        $$\mathcal{L} = f + \sum_i \mu_i g_i + \sum_j \lambda_j h_j$$
+                    </div>
+                    <div class="formula-box verde">
+                        <strong>As 4 condições</strong><br>
+                        1. $\nabla_x \mathcal{L} = 0$ &nbsp;<span class="small-text">(forças se cancelam)</span><br>
+                        2. $g_i \le 0$, &nbsp;$h_j = 0$ &nbsp;<span class="small-text">(obedece)</span><br>
+                        3. $\mu_i \ge 0$ &nbsp;<span class="small-text">(parede só empurra)</span><br>
+                        4. $\mu_i\, g_i = 0$ &nbsp;<span class="small-text">(interruptor)</span>
+                    </div>
+                </div>
+                <div style="flex:1;">
+                    <div class="formula-box verm">
+                        <strong>Erros que mais custam nota</strong>
+                        <ul style="margin:8px 0 0; font-size:0.82em;">
+                            <li>Esquecer de virar máximo em mínimo (trocar o sinal de $f$).</li>
+                            <li>Deixar a desigualdade como $\ge$ sem reescrever para $\le 0$.</li>
+                            <li>Aceitar $\mu &lt; 0$ como resposta.</li>
+                            <li>Não testar o cenário “restrição folgada”.</li>
+                            <li>Concluir “é o mínimo” sem convexidade nem 2ª ordem.</li>
+                            <li>Esquecer de conferir a viabilidade no final.</li>
+                        </ul>
+                    </div>
+                    <div class="leitura">
+                        <b>Se travar na prova, faça nesta ordem:</b><br>
+                        1. Ache o mínimo <b>sem</b> restrição.<br>
+                        2. Ele obedece às regras? <b>Acabou</b> — todos os $\mu = 0$.<br>
+                        3. Se viola alguma, force <b>aquela</b> a valer $=0$ e resolva.<br>
+                        4. Confira $\mu \ge 0$ e a viabilidade. Se falhar, mude o cenário.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= SLIDE 35: ENCERRAMENTO =============== -->
+        <section class="slide-centro" style="text-align:center;">
+            <h2 style="align-self:center;">Em uma frase</h2>
+            <p style="font-size:1.05em; max-width:820px; margin:18px auto; line-height:1.5em;">
+                As condições de KKT substituem a regra
+                <em>“a inclinação tem que ser zero”</em> por
+                <strong style="color:var(--ufpr-blue);">“a inclinação tem que ser exatamente
+                aquilo que as paredes conseguem segurar”</strong> —
+                e, de quebra, entregam o <strong style="color:var(--math-gold);">preço</strong>
+                de cada parede.
+            </p>
+            <div class="cards" style="max-width:900px; margin:24px auto 0;">
+                <div class="card green"><h4>Se lembrar de uma coisa</h4>
+                    <p>$\mu_i \cdot g_i = 0$: <strong>ou a restrição está folgada, ou ela está empurrando.</strong> Nunca as duas.</p></div>
+                <div class="card gold"><h4>Se lembrar de duas</h4>
+                    <p>KKT dá <strong>candidatos</strong>. Só a convexidade transforma candidato em <strong>certeza global</strong>.</p></div>
+            </div>
+            <p class="small-text" style="margin-top:34px;">
+                Universidade Federal do Paraná &nbsp;·&nbsp; Engenharia Mecânica<br>
+                Otimização &nbsp;·&nbsp; Prof. Dr. Carlos Alberto Bavastri
+            </p>
+        </section>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+<script>
+    Reveal.initialize({
+        hash: true,
+        center: false,
+        transition: 'slide',
+        slideNumber: 'c/t',
+        width: 1100,
+        height: 800,
+        margin: 0.04,
+        minScale: 0.2,
+        maxScale: 1.5
+    });
+
+    // --- Botao Gerar PDF ---
+    document.getElementById('btnPdf').addEventListener('click', function () {
+        if (window.location.search.indexOf('print-pdf') === -1) {
+            const sep = window.location.search ? '&' : '?';
+            window.location.href = window.location.pathname + window.location.search + sep + 'print-pdf';
+        } else {
+            window.print();
+        }
+    });
+    if (window.location.search.indexOf('print-pdf') !== -1) {
+        window.addEventListener('load', () => setTimeout(() => window.print(), 1200));
+    }
+
+    // Renderiza as formulas com KaTeX
+    renderMathInElement(document.body, {
+        delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$',  right: '$',  display: false }
+        ],
+        throwOnError: false
+    });
+
+    /* Guarda contra estouro vertical: se o conteudo passar da altura util do
+       slide, reduz a fonte ate caber. Evita texto cortado no projetor.      */
+    function ajustarAltura() {
+        const ALTURA = 800, MARGEM = 24;
+        document.querySelectorAll('.reveal .slides section').forEach(s => {
+            s.style.fontSize = '';
+            if (s.classList.contains('divider') || s.classList.contains('slide-centro')) return;
+            let escala = 1;
+            for (let i = 0; i < 8 && s.scrollHeight > ALTURA - MARGEM; i++) {
+                escala -= 0.04;
+                s.style.fontSize = (0.82 * escala).toFixed(3) + 'em';
+            }
+        });
+    }
+
+    /* =======================================================================
+       ENGINE DE DESENHO / ANIMACAO
+       ANIM[nome] = {draw(t), dur}. draw(t) recebe t de 0 a 1 e congela no
+       quadro final, para que a impressao em PDF capture a figura completa.
+       ======================================================================= */
+    const cores = {
+        azul:   '#004a8e',
+        claro:  '#2e6fc4',
+        verde:  '#27ae60',
+        verm:   '#e74c3c',
+        ouro:   '#f39c12',
+        roxo:   '#8e44ad',
+        cinza:  '#7f8c9b',
+        grade:  '#eef1f6'
+    };
+
+    // ---- utilitarios de desenho -------------------------------------------
+    function grade(ctx, w, h, passo) {
+        ctx.strokeStyle = cores.grade; ctx.lineWidth = 1;
+        for (let i = 0; i <= w; i += (passo || 40)) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,h); ctx.stroke(); }
+        for (let i = 0; i <= h; i += (passo || 40)) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(w,i); ctx.stroke(); }
+    }
+    function ponto(ctx, x, y, cor, r) {
+        ctx.fillStyle = cor; ctx.beginPath(); ctx.arc(x, y, r || 5, 0, Math.PI*2); ctx.fill();
+    }
+    function texto(ctx, s, x, y, cor, font) {
+        ctx.fillStyle = cor || '#333'; ctx.font = font || '12px Arial'; ctx.fillText(s, x, y);
+    }
+    function seta(ctx, x1, y1, x2, y2, cor, lw) {
+        const ang = Math.atan2(y2-y1, x2-x1), hl = 9;
+        ctx.strokeStyle = cor; ctx.lineWidth = lw || 2;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2,y2);
+        ctx.lineTo(x2 - hl*Math.cos(ang - Math.PI/6), y2 - hl*Math.sin(ang - Math.PI/6));
+        ctx.lineTo(x2 - hl*Math.cos(ang + Math.PI/6), y2 - hl*Math.sin(ang + Math.PI/6));
+        ctx.closePath(); ctx.fillStyle = cor; ctx.fill();
+    }
+    function rotulo(ctx, s, x, y, cor, font) {
+        ctx.font = font || 'bold 12px Arial';
+        const larg = ctx.measureText(s).width;
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.fillRect(x - 3, y - 12, larg + 6, 16);
+        ctx.fillStyle = cor || '#333';
+        ctx.fillText(s, x, y);
+    }
+    const suave = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+
+    // ---- registro e motor -------------------------------------------------
+    const ANIM = {};
+    const RODANDO = {};
+
+    function registrar(nome, idCanvas, dur, draw) {
+        const cv = document.getElementById(idCanvas);
+        if (!cv) return;
+        ANIM[nome] = { cv, ctx: cv.getContext('2d'), dur, draw };
+    }
+
+    const PASSOS = {};
+    const PASSO_ATUAL = {};
+
+    function tParaPasso(nome, i) {
+        const n = PASSOS[nome];
+        if (i >= n) return 1;
+        return (i + 0.5) / n;
+    }
+    function desenharPasso(nome, i) {
+        const a = ANIM[nome];
+        if (!a) return;
+        if (RODANDO[nome]) { cancelAnimationFrame(RODANDO[nome]); RODANDO[nome] = null; }
+        const n = PASSOS[nome];
+        i = Math.max(0, Math.min(n, i));
+        PASSO_ATUAL[nome] = i;
+        a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+        a.draw(tParaPasso(nome, i));
+        atualizarCtrlPasso(nome);
+    }
+    function passoAnterior(nome) { desenharPasso(nome, (PASSO_ATUAL[nome] ?? 0) - 1); }
+    function passoSeguinte(nome) { desenharPasso(nome, (PASSO_ATUAL[nome] ?? 0) + 1); }
+
+    function atualizarCtrlPasso(nome) {
+        const n = PASSOS[nome], i = PASSO_ATUAL[nome] ?? 0;
+        document.querySelectorAll('[data-passo-de="' + nome + '"]').forEach(el => {
+            const acao = el.dataset.passoAcao;
+            if (acao === 'label')      el.textContent = (i >= n ? n : i + 1) + ' / ' + n;
+            else if (acao === 'prev')  el.disabled = (i <= 0);
+            else if (acao === 'next')  el.disabled = (i >= n);
+        });
+    }
+
+    let fatorVel = 1.6;
+    try {
+        const salvo = parseFloat(localStorage.getItem('kktVel'));
+        if (isFinite(salvo) && salvo > 0) fatorVel = salvo;
+    } catch (e) { /* localStorage indisponivel */ }
+
+    function tocar(nome) {
+        const a = ANIM[nome];
+        if (!a) return;
+        if (RODANDO[nome]) cancelAnimationFrame(RODANDO[nome]);
+        const dur = a.dur * fatorVel;
+        const t0 = performance.now();
+        const passo = (agora) => {
+            const t = Math.min(1, (agora - t0) / dur);
+            a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+            a.draw(t);
+            if (t < 1) RODANDO[nome] = requestAnimationFrame(passo);
+            else RODANDO[nome] = null;
+        };
+        RODANDO[nome] = requestAnimationFrame(passo);
+    }
+    function quadroFinal(nome) {
+        const a = ANIM[nome];
+        if (!a) return;
+        a.ctx.clearRect(0, 0, a.cv.width, a.cv.height);
+        a.draw(1);
+    }
+
+    /* =======================================================================
+       FIGURA 1 — Slide 4: a cerca crescendo ate o quadrado
+       Mostra retangulos de mesmo perimetro (40 m) e a area de cada um.
+       ======================================================================= */
+    registrar('cerca', 'cvCerca', 3000, function (t) {
+        const a = ANIM.cerca, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        grade(ctx, w, h, 30);
+
+        // percorre larguras de 2 a 10 (o resto vem de x+y=20)
+        const lado = 2 + 8 * tt;             // largura x
+        const alt  = 20 - lado;              // altura y (perimetro fixo)
+        const esc  = 11;                     // pixels por metro
+        const ox = 40, oy = h - 40;          // origem do desenho
+
+        // retangulo atual
+        const lw = lado * esc, lh = alt * esc;
+        ctx.fillStyle = 'rgba(39,174,96,0.18)';
+        ctx.fillRect(ox, oy - lh, lw, lh);
+        ctx.strokeStyle = cores.verde; ctx.lineWidth = 3;
+        ctx.strokeRect(ox, oy - lh, lw, lh);
+
+        // eixos
+        ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(ox, 20); ctx.lineTo(ox, oy); ctx.lineTo(w - 20, oy); ctx.stroke();
+
+        // cotas
+        texto(ctx, lado.toFixed(1) + ' m', ox + lw/2 - 18, oy + 20, cores.azul, 'bold 13px Arial');
+        ctx.save();
+        ctx.translate(ox - 12, oy - lh/2 + 20); ctx.rotate(-Math.PI/2);
+        texto(ctx, alt.toFixed(1) + ' m', 0, 0, cores.azul, 'bold 13px Arial');
+        ctx.restore();
+
+        // area (destaque quando chega no quadrado)
+        const area = lado * alt;
+        const otimo = Math.abs(lado - 10) < 0.15;
+        rotulo(ctx, 'Área = ' + area.toFixed(1) + ' m²',
+               ox + 14, oy - lh - 14, otimo ? cores.verde : '#555',
+               'bold ' + (otimo ? 17 : 14) + 'px Arial');
+
+        // barra de "quanto de tela usei" — sempre 40 m
+        texto(ctx, 'tela usada: 2(' + lado.toFixed(1) + ' + ' + alt.toFixed(1) + ') = 40,0 m',
+              ox, 20, cores.verm, 'bold 12px Arial');
+
+        // marca o maximo alcancado
+        if (otimo) {
+            rotulo(ctx, '★ máximo: quadrado 10 × 10', ox + 14, 44, cores.verde, 'bold 14px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 2 — Slide 5a: minimo SEM restricao (bolinha para no fundo)
+       ======================================================================= */
+    registrar('semRestr', 'cvSemRestr', 2200, function (t) {
+        const a = ANIM.semRestr, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        // parabola: y = (x-cx)^2 ...
+        const cx = w/2, base = h - 40, k = 0.0042;
+        const curvaY = (x) => base - 150 + k * (x - cx) * (x - cx);
+
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let x = 20; x <= w - 20; x += 2) {
+            const y = curvaY(x);
+            x === 20 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // bolinha descendo de x=60 ate o fundo cx
+        const bx = 60 + (cx - 60) * tt;
+        const by = curvaY(bx);
+        ponto(ctx, bx, by - 8, cores.verm, 9);
+
+        // inclinacao no ponto (derivada)
+        const d = 2 * k * (bx - cx);
+        const ang = Math.atan(d);
+        const L = 42;
+        ctx.strokeStyle = cores.ouro; ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(bx - L*Math.cos(ang), by - 8 - L*Math.sin(ang));
+        ctx.lineTo(bx + L*Math.cos(ang), by - 8 + L*Math.sin(ang));
+        ctx.stroke();
+
+        if (tt > 0.93) {
+            rotulo(ctx, 'inclinação = 0  ✔', cx - 44, by - 30, cores.verde, 'bold 14px Arial');
+            ponto(ctx, cx, curvaY(cx) - 8, cores.verde, 9);
+        } else {
+            rotulo(ctx, 'ainda desce...', bx - 30, by - 34, '#777', 'bold 12px Arial');
+        }
+        texto(ctx, 'sem parede: para onde o chão é plano', 16, 22, '#555', 'italic 12px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 3 — Slide 5b: minimo COM restricao (bolinha trava na parede)
+       ======================================================================= */
+    registrar('comRestr', 'cvComRestr', 2200, function (t) {
+        const a = ANIM.comRestr, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        const cx = w/2 + 60, base = h - 40, k = 0.0042;
+        const curvaY = (x) => base - 150 + k * (x - cx) * (x - cx);
+        const xParede = w/2 - 30;
+
+        // regiao proibida (a direita da parede)
+        ctx.fillStyle = 'rgba(231,76,60,0.08)';
+        ctx.fillRect(xParede, 0, w - xParede, h);
+
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let x = 20; x <= w - 20; x += 2) {
+            const y = curvaY(x);
+            x === 20 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // parede
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(xParede, 10); ctx.lineTo(xParede, h - 12); ctx.stroke();
+        texto(ctx, 'parede', xParede + 6, 24, cores.verm, 'bold 12px Arial');
+
+        // bolinha: desce e trava na parede
+        const alvo = xParede;
+        const bx = 60 + (alvo - 60) * tt;
+        const by = curvaY(bx);
+        ponto(ctx, bx, by - 8, cores.verm, 9);
+
+        const d = 2 * k * (bx - cx);
+        const ang = Math.atan(d);
+        const L = 42;
+        ctx.strokeStyle = cores.ouro; ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(bx - L*Math.cos(ang), by - 8 - L*Math.sin(ang));
+        ctx.lineTo(bx + L*Math.cos(ang), by - 8 + L*Math.sin(ang));
+        ctx.stroke();
+
+        // o fundo verdadeiro fica na area proibida
+        ponto(ctx, cx, curvaY(cx) - 8, '#bbb', 7);
+        rotulo(ctx, 'fundo (proibido)', cx - 40, curvaY(cx) + 18, '#aaa', 'italic 11px Arial');
+
+        if (tt > 0.93) {
+            rotulo(ctx, 'inclinação ≠ 0  ✘', bx - 118, by - 34, cores.verm, 'bold 14px Arial');
+        }
+        texto(ctx, 'com parede: para inclinada', 16, 22, '#555', 'italic 12px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 4 — Slide 6: equilibrio de forcas na parede
+       ======================================================================= */
+    registrar('forcas', 'cvForcas', 3200, function (t) {
+        const a = ANIM.forcas, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        grade(ctx, w, h, 40);
+
+        // rampa inclinada (o "chao")
+        const x0 = 40, y0 = 80, x1 = w - 60, y1 = h - 70;
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.fillStyle = 'rgba(0,74,142,0.06)';
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.lineTo(x1,h); ctx.lineTo(x0,h); ctx.closePath(); ctx.fill();
+        texto(ctx, 'o "chão" de f — inclinado', x0 + 6, y0 - 10, cores.azul, 'italic 12px Arial');
+
+        // parede vertical onde a bolinha trava
+        const xp = x1 - 90;
+        const yp = y0 + (y1 - y0) * (xp - x0) / (x1 - x0);
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(xp, yp - 130); ctx.lineTo(xp, yp + 46); ctx.stroke();
+        // hachuras do lado proibido
+        ctx.strokeStyle = 'rgba(231,76,60,0.45)'; ctx.lineWidth = 2;
+        for (let yy = yp - 126; yy < yp + 44; yy += 12) {
+            ctx.beginPath(); ctx.moveTo(xp, yy); ctx.lineTo(xp + 13, yy + 9); ctx.stroke();
+        }
+        texto(ctx, 'parede: g(x) = 0', xp + 8, yp - 136, cores.verm, 'bold 12px Arial');
+
+        // bolinha desliza ate a parede
+        const bx = x0 + 30 + (xp - x0 - 30) * Math.min(1, tt / 0.55);
+        const by = y0 + (y1 - y0) * (bx - x0) / (x1 - x0);
+        ponto(ctx, bx, by - 11, cores.roxo, 11);
+
+        // depois de encostar, aparecem as setas de forca
+        if (tt > 0.55) {
+            const f = Math.min(1, (tt - 0.55) / 0.3);
+            // gravidade / -grad f: ao longo da rampa, para baixo
+            const ang = Math.atan2(y1 - y0, x1 - x0);
+            const L = 72 * f;
+            seta(ctx, bx, by - 11,
+                 bx + L*Math.cos(ang), by - 11 + L*Math.sin(ang), cores.verm, 3.5);
+            rotulo(ctx, '−∇f  (quer descer)', bx + 6, by + 44, cores.verm, 'bold 12px Arial');
+
+            // reacao da parede: horizontal, para a esquerda
+            seta(ctx, bx, by - 11, bx - L*Math.cos(ang), by - 11 - L*Math.sin(ang), cores.azul, 3.5);
+            rotulo(ctx, 'μ·∇g  (parede segura)', bx - 165, by - 56, cores.azul, 'bold 12px Arial');
+        }
+        if (tt > 0.9) {
+            rotulo(ctx, 'soma = 0  →  equilíbrio  ✔', 30, h - 18, cores.verde, 'bold 15px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 5 — Slide 9: o gradiente como seta de subida
+       ======================================================================= */
+    registrar('grad', 'cvGrad', 2800, function (t) {
+        const a = ANIM.grad, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        // f = (x-cx)^2 + (y-cy)^2 desenhada como circulos de nivel
+        const cx = w/2, cy = h/2 + 10;
+        for (let r = 30; r <= 165; r += 27) {
+            ctx.strokeStyle = '#dde4ec'; ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+        }
+        ponto(ctx, cx, cy, cores.cinza, 5);
+        rotulo(ctx, 'mínimo de f', cx + 10, cy + 20, '#888', 'italic 11px Arial');
+
+        // ponto que percorre um arco
+        const ang = -0.9 + 1.5 * tt;
+        const R = 118;
+        const px = cx + R*Math.cos(ang), py = cy + R*Math.sin(ang);
+        ponto(ctx, px, py, cores.roxo, 8);
+
+        // grad f aponta para FORA (f cresce afastando-se do centro)
+        const ux = Math.cos(ang), uy = Math.sin(ang);
+        seta(ctx, px, py, px + 62*ux, py + 62*uy, cores.verm, 3);
+        rotulo(ctx, '∇f  (sobe)', px + 62*ux + 6, py + 62*uy + 4, cores.verm, 'bold 12px Arial');
+
+        // -grad f aponta para o centro
+        seta(ctx, px, py, px - 62*ux, py - 62*uy, cores.verde, 3);
+        rotulo(ctx, '−∇f  (desce)', px - 62*ux - 84, py - 62*uy - 6, cores.verde, 'bold 12px Arial');
+
+        texto(ctx, 'curvas cinzas = pontos de mesmo valor de f', 12, 18, '#777', 'italic 11px Arial');
+        texto(ctx, 'a seta é sempre perpendicular à curva de nível', 12, h - 12, '#777', 'italic 11px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 6 — Slide 11: a cerca no plano x-y, gradientes paralelos
+       ======================================================================= */
+    registrar('cercaKkt', 'cvCercaKkt', 100, function (t) {
+        const a = ANIM.cercaKkt, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        // dominio 0..20 em x e y
+        const M = 42;                                   // margem
+        const px = (x) => M + (x / 22) * (w - M - 14);
+        const py = (y) => (h - M) - (y / 22) * (h - M - 16);
+
+        grade(ctx, w, h, 36);
+        // eixos
+        ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(0), 12); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(w - 8, py(0)); ctx.stroke();
+        texto(ctx, 'x', w - 18, py(0) + 18, '#666', 'bold 12px Arial');
+        texto(ctx, 'y', px(0) - 18, 20, '#666', 'bold 12px Arial');
+
+        // hiperboles de area constante: y = A/x
+        [40, 70, 100, 140].forEach(A => {
+            ctx.strokeStyle = (A === 100) ? cores.ouro : '#dde4ec';
+            ctx.lineWidth = (A === 100) ? 2.2 : 1.2;
+            ctx.beginPath();
+            let inic = false;
+            for (let x = 1.6; x <= 21; x += 0.12) {
+                const y = A / x;
+                if (y > 21.5) continue;
+                inic ? ctx.lineTo(px(x), py(y)) : (ctx.moveTo(px(x), py(y)), inic = true);
+            }
+            ctx.stroke();
+            const yr = A / 18;
+            if (yr < 21) rotulo(ctx, 'A=' + A, px(18) - 6, py(yr) - 4,
+                                (A === 100) ? '#b9770e' : '#aab4c0', 'bold 10px Arial');
+        });
+
+        // restricao x+y=20
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(px(0), py(20)); ctx.lineTo(px(20), py(0)); ctx.stroke();
+        rotulo(ctx, 'x + y = 20', px(1.5), py(19.4), cores.azul, 'bold 12px Arial');
+
+        // ponto otimo (10,10)
+        const ox = px(10), oy = py(10);
+        ponto(ctx, ox, oy, cores.verde, 8);
+        rotulo(ctx, '(10, 10)', ox + 12, oy + 20, cores.verde, 'bold 13px Arial');
+
+        // setas: grad f = (-10,-10) normalizado; lambda*grad h = (10,10)
+        const E = 3.6;                       // escala visual das setas
+        seta(ctx, ox, oy, ox - 10*E, oy + 10*E, cores.verm, 3);
+        rotulo(ctx, '∇f = (−10,−10)', ox - 10*E - 96, oy + 10*E + 16, cores.verm, 'bold 11px Arial');
+        seta(ctx, ox, oy, ox + 10*E, oy - 10*E, cores.azul, 3);
+        rotulo(ctx, 'λ∇h = (10, 10)', ox + 10*E + 4, oy - 10*E - 6, cores.azul, 'bold 11px Arial');
+
+        texto(ctx, 'no ótimo as setas são paralelas e opostas → somam zero',
+              12, h - 10, '#666', 'italic 11px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 7 — Slide 12: lambda como preco-sombra
+       A area otima cresce ~5 m2 por metro de tela.
+       ======================================================================= */
+    registrar('preco', 'cvPreco', 3000, function (t) {
+        const a = ANIM.preco, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        const M = 52;
+        const P0 = 36, P1 = 46;                       // faixa de perimetro
+        const A = (P) => P*P/16;                      // area otima
+        const px = (P) => M + (P - P0)/(P1 - P0) * (w - M - 22);
+        const py = (Ar) => (h - 44) - (Ar - 70)/(70) * (h - 80);
+
+        grade(ctx, w, h, 38);
+        ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(M, 14); ctx.lineTo(M, h - 44); ctx.lineTo(w - 12, h - 44); ctx.stroke();
+        texto(ctx, 'tela disponível (m)', w/2 - 52, h - 14, '#666', 'bold 11px Arial');
+        ctx.save(); ctx.translate(15, h/2 + 40); ctx.rotate(-Math.PI/2);
+        texto(ctx, 'melhor área (m²)', 0, 0, '#666', 'bold 11px Arial'); ctx.restore();
+
+        // curva A(P)
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let P = P0; P <= P1; P += 0.1) {
+            const X = px(P), Y = py(A(P));
+            P === P0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+        }
+        ctx.stroke();
+
+        // ponto que anda sobre a curva
+        const Pc = 38 + 6 * tt;
+        ponto(ctx, px(Pc), py(A(Pc)), cores.verm, 7);
+        rotulo(ctx, 'P=' + Pc.toFixed(1) + ' → A=' + A(Pc).toFixed(1),
+               px(Pc) + 10, py(A(Pc)) - 10, cores.verm, 'bold 11px Arial');
+
+        // triangulo mostrando a inclinacao em P=40 (dA/dP = 5)
+        if (tt > 0.35) {
+            const f = Math.min(1, (tt - 0.35) / 0.35);
+            const xa = px(40), ya = py(A(40));
+            const xb = px(41), yb = py(A(41));
+            ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(xa, ya);
+            ctx.lineTo(xa + (xb - xa)*f, ya);
+            ctx.lineTo(xa + (xb - xa)*f, ya + (yb - ya)*f);
+            ctx.stroke();
+            if (f > 0.85) {
+                rotulo(ctx, '+1 m', (xa + xb)/2 - 12, ya + 16, '#b9770e', 'bold 11px Arial');
+                rotulo(ctx, '+5 m²', xb + 6, (ya + yb)/2, '#b9770e', 'bold 12px Arial');
+            }
+        }
+        if (tt > 0.8) {
+            rotulo(ctx, 'inclinação = λ ≈ 5 m²/m', M + 14, 30, cores.verde, 'bold 14px Arial');
+        }
+    });
+
+    /* Desenha uma "cena" generica: alvo (minimo irrestrito), regiao viavel
+       delimitada por x+y<=b, circulos de nivel e a solucao. Reaproveitada
+       por varias figuras. Coordenadas do problema: 0..6 nos dois eixos.    */
+    function cenaRestrita(ctx, w, h, opc) {
+        const M = 40;
+        const px = (x) => M + (x / 6) * (w - M - 16);
+        const py = (y) => (h - M) - (y / 6) * (h - M - 16);
+        const alvo = opc.alvo, b = opc.b;
+
+        grade(ctx, w, h, 34);
+
+        // regiao viavel x+y<=b (poligono com os eixos)
+        ctx.fillStyle = 'rgba(39,174,96,0.13)';
+        ctx.beginPath();
+        ctx.moveTo(px(0), py(0));
+        ctx.lineTo(px(0), py(Math.min(b, 6)));
+        if (b <= 6) ctx.lineTo(px(b), py(0));
+        else { ctx.lineTo(px(b - 6), py(6)); ctx.lineTo(px(6), py(6)); ctx.lineTo(px(6), py(0)); }
+        ctx.closePath(); ctx.fill();
+
+        // eixos
+        ctx.strokeStyle = '#999'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(0), 12); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(w - 8, py(0)); ctx.stroke();
+        texto(ctx, 'x', w - 16, py(0) + 17, '#666', 'bold 11px Arial');
+        texto(ctx, 'y', px(0) - 16, 20, '#666', 'bold 11px Arial');
+
+        // reta da restricao
+        ctx.strokeStyle = cores.verde; ctx.lineWidth = 3;
+        ctx.beginPath();
+        if (b <= 6) { ctx.moveTo(px(0), py(b)); ctx.lineTo(px(b), py(0)); }
+        else { ctx.moveTo(px(b-6), py(6)); ctx.lineTo(px(6), py(b-6)); }
+        ctx.stroke();
+        rotulo(ctx, 'x + y = ' + b, px(0.2), py(b <= 6 ? b - 0.45 : 5.6), cores.verde, 'bold 11px Arial');
+
+        // alvo (minimo irrestrito)
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 2.5;
+        const ax = px(alvo[0]), ay = py(alvo[1]), s = 7;
+        ctx.beginPath();
+        ctx.moveTo(ax-s, ay-s); ctx.lineTo(ax+s, ay+s);
+        ctx.moveTo(ax+s, ay-s); ctx.lineTo(ax-s, ay+s);
+        ctx.stroke();
+        rotulo(ctx, 'alvo (' + alvo[0] + ',' + alvo[1] + ')', ax + 11, ay - 6, '#777', 'bold 11px Arial');
+
+        return { px, py, ax, ay };
+    }
+
+    // circulos de nivel centrados no alvo, ate um raio dado
+    function niveisAlvo(ctx, px, py, alvo, raios, destaque) {
+        raios.forEach(r => {
+            const ehD = destaque !== undefined && Math.abs(r - destaque) < 1e-6;
+            ctx.strokeStyle = ehD ? cores.ouro : '#dde4ec';
+            ctx.lineWidth = ehD ? 2.4 : 1.2;
+            ctx.beginPath();
+            // circulo no espaco do problema -> elipse em pixel (escalas iguais aqui)
+            const cxp = px(alvo[0]), cyp = py(alvo[1]);
+            const rp = Math.abs(px(alvo[0] + r) - cxp);
+            ctx.arc(cxp, cyp, rp, 0, Math.PI*2);
+            ctx.stroke();
+        });
+    }
+
+    /* =======================================================================
+       FIGURA 8 — Slide 14: restricao ATIVA x INATIVA (2 passos)
+       ======================================================================= */
+    registrar('ativa', 'cvAtiva', 3000, function (t) {
+        const a = ANIM.ativa, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        // primeira metade: caso inativo (alvo dentro). segunda: caso ativo.
+        const caso = t < 0.5 ? 0 : 1;
+        const tl = caso === 0 ? (t / 0.5) : ((t - 0.5) / 0.5);
+        const tt = suave(Math.min(1, tl));
+
+        if (caso === 0) {
+            // alvo (1,1) com x+y<=5: folgado
+            const g = cenaRestrita(ctx, w, h, { alvo: [1,1], b: 5 });
+            niveisAlvo(ctx, g.px, g.py, [1,1], [0.6, 1.2, 1.8]);
+            ponto(ctx, g.ax, g.ay, cores.verde, 9);
+            rotulo(ctx, 'solução = o próprio alvo', g.ax + 12, g.ay + 24, cores.verde, 'bold 12px Arial');
+            rotulo(ctx, 'CASO A — INATIVA:  g < 0,  μ = 0', 14, 22, cores.verde, 'bold 13px Arial');
+            if (tt > 0.5) {
+                rotulo(ctx, 'g(1,1) = 1+1−5 = −3  (folga)', 14, h - 12, '#555', 'bold 11px Arial');
+            }
+        } else {
+            // alvo (5,5) com x+y<=4: apertado
+            const g = cenaRestrita(ctx, w, h, { alvo: [5,5], b: 4 });
+            niveisAlvo(ctx, g.px, g.py, [5,5], [1.5, 2.5, 3.5, 4.243], 4.243);
+            const sx = g.px(2), sy = g.py(2);
+            // a solucao "escorrega" ate a parede
+            const bx = g.ax + (sx - g.ax) * tt, by = g.ay + (sy - g.ay) * tt;
+            ponto(ctx, bx, by, cores.verm, 9);
+            if (tt > 0.9) {
+                rotulo(ctx, 'solução (2,2)', sx - 96, sy + 4, cores.verm, 'bold 12px Arial');
+                // setas paralelas
+                const E = 26;
+                seta(ctx, sx, sy, sx + E, sy - E, cores.verm, 2.6);
+                seta(ctx, sx, sy, sx - E, sy + E, cores.azul, 2.6);
+            }
+            rotulo(ctx, 'CASO B — ATIVA:  g = 0,  μ > 0', 14, 22, cores.verm, 'bold 13px Arial');
+            if (tt > 0.9) rotulo(ctx, 'g(2,2) = 2+2−4 = 0  (encostado)', 14, h - 12, '#555', 'bold 11px Arial');
+        }
+    });
+    PASSOS.ativa = 2;
+
+    /* =======================================================================
+       FIGURA 9 — Slide 15: o interruptor mu*g = 0
+       ======================================================================= */
+    registrar('folga', 'cvFolga', 3000, function (t) {
+        const a = ANIM.folga, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        // eixo horizontal: distancia ate a parede (g), de -6 a 0
+        const M = 46;
+        const gx = (g) => M + ((g + 6) / 6) * (w - M - 26);
+        const yPar = h - 92;
+
+        grade(ctx, w, h, 34);
+        texto(ctx, 'quanto μ empurra, conforme a solução se aproxima da parede',
+              12, 20, '#666', 'italic 11px Arial');
+
+        // a parede fica em g=0
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(gx(0), 40); ctx.lineTo(gx(0), yPar + 22); ctx.stroke();
+        texto(ctx, 'parede', gx(0) - 46, 36, cores.verm, 'bold 11px Arial');
+
+        // eixo g
+        ctx.strokeStyle = '#999'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(M, yPar); ctx.lineTo(w - 14, yPar); ctx.stroke();
+        [-6,-4,-2,0].forEach(v => {
+            ctx.strokeStyle = '#bbb'; ctx.beginPath();
+            ctx.moveTo(gx(v), yPar - 4); ctx.lineTo(gx(v), yPar + 4); ctx.stroke();
+            texto(ctx, String(v), gx(v) - 5, yPar + 18, '#777', '10px Arial');
+        });
+        texto(ctx, 'g(x)', w - 42, yPar + 32, '#666', 'bold 11px Arial');
+
+        // bolinha se aproximando
+        const gAtual = -6 + 6 * tt;
+        const bxp = gx(gAtual);
+        ponto(ctx, bxp, yPar - 16, cores.roxo, 8);
+
+        // barra de mu: so cresce quando g chega em 0
+        const encostou = gAtual > -0.05;
+        const mu = encostou ? 4 : 0;
+        const alturaBarra = mu * 15;
+        ctx.fillStyle = encostou ? cores.azul : '#dfe5ec';
+        ctx.fillRect(w - 84, h - 46 - alturaBarra, 34, Math.max(4, alturaBarra));
+        texto(ctx, 'μ', w - 72, h - 28, '#555', 'bold 13px Arial');
+        rotulo(ctx, 'μ = ' + mu, w - 96, h - 52 - alturaBarra,
+               encostou ? cores.azul : '#999', 'bold 12px Arial');
+
+        // painel de estado
+        const prodF = mu * gAtual;
+        rotulo(ctx, 'g = ' + gAtual.toFixed(2), 20, 48, '#555', 'bold 12px Arial');
+        rotulo(ctx, 'μ · g = ' + prodF.toFixed(2), 20, 70,
+               Math.abs(prodF) < 1e-6 ? cores.verde : cores.verm, 'bold 12px Arial');
+        rotulo(ctx, Math.abs(prodF) < 1e-6 ? '✔ folga complementar OK' : '✘ inconsistente',
+               20, 92, Math.abs(prodF) < 1e-6 ? cores.verde : cores.verm, 'bold 12px Arial');
+
+        if (encostou) {
+            rotulo(ctx, 'encostou → agora a parede empurra', 20, h - 14, cores.azul, 'bold 12px Arial');
+        } else {
+            rotulo(ctx, 'longe da parede → μ = 0', 20, h - 14, '#777', 'bold 12px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 10 — Slide 19: o problema do exemplo (alvo fora da regiao)
+       ======================================================================= */
+    registrar('ex1', 'cvEx1', 2400, function (t) {
+        const a = ANIM.ex1, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        const g = cenaRestrita(ctx, w, h, { alvo: [4,4], b: 4 });
+        // circulos de nivel crescendo ate tocar a reta
+        const rMax = 2.828;                       // dist de (4,4) ate (2,2)
+        const nNiv = 5;
+        for (let i = 1; i <= nNiv; i++) {
+            const r = (rMax * 1.25) * (i / nNiv) * tt;
+            if (r < 0.05) continue;
+            ctx.strokeStyle = '#dde4ec'; ctx.lineWidth = 1.2;
+            const cxp = g.px(4), cyp = g.py(4);
+            const rp = Math.abs(g.px(4 + r) - cxp);
+            ctx.beginPath(); ctx.arc(cxp, cyp, rp, 0, Math.PI*2); ctx.stroke();
+        }
+        rotulo(ctx, 'região permitida', g.px(0.3), g.py(1.1), cores.verde, 'bold 12px Arial');
+        rotulo(ctx, 'x + y ≤ 4', g.px(0.3), g.py(0.5), cores.verde, 'bold 11px Arial');
+        if (tt > 0.75) {
+            rotulo(ctx, 'o alvo está FORA → restrição vai atuar', 12, 22, cores.verm, 'bold 12px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 11 — Slide 20: o chute errado (mu=0 leva a ponto proibido)
+       ======================================================================= */
+    registrar('ex2', 'cvEx2', 100, function (t) {
+        const a = ANIM.ex2, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const g = cenaRestrita(ctx, w, h, { alvo: [4,4], b: 4 });
+        // marca o ponto (4,4) como candidato invalido
+        ponto(ctx, g.ax, g.ay, cores.verm, 9);
+        // circulo de "proibido"
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(g.ax, g.ay, 20, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(g.ax - 14, g.ay + 14); ctx.lineTo(g.ax + 14, g.ay - 14); ctx.stroke();
+
+        rotulo(ctx, 'candidato do cenário 1', g.ax - 30, g.ay - 30, cores.verm, 'bold 12px Arial');
+        rotulo(ctx, 'g = 4 > 0  →  PROIBIDO', g.ax - 34, g.ay + 44, cores.verm, 'bold 12px Arial');
+        rotulo(ctx, 'μ = 0 não serve aqui', 12, 22, cores.verm, 'bold 13px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 12 — Slide 21: a solucao correta em (2,2) com tangencia
+       ======================================================================= */
+    registrar('ex3', 'cvEx3', 2600, function (t) {
+        const a = ANIM.ex3, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        const g = cenaRestrita(ctx, w, h, { alvo: [4,4], b: 4 });
+
+        // circulo de nivel que cresce ate tangenciar a reta em (2,2)
+        const rFim = 2.828;
+        const r = rFim * tt;
+        const cxp = g.px(4), cyp = g.py(4);
+        const rp = Math.abs(g.px(4 + r) - cxp);
+        ctx.strokeStyle = (tt > 0.96) ? cores.ouro : '#c9d4e0';
+        ctx.lineWidth = (tt > 0.96) ? 2.6 : 1.6;
+        ctx.beginPath(); ctx.arc(cxp, cyp, rp, 0, Math.PI*2); ctx.stroke();
+
+        if (tt > 0.9) {
+            const sx = g.px(2), sy = g.py(2);
+            ponto(ctx, sx, sy, cores.verm, 9);
+            rotulo(ctx, 'x* = (2, 2)', sx - 92, sy + 6, cores.verm, 'bold 13px Arial');
+            // setas paralelas: grad f = (-4,-4), mu*grad g = (4,4)
+            const E = 30;
+            seta(ctx, sx, sy, sx - E, sy + E, cores.verm, 3);
+            rotulo(ctx, '∇f = (−4,−4)', sx - E - 84, sy + E + 16, cores.verm, 'bold 11px Arial');
+            seta(ctx, sx, sy, sx + E, sy - E, cores.azul, 3);
+            rotulo(ctx, 'μ∇g = (4, 4)', sx + E + 4, sy - E - 6, cores.azul, 'bold 11px Arial');
+            rotulo(ctx, 'tangência  →  KKT ✔', 12, 22, cores.verde, 'bold 13px Arial');
+        } else {
+            rotulo(ctx, 'crescendo o nível até tocar a reta...', 12, 22, '#666', 'italic 12px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 13 — Slide 23: duas restricoes, so uma ativa
+       ======================================================================= */
+    registrar('duas', 'cvDuas', 100, function (t) {
+        const a = ANIM.duas, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const M = 38;
+        const px = (x) => M + (x / 12) * (w - M - 14);
+        const py = (y) => (h - M) - (y / 6) * (h - M - 14);
+
+        grade(ctx, w, h, 32);
+        // viavel: x+y<=4 e x<=10 (o segundo nao morde)
+        ctx.fillStyle = 'rgba(39,174,96,0.13)';
+        ctx.beginPath();
+        ctx.moveTo(px(0), py(0)); ctx.lineTo(px(0), py(4)); ctx.lineTo(px(4), py(0));
+        ctx.closePath(); ctx.fill();
+
+        ctx.strokeStyle = '#999'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(0), 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(w - 8, py(0)); ctx.stroke();
+
+        // g1 ativa
+        ctx.strokeStyle = cores.verde; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(px(0), py(4)); ctx.lineTo(px(4), py(0)); ctx.stroke();
+        rotulo(ctx, 'g₁: x+y ≤ 4  (ATIVA, μ₁=1)', px(0.2), py(4.6), cores.verde, 'bold 11px Arial');
+
+        // g2 inativa, longe
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 2.5;
+        ctx.setLineDash([6,4]);
+        ctx.beginPath(); ctx.moveTo(px(10), py(0)); ctx.lineTo(px(10), 14); ctx.stroke();
+        ctx.setLineDash([]);
+        rotulo(ctx, 'g₂: x ≤ 10', px(10) - 32, 28, cores.cinza, 'bold 11px Arial');
+        rotulo(ctx, '(INATIVA, μ₂=0)', px(10) - 48, 44, cores.cinza, 'bold 10px Arial');
+
+        // alvo (3,2) fora
+        const ax = px(3), ay = py(2), s = 6;
+        ctx.strokeStyle = cores.cinza; ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(ax-s, ay-s); ctx.lineTo(ax+s, ay+s);
+        ctx.moveTo(ax+s, ay-s); ctx.lineTo(ax-s, ay+s); ctx.stroke();
+        rotulo(ctx, 'alvo (3,2)', ax + 9, ay - 8, '#777', 'bold 10px Arial');
+
+        // nivel tangente e solucao (2.5,1.5)
+        const rp = Math.abs(px(3 + Math.SQRT1_2) - ax);
+        ctx.strokeStyle = cores.ouro; ctx.lineWidth = 2.2;
+        ctx.beginPath(); ctx.arc(ax, ay, rp, 0, Math.PI*2); ctx.stroke();
+
+        const sx = px(2.5), sy = py(1.5);
+        ponto(ctx, sx, sy, cores.verm, 8);
+        rotulo(ctx, 'x* = (2,5; 1,5)', sx - 84, sy + 20, cores.verm, 'bold 11px Arial');
+    });
+
+    /* =======================================================================
+       FIGURA 14 — Slide 25: sela — KKT satisfeito mas nao e minimo
+       f = x^2 - y^2 : corte em y=0 (sobe) e corte em x=0 (desce)
+       ======================================================================= */
+    registrar('sela', 'cvSela', 2800, function (t) {
+        const a = ANIM.sela, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        const cx = w/2, cy = h/2 + 6;
+        const E = 62;                     // escala
+
+        grade(ctx, w, h, 34);
+        texto(ctx, 'f(x,y) = x² − y²   no ponto (0,0)', 12, 20, '#555', 'bold 12px Arial');
+
+        // eixo
+        ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(40, cy); ctx.lineTo(w - 20, cy); ctx.stroke();
+
+        // corte ao longo de x (parabola para CIMA) — sobe
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let d = -1.6; d <= 1.6; d += 0.05) {
+            const X = cx + d * E, Y = cy - (d*d) * 46;
+            d === -1.6 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+        }
+        ctx.stroke();
+        rotulo(ctx, 'na direção x: f SOBE  (parece mínimo)', cx - 60, cy - 108, cores.azul, 'bold 11px Arial');
+
+        // corte ao longo de y (parabola para BAIXO) — desce
+        if (tt > 0.4) {
+            const f = Math.min(1, (tt - 0.4) / 0.5);
+            ctx.strokeStyle = cores.verm; ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let d = -1.6*f; d <= 1.6*f; d += 0.05) {
+                const X = cx + d * E, Y = cy + (d*d) * 46;
+                ctx.lineTo(X, Y);
+            }
+            ctx.stroke();
+            if (f > 0.8) {
+                rotulo(ctx, 'na direção y: f DESCE  →  não é mínimo!',
+                       cx - 74, cy + 116, cores.verm, 'bold 11px Arial');
+            }
+        }
+
+        ponto(ctx, cx, cy, cores.roxo, 8);
+        rotulo(ctx, '∇f = (0,0) ✔', cx + 12, cy - 10, cores.roxo, 'bold 12px Arial');
+        if (tt > 0.93) {
+            rotulo(ctx, 'KKT satisfeito, mas é uma SELA', 12, h - 12, cores.verm, 'bold 13px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 15 — Slide 26: convexa x nao convexa
+       ======================================================================= */
+    registrar('convexo', 'cvConvexo', 2800, function (t) {
+        const a = ANIM.convexo, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const tt = suave(t);
+        const meia = w / 2;
+        const base = h - 46;
+
+        // ---- esquerda: convexa ----
+        ctx.strokeStyle = cores.verde; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = 0; i <= 100; i++) {
+            const x = 26 + (meia - 52) * i / 100;
+            const u = (x - (26 + (meia - 52)/2)) / 62;
+            const y = base - 30 - 88 * Math.exp(-u*u*0.55) * 0 - (100 - 55*u*u) * 0;
+            const yy = base - 140 + 78 * (u*u) / 1.6;
+            i === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+        }
+        ctx.stroke();
+        texto(ctx, 'CONVEXA', 40, 24, cores.verde, 'bold 12px Arial');
+        texto(ctx, 'um vale só', 40, 40, '#666', 'italic 11px Arial');
+        const exC = 26 + (meia - 52)/2;
+        ponto(ctx, exC, base - 140, cores.verde, 7);
+        if (tt > 0.6) rotulo(ctx, 'KKT ⇒ global ✔', exC - 44, base - 156, cores.verde, 'bold 11px Arial');
+
+        // divisor
+        ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(meia, 14); ctx.lineTo(meia, h - 14); ctx.stroke();
+
+        // ---- direita: nao convexa (varios vales) ----
+        ctx.strokeStyle = cores.verm; ctx.lineWidth = 3;
+        ctx.beginPath();
+        const f2 = (u) => base - 116 + 34*Math.sin(u*2.6) + 26*(u*0.42)*(u*0.42);
+        for (let i = 0; i <= 140; i++) {
+            const u = -4.2 + 8.4 * i / 140;
+            const x = meia + 26 + (w - meia - 52) * i / 140;
+            const y = f2(u);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        texto(ctx, 'NÃO CONVEXA', meia + 30, 24, cores.verm, 'bold 12px Arial');
+        texto(ctx, 'vários vales', meia + 30, 40, '#666', 'italic 11px Arial');
+
+        // marca dois minimos locais
+        if (tt > 0.45) {
+            [-2.0, 0.42].forEach((u, k) => {
+                const x = meia + 26 + (w - meia - 52) * (u + 4.2) / 8.4;
+                // procura o minimo local proximo numericamente
+                let best = u, bv = f2(u);
+                for (let d = -0.9; d <= 0.9; d += 0.01) {
+                    if (f2(u+d) < bv) { bv = f2(u+d); best = u+d; }
+                }
+                const xb = meia + 26 + (w - meia - 52) * (best + 4.2) / 8.4;
+                ponto(ctx, xb, bv, k === 0 ? cores.ouro : cores.verm, 7);
+            });
+            rotulo(ctx, 'KKT vale nos DOIS', meia + 30, h - 30, cores.verm, 'bold 11px Arial');
+            rotulo(ctx, 'qual é o global? KKT não diz', meia + 30, h - 14, '#666', 'bold 11px Arial');
+        }
+    });
+
+    /* =======================================================================
+       FIGURA 16 — Slide 27: cuspide y^2 = x^3 (falha de qualificacao)
+       ======================================================================= */
+    registrar('licq', 'cvLicq', 100, function (t) {
+        const a = ANIM.licq, ctx = a.ctx, w = a.cv.width, h = a.cv.height;
+        const M = 56;
+        const px = (x) => M + x * 95;
+        const py = (y) => h/2 - y * 62;
+
+        grade(ctx, w, h, 34);
+        ctx.strokeStyle = '#999'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(M - 24, py(0)); ctx.lineTo(w - 12, py(0)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px(0), 14); ctx.lineTo(px(0), h - 14); ctx.stroke();
+        texto(ctx, 'x', w - 18, py(0) + 17, '#666', 'bold 11px Arial');
+        texto(ctx, 'y', px(0) - 17, 22, '#666', 'bold 11px Arial');
+
+        // curva y = +-x^(3/2)
+        ctx.strokeStyle = cores.azul; ctx.lineWidth = 3;
+        [1, -1].forEach(sg => {
+            ctx.beginPath();
+            for (let x = 0; x <= 3.1; x += 0.01) {
+                const y = sg * Math.pow(x, 1.5);
+                const X = px(x), Y = py(y);
+                if (Y < 6 || Y > h - 6) continue;
+                x === 0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+            }
+            ctx.stroke();
+        });
+        rotulo(ctx, 'y² = x³', px(1.9), py(1.6), cores.azul, 'bold 12px Arial');
+
+        // ponto (0,0) com a cuspide
+        ponto(ctx, px(0), py(0), cores.verm, 8);
+        rotulo(ctx, '(0,0) é a solução', px(0) + 14, py(0) - 22, cores.verm, 'bold 12px Arial');
+        rotulo(ctx, '∇h = (0,0)  ✘', px(0) + 14, py(0) + 30, cores.verm, 'bold 12px Arial');
+
+        // grad f = (1,0), que nunca pode ser cancelado
+        seta(ctx, px(0), py(0), px(0) + 62, py(0), cores.ouro, 3);
+        rotulo(ctx, '∇f = (1,0)', px(0) + 66, py(0) - 6, '#b9770e', 'bold 11px Arial');
+
+        texto(ctx, 'sem direção perpendicular definida → não existe λ',
+              12, h - 12, cores.verm, 'bold 11px Arial');
+    });
+
+    /* =======================================================================
+       DISPARO DAS ANIMACOES
+       ======================================================================= */
+    const SLIDE_ANIM = {
+        cvCerca: 'cerca', cvSemRestr: 'semRestr', cvComRestr: 'comRestr',
+        cvForcas: 'forcas', cvGrad: 'grad', cvCercaKkt: 'cercaKkt',
+        cvPreco: 'preco', cvAtiva: 'ativa', cvFolga: 'folga',
+        cvEx1: 'ex1', cvEx2: 'ex2', cvEx3: 'ex3', cvDuas: 'duas',
+        cvSela: 'sela', cvConvexo: 'convexo', cvLicq: 'licq'
+    };
+
+    Object.keys(PASSOS).forEach(nome => { PASSO_ATUAL[nome] = 0; });
+    Object.values(SLIDE_ANIM).forEach(quadroFinal);
+    Object.keys(PASSOS).forEach(atualizarCtrlPasso);
+
+    const modoPdf = window.location.search.indexOf('print-pdf') !== -1;
+
+    function animarSlideAtual(slide) {
+        if (!slide || modoPdf) return;
+        slide.querySelectorAll('canvas').forEach(cv => {
+            const nome = SLIDE_ANIM[cv.id];
+            if (!nome || !ANIM[nome]) return;
+            if (PASSOS[nome] !== undefined) {
+                PASSO_ATUAL[nome] = PASSOS[nome];
+                atualizarCtrlPasso(nome);
+            }
+            if (ANIM[nome].dur > 1) tocar(nome);
+        });
+    }
+
+    Reveal.on('ready', (e) => { ajustarAltura(); animarSlideAtual(e.currentSlide); });
+    Reveal.on('slidechanged', (e) => animarSlideAtual(e.currentSlide));
+
+    // botoes "repetir animacao"
+    document.querySelectorAll('.anim-ctrl[data-anim]').forEach(b => {
+        b.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            tocar(b.dataset.anim);
+        });
+    });
+
+    // botoes de passo a passo
+    document.querySelectorAll('[data-passo-de]').forEach(el => {
+        const nome = el.dataset.passoDe, acao = el.dataset.passoAcao;
+        if (acao === 'label') return;
+        el.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            acao === 'prev' ? passoAnterior(nome) : passoSeguinte(nome);
+        });
+    });
+
+    /* ---- Controle de velocidade ---------------------------------------- */
+    (function ligarControleVel() {
+        const range = document.getElementById('velRange');
+        const val   = document.getElementById('velVal');
+        if (!range || !val) return;
+
+        const aplicar = (v, salvar) => {
+            fatorVel = v;
+            val.textContent = v.toFixed(1).replace('.', ',') + '×';
+            if (salvar) { try { localStorage.setItem('kktVel', String(v)); } catch (e) {} }
+        };
+
+        range.value = fatorVel;
+        aplicar(fatorVel, false);
+
+        range.addEventListener('input', () => aplicar(parseFloat(range.value), true));
+        range.addEventListener('change', () => {
+            const slide = Reveal.getCurrentSlide();
+            if (slide) animarSlideAtual(slide);
+        });
+        range.addEventListener('keydown', (ev) => ev.stopPropagation());
+        range.addEventListener('click', (ev) => ev.stopPropagation());
+    })();
+
+    // setas ←/→ controlam a figura do slide atual quando ela tem passos
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+        const slide = Reveal.getCurrentSlide();
+        if (!slide) return;
+        const cv = slide.querySelector('canvas');
+        if (!cv) return;
+        const nome = SLIDE_ANIM[cv.id];
+        if (!nome || !PASSOS[nome]) return;
+        const i = PASSO_ATUAL[nome] ?? 0;
+        if (ev.key === 'ArrowRight' && i >= PASSOS[nome]) return;
+        if (ev.key === 'ArrowLeft'  && i <= 0) return;
+        ev.preventDefault(); ev.stopPropagation();
+        ev.key === 'ArrowRight' ? passoSeguinte(nome) : passoAnterior(nome);
+    }, true);
+
+    window.addEventListener('resize', ajustarAltura);
+</script>
+</body>
+</html>
