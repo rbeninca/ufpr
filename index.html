@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Otimização Não Linear — Índice dos Trabalhos</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+    .paper { max-width: 210mm; margin: 40px auto; background: white; padding: 20mm 25mm; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; }
+
+    h1 { font-size: 22pt; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 10px; }
+    h2 { font-size: 16pt; font-weight: 700; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px; }
+    h3 { font-size: 13pt; font-weight: 600; color: #334155; margin-top: 20px; margin-bottom: 10px; }
+
+    p { margin-bottom: 12px; line-height: 1.6; text-align: justify; font-size: 11pt; }
+    ul { list-style-type: disc; margin-left: 20px; margin-bottom: 12px; font-size: 11pt; }
+
+    .link-card { display: block; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; background: #f8fafc; color: #0f172a; text-decoration: none; transition: background .15s ease, border-color .15s ease; font-size: 11pt; }
+    .link-card:hover { background: #eef2ff; border-color: #93c5fd; }
+    .link-card code { font-family: 'JetBrains Mono', monospace; font-size: .95em; color: #b03060; }
+
+    /* Botoes de documento dentro de cada cartao */
+    .doc-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .doc-links a {
+      display: inline-block; font-size: 10pt; font-weight: 600; text-decoration: none;
+      color: #1d4ed8; background: #fff; border: 1px solid #bfdbfe;
+      border-radius: 6px; padding: 5px 12px;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
+    }
+    .doc-links a:hover { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="paper">
+    <div class="text-center mb-10">
+      <p class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Universidade Federal do Paraná</p>
+      <p class="text-xs text-slate-400 uppercase tracking-widest mb-4">Programa de Pós-Graduação em Engenharia Mecânica</p>
+      <h1>Otimização Não Linear</h1>
+      <p class="text-slate-500 text-sm mt-2">Prof. Dr. Carlos Alberto Bavastri</p>
+      
+    </div>
+
+    <section>
+      <h2>Trabalhos</h2>
+      <div class="grid grid-cols-1 gap-4">
+
+        <div class="link-card">
+          <strong>Trabalho 1</strong><br/>
+          Método de Nelder-Mead (Poliedro Flexível)
+          <span class="doc-links">
+            <a href="./trabalho1-  algoritmo Nelder/index.html" title="Relatório do Trabalho 1">📄 Relatório</a>
+            <a href="./trabalho1-  algoritmo Nelder/slide.html" title="Slides do Trabalho 1">🖥️ Slides</a>
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Trabalho 2</strong><br/>
+          Cálculo numérico do Gradiente e da Matriz Hessiana em MATLAB
+          <span class="doc-links">
+            <a href="./trabalho2 - hessiana/index.html" title="Relatório do Trabalho 2">📄 Relatório</a>
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Trabalho 3</strong><br/>
+          Método da Dicotomia (Busca Unidimensional)
+          <span class="doc-links">
+            <a href="./trabalho3 - bissecção de bolzano  Método R em R/index.html" title="Relatório do Trabalho 3">📄 Relatório</a>
+            <a href="./trabalho3 - bissecção de bolzano  Método R em R/slide.html" title="Slides do Trabalho 3">🖥️ Slides</a>
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Trabalho 4</strong><br/>
+          Método da Descida Mais Rápida
+          <span class="doc-links">
+            <a href="./trabalho4 - descida mais rapida/Método da Descida Mais Rápida.odp" title="Slides do Trabalho 4">🖥️ Slides</a>
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Trabalho 5</strong><br/>
+          Determinação e Estimativa de η em Métodos Quase-Newton
+          <span class="doc-links">
+            <a href="./trabalho5 - Estimativa ETA em quase newton/index.html" title="Relatório do Trabalho 5">📄 Relatório</a>
+            <a href="./trabalho5 - Estimativa ETA em quase newton/algoritmo-eta.html" title="Algoritmo interativo de estimativa de η">⚙️ Algoritmo</a>
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Trabalho 6</strong><br/>
+          Algoritmos Genéticos — Otimização inspirada na evolução natural
+          <span class="doc-links">
+            <a href="./trabalho6 - GA no Matlab/slide.html" title="Algoritmos Genéticos e uso no MATLAB">🖥️ Slides</a>
+            <a href="./trabalho6 - GA no Matlab/GA-explicado.html" title="Apresentação interativa com laboratório de otimização em 3D">🧬 GA Explicado (interativo)</a>
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Trabalho 7</strong><br/>
+          Algoritmos Bioinspirados — apresentações geral e específicas
+          <span class="doc-links">
+            <!-- <a href="./trabalho7 - bioinspirados/slide-completo.html" title="Apresentação didática do básico ao avançado">📘 Visão Geral Completa</a> -->
+            <!-- <a href="./trabalho7 - bioinspirados/slide.html" title="Colônia de Abelhas (ABC)">🐝 Colônia de Abelhas</a> -->
+             <a href="./trabalho7 - bioinspirados/slide-pso.html" title="Enxame de Partículas (PSO)">🐦 Enxame de Partículas</a> 
+            <!--<a href="./trabalho7 - bioinspirados/slide-gwo.html" title="Otimizador do Lobo Cinzento (GWO)">🐺 Otimizador do Lobo Cinzento</a> -->
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Trabalho 8</strong><br/>
+          O Solver <code>fmincon</code> no MATLAB — Otimização Contínua Determinística
+          <span class="doc-links">
+            <a href="./trabalho8 - fmincon/slide.html" title="Slides do Trabalho 8">🖥️ Slides</a>
+          </span>
+        </div>
+
+        <div class="link-card">
+          <strong>Estudos</strong><br/>
+          Condições de Karush-Kuhn-Tucker (KKT) — do básico ao avançado
+          <span class="doc-links">
+            <a href="./trabalho estudos KKT/slide-kkt.html" title="Condições de KKT explicadas passo a passo">📐 KKT Explicado</a>
+          </span>
+        </div>
+
+      </div>
+    </section>
+
+    <section>
+    
+    
+    </section>
+  </div>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-S90V8HLVGK"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-S90V8HLVGK');
+</script>
+</body>
+</html>
